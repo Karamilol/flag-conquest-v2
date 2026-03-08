@@ -1167,6 +1167,9 @@ export function drawEntities(
   // --- Projectiles ---
   drawProjectiles(ctx, game.projectiles || [], camX, cullLeft, cullRight);
 
+  // --- In-flight cast visuals (flame callers + fire imps) ---
+  drawCastingFireballs(ctx, game, camX, frame);
+
   // --- Particles ---
   for (const p of game.particles || []) {
     if (p.x < cullLeft || p.x > cullRight) continue;
@@ -1253,6 +1256,76 @@ function drawProjectiles(
       case 'chainLightning':
         drawChainLightning(ctx, p.chainTargets, camX, p.duration ?? 30);
         break;
+    }
+  }
+}
+
+/** Draw in-flight fireball visuals for flame callers and fire imps during their cast phase */
+function drawCastingFireballs(
+  ctx: CanvasRenderingContext2D,
+  game: any,
+  camX: number,
+  frame: number,
+): void {
+  const casters = [
+    ...((game.enemyFlameCallers || []).map((fc: any) => ({ ...fc, castMax: 310, color: '#ff4400', glowColor: '#ff8800', size: 7 }))),
+    ...((game.enemyFireImps || []).map((fi: any) => ({ ...fi, castMax: 120, color: '#ff6600', glowColor: '#ffaa00', size: 5 }))),
+  ];
+
+  for (const c of casters) {
+    if (!c.isCasting || c.health <= 0 || !c.castTargetX) continue;
+    const t = Math.min(1, (c.castTimer || 0) / c.castMax);
+    // Fireball arcs from caster to target
+    const startX = c.x - camX;
+    const startY = (c.y || GROUND_Y - 20) + WORLD_Y_OFFSET;
+    const endX = c.castTargetX - camX;
+    const endY = (c.castTargetY || GROUND_Y - 10) + WORLD_Y_OFFSET;
+    const fx = startX + (endX - startX) * t;
+    const arcH = -60 * 4 * t * (t - 1); // parabolic arc
+    const fy = startY + (endY - startY) * t - arcH;
+
+    // Glow
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = c.glowColor;
+    ctx.beginPath();
+    ctx.arc(fx, fy, c.size + 4 + Math.sin(frame * 0.3) * 2, 0, Math.PI * 2);
+    ctx.fill();
+    // Core
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = c.color;
+    ctx.beginPath();
+    ctx.arc(fx, fy, c.size, 0, Math.PI * 2);
+    ctx.fill();
+    // Bright center
+    ctx.globalAlpha = 0.8;
+    ctx.fillStyle = '#ffdd44';
+    ctx.beginPath();
+    ctx.arc(fx, fy, c.size * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    // Trail sparks
+    ctx.globalAlpha = 0.4;
+    for (let i = 1; i <= 3; i++) {
+      const tt = Math.max(0, t - i * 0.06);
+      const tx = startX + (endX - startX) * tt;
+      const tArc = -60 * 4 * tt * (tt - 1);
+      const ty = startY + (endY - startY) * tt - tArc;
+      ctx.fillStyle = c.color;
+      ctx.beginPath();
+      ctx.arc(tx, ty, c.size * (0.6 - i * 0.12), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // Target zone indicator (ground circle that grows as fireball approaches)
+    if (t > 0.3) {
+      const zoneAlpha = (t - 0.3) * 0.5;
+      ctx.globalAlpha = zoneAlpha;
+      ctx.strokeStyle = c.color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(endX, endY + 5, 20 * t, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
     }
   }
 }
@@ -1430,26 +1503,29 @@ function drawCrystalBolt(ctx: CanvasRenderingContext2D, x: number, y: number): v
 }
 
 function drawBombardShot(ctx: CanvasRenderingContext2D, x: number, y: number, worldX: number): void {
-  // Smoke trail
-  ctx.globalAlpha = 0.25;
+  // Smoke trail (larger, more visible)
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = '#777';
+  ctx.beginPath(); ctx.arc(x - 8, y + 3, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 0.2;
   ctx.fillStyle = '#666';
-  ctx.beginPath(); ctx.arc(x - 6, y + 2, 3, 0, Math.PI * 2); ctx.fill();
-  ctx.globalAlpha = 0.15;
+  ctx.beginPath(); ctx.arc(x - 14, y + 5, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 0.12;
   ctx.fillStyle = '#555';
-  ctx.beginPath(); ctx.arc(x - 10, y + 4, 2, 0, Math.PI * 2); ctx.fill();
-  // Cannonball
+  ctx.beginPath(); ctx.arc(x - 20, y + 6, 2.5, 0, Math.PI * 2); ctx.fill();
+  // Cannonball (bigger)
   ctx.globalAlpha = 1;
-  ctx.fillStyle = '#666';
-  ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#555';
+  ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#888';
   ctx.globalAlpha = 0.6;
-  ctx.beginPath(); ctx.arc(x - 1.5, y - 1.5, 2, 0, Math.PI * 2); ctx.fill();
-  // Fuse spark
-  ctx.globalAlpha = 0.8;
-  ctx.fillStyle = '#ff8800';
-  ctx.beginPath(); ctx.arc(x + 3, y - 4, 1.5, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#ffcc00';
-  ctx.beginPath(); ctx.arc(x + 4, y - 5, 1, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x - 2, y - 2, 3, 0, Math.PI * 2); ctx.fill();
+  // Fuse spark (brighter)
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#ff6600';
+  ctx.beginPath(); ctx.arc(x + 4, y - 5, 2.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#ffdd00';
+  ctx.beginPath(); ctx.arc(x + 5, y - 6, 1.5, 0, Math.PI * 2); ctx.fill();
   ctx.globalAlpha = 1;
 }
 
