@@ -260,7 +260,7 @@ function UnitsTab({ game, upgrades, shardUpgrades, challengeCompletions, relicCo
         }
         // Masterwork Arms (Smithy 6pc) — hero +2 dmg/+1 def per boss; shown at runtime
         // Titan's Heart
-        if (ancientRelicsOwned.includes('titansHeart')) {
+        if ((ancientRelicsOwned || []).includes('titansHeart')) {
           const thEff = getAncientEffect('titansHeart', getAncientRelicLevel(ancientRelicCopies['titansHeart'] || 1));
           heroBonuses.push({ source: "Titan's Heart", stat: 'health', value: `+${Math.round((thEff.hpBonus || 0.15) * 100)}%` });
         }

@@ -208,7 +208,7 @@ export function RelicPanel({ relicCollection, onClose, ancientFragments, dungeon
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', padding: '2px 4px', gap: '2px' }}>
               {ANCIENT_RELIC_DEFS.map(relic => {
-                const owned = ancientRelicsOwned.includes(relic.id);
+                const owned = (ancientRelicsOwned || []).includes(relic.id);
                 const copies = ancientRelicCopies[relic.id] || 0;
                 const level = getAncientRelicLevel(copies);
                 const catColors: Record<string, string> = { combat: '#ff6666', hero: '#66aaff', economy: '#ffd700' };

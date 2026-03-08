@@ -62,11 +62,11 @@ export function PrestigeShop({ gems, shards, upgrades, shardUpgrades, challengeC
   };
 
   const tabBadges: Record<ShopTab, boolean> = {
-    units: UNIT_UNLOCK_ORDER.some(u => u.cost > 0 && !upgrades.unlockedUnits.includes(u.key) && gems >= u.cost),
+    units: UNIT_UNLOCK_ORDER.some(u => u.cost > 0 && !(upgrades.unlockedUnits as string[] || []).includes(u.key) && gems >= u.cost),
     income: INCOME_TIER_UNLOCKS.some(t => !((upgrades[t.key] as number) || 0) && gems >= t.cost),
     misc: (!((upgrades.startingArtifact as number) || 0) && gems >= 75) || (!((upgrades.autoPortal as number) || 0) && gems >= 30) || (((upgrades.freeStartingUnit as number) || 0) < 3 && gems >= [50, 100, 200][(upgrades.freeStartingUnit as number) || 0]) || (!((upgrades.extraRerolls as number) || 0) && gems >= 40) || gems >= gemUpgradeCost(3, (upgrades.startingGold as number) || 0) || gems >= gemUpgradeCost(3, (upgrades.startingIncome as number) || 0),
-    shards: SHARD_UPGRADES.some(def => upgrades.unlockedUnits.includes(def.unitType) && (shardUpgrades[def.key] || 0) < def.maxLevel && shards >= shardUpgradeCost(def, shardUpgrades[def.key] || 0)),
-    cosmetics: COSMETICS.some(c => !(upgrades.ownedCosmetics as string[] || []).includes(c.id) && gems >= c.gemCost) || PETS.some(p => p.source === 'store' && !p.locked && !petState.ownedPets.includes(p.id) && gems >= p.gemCost),
+    shards: SHARD_UPGRADES.some(def => (upgrades.unlockedUnits as string[] || []).includes(def.unitType) && (shardUpgrades[def.key] || 0) < def.maxLevel && shards >= shardUpgradeCost(def, shardUpgrades[def.key] || 0)),
+    cosmetics: COSMETICS.some(c => !(upgrades.ownedCosmetics as string[] || []).includes(c.id) && gems >= c.gemCost) || PETS.some(p => p.source === 'store' && !p.locked && !(petState.ownedPets || []).includes(p.id) && gems >= p.gemCost),
   };
 
   return (
@@ -169,7 +169,7 @@ function UnitsTab({ gems, upgrades, shardUpgrades, challengeCompletions, buyUnit
         Unlocked units are added to the roll pool
       </div>
       {UNIT_UNLOCK_ORDER.map((unit) => {
-        const isUnlocked = upgrades.unlockedUnits.includes(unit.key);
+        const isUnlocked = (upgrades.unlockedUnits as string[] || []).includes(unit.key);
         const canAfford = gems >= unit.cost;
         const stats = UNIT_STATS[unit.key as keyof typeof UNIT_STATS] as any;
         const { base, final, bonuses } = computePermanentUnitStats(unit.key as UnitType, shardUpgrades, challengeCompletions);
@@ -207,13 +207,13 @@ function UnitsTab({ gems, upgrades, shardUpgrades, challengeCompletions, buyUnit
               {isUnlocked && unit.key === 'soldier' ? (
                 <span style={{ fontSize: '14px' }}>{'\u2705'}</span>
               ) : isUnlocked ? (
-                upgrades.unitTogglePurchased.includes(unit.key) ? (
+                (upgrades.unitTogglePurchased as string[] || []).includes(unit.key) ? (
                   <button onClick={() => toggleUnitPool(unit.key)} style={{
                     width: '90%', padding: '3px 2px', fontSize: '10px', fontFamily: 'inherit', fontWeight: 'bold',
-                    background: upgrades.disabledUnits.includes(unit.key) ? '#ff4444' : '#4aff4a',
+                    background: (upgrades.disabledUnits as string[] || []).includes(unit.key) ? '#ff4444' : '#4aff4a',
                     color: '#000', border: 'none', borderRadius: '3px', cursor: 'pointer',
                   }}>
-                    {upgrades.disabledUnits.includes(unit.key) ? 'OFF' : 'ON'}
+                    {(upgrades.disabledUnits as string[] || []).includes(unit.key) ? 'OFF' : 'ON'}
                   </button>
                 ) : (
                   <button onClick={() => buyUnitToggle(unit.key, unit.cost)} disabled={gems < unit.cost} style={{
@@ -470,7 +470,7 @@ const UNIT_TABS = [
 ];
 
 function ShardsTab({ shards, shardUpgrades, unlockedUnits, onBuy }: { shards: number; shardUpgrades: ShardUpgrades; unlockedUnits: string[]; onBuy: (key: string, cost: number) => void }) {
-  const availableTabs = UNIT_TABS.filter(t => unlockedUnits.includes(t.key));
+  const availableTabs = UNIT_TABS.filter(t => (unlockedUnits || []).includes(t.key));
   const [selectedUnit, setSelectedUnit] = useState(availableTabs[0]?.key || 'soldier');
   const unitUpgrades = getUpgradesForUnit(selectedUnit);
   const tabInfo = UNIT_TABS.find(t => t.key === selectedUnit);
@@ -617,14 +617,14 @@ function CosmeticsTab({ gems, upgrades, petState, buyCosmetic, equipCosmetic, bu
           <>
             <div style={{ fontSize: '9px', color: '#c084fc', fontWeight: 'bold', padding: '3px 6px', background: 'rgba(138,74,223,0.08)', borderRadius: '3px' }}>HERO SKINS</div>
             {COSMETICS.filter(c => c.category === 'heroSkin').sort(sortByRarity).map(c => (
-              <CosmeticRow key={c.id} cosmetic={c} owned={ownedCosmetics.includes(c.id)} equipped={equippedHeroSkin === c.id}
+              <CosmeticRow key={c.id} cosmetic={c} owned={(ownedCosmetics || []).includes(c.id)} equipped={equippedHeroSkin === c.id}
                 gems={gems} onBuy={() => buyCosmetic(c.id, c.gemCost)} onEquip={() => equipCosmetic(c.id, 'heroSkin')} onUnequip={() => equipCosmetic('default', 'heroSkin')} />
             ))}
             {unitTypes.map(ut => (
               <React.Fragment key={ut}>
                 <div style={{ fontSize: '9px', color: '#c084fc', fontWeight: 'bold', padding: '3px 6px', background: 'rgba(138,74,223,0.08)', borderRadius: '3px', marginTop: '4px' }}>{ut.toUpperCase()} SKINS</div>
                 {COSMETICS.filter(c => c.category === 'unitSkin' && c.unitType === ut).sort(sortByRarity).map(c => (
-                  <CosmeticRow key={c.id} cosmetic={c} owned={ownedCosmetics.includes(c.id)} equipped={equippedUnitSkins[c.unitType!] === c.id}
+                  <CosmeticRow key={c.id} cosmetic={c} owned={(ownedCosmetics || []).includes(c.id)} equipped={equippedUnitSkins[c.unitType!] === c.id}
                     gems={gems} onBuy={() => buyCosmetic(c.id, c.gemCost)} onEquip={() => equipCosmetic(c.id, 'unitSkin')} onUnequip={() => equipCosmetic(`default_${c.unitType}`, 'unitSkin')} />
                 ))}
               </React.Fragment>
@@ -639,7 +639,7 @@ function CosmeticsTab({ gems, upgrades, petState, buyCosmetic, equipCosmetic, bu
             Banners change the look of captured flags
           </div>
           {COSMETICS.filter(c => c.category === 'banner').map(c => (
-            <CosmeticRow key={c.id} cosmetic={c} owned={ownedCosmetics.includes(c.id)} equipped={equippedBanner === c.id}
+            <CosmeticRow key={c.id} cosmetic={c} owned={(ownedCosmetics || []).includes(c.id)} equipped={equippedBanner === c.id}
               gems={gems} onBuy={() => buyCosmetic(c.id, c.gemCost)} onEquip={() => equipCosmetic(c.id, 'banner')} onUnequip={() => equipCosmetic('default', 'banner')} />
           ))}
         </>
@@ -652,17 +652,17 @@ function CosmeticsTab({ gems, upgrades, petState, buyCosmetic, equipCosmetic, bu
           </div>
           <div style={{ fontSize: '9px', color: '#c084fc', fontWeight: 'bold', padding: '3px 6px', background: 'rgba(138,74,223,0.08)', borderRadius: '3px' }}>BOSS PETS (20% drop per kill)</div>
           {PETS.filter(p => p.source === 'boss').map(p => (
-            <PetRow key={p.id} pet={p} owned={petState.ownedPets.includes(p.id)} equipped={petState.equippedPet === p.id}
+            <PetRow key={p.id} pet={p} owned={(petState.ownedPets || []).includes(p.id)} equipped={petState.equippedPet === p.id}
               gems={gems} onBuy={() => buyPet(p.id, p.gemCost)} onEquip={() => equipPet(p.id)} />
           ))}
           <div style={{ fontSize: '9px', color: '#c084fc', fontWeight: 'bold', padding: '3px 6px', background: 'rgba(138,74,223,0.08)', borderRadius: '3px', marginTop: '4px' }}>STORE PETS</div>
           {PETS.filter(p => p.source === 'store').map(p => (
-            <PetRow key={p.id} pet={p} owned={petState.ownedPets.includes(p.id)} equipped={petState.equippedPet === p.id}
+            <PetRow key={p.id} pet={p} owned={(petState.ownedPets || []).includes(p.id)} equipped={petState.equippedPet === p.id}
               gems={gems} onBuy={() => buyPet(p.id, p.gemCost)} onEquip={() => equipPet(p.id)} />
           ))}
           <div style={{ fontSize: '9px', color: '#c084fc', fontWeight: 'bold', padding: '3px 6px', background: 'rgba(138,74,223,0.08)', borderRadius: '3px', marginTop: '4px' }}>ACHIEVEMENT PETS</div>
           {PETS.filter(p => p.source === 'achievement').map(p => (
-            <PetRow key={p.id} pet={p} owned={petState.ownedPets.includes(p.id)} equipped={petState.equippedPet === p.id}
+            <PetRow key={p.id} pet={p} owned={(petState.ownedPets || []).includes(p.id)} equipped={petState.equippedPet === p.id}
               gems={gems} onBuy={() => buyPet(p.id, p.gemCost)} onEquip={() => equipPet(p.id)} />
           ))}
         </>

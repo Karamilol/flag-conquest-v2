@@ -41,7 +41,7 @@ function getBuildingImage(type: string, active: boolean): HTMLImageElement | nul
 
 // Building draw position offsets (relative to flag group origin at flag.x, GROUND_Y - FLAG_HEIGHT)
 const BLDG_DRAW_OFFSET_X = -50 + BLDG_VB_X * BLDG_SCALE; // -50 - 20.4 = -70.4
-const BLDG_DRAW_OFFSET_Y = (FLAG_HEIGHT - 32 * BLDG_SCALE) + BLDG_VB_Y * BLDG_SCALE; // -48.8 - 51 = -99.8
+const BLDG_DRAW_OFFSET_Y = (FLAG_HEIGHT - 32 * BLDG_SCALE) + BLDG_VB_Y * BLDG_SCALE + 3; // +3 to sit flush on ground
 
 // ── Flags ─────────────────────────────────────────────────────────
 function drawFlag(ctx: CanvasRenderingContext2D, flag: Flag, camX: number, frame: number): void {

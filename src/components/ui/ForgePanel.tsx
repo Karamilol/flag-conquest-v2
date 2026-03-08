@@ -65,7 +65,7 @@ export function ForgePanel({ ancientFragments, ancientRelicsOwned, ancientRelicC
         width: '100%', marginBottom: '10px',
       }}>
         {ANCIENT_RELIC_DEFS.map(relic => {
-          const owned = ancientRelicsOwned.includes(relic.id);
+          const owned = (ancientRelicsOwned || []).includes(relic.id);
           const isNew = justForged === relic.id;
           const copies = ancientRelicCopies[relic.id] || 0;
           const level = getAncientRelicLevel(copies);
