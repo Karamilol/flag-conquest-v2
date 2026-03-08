@@ -48,7 +48,7 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
     const lf2Y = 10 + Math.cos(frame * 0.06 + 1) * 6;
 
     return (
-      <g transform={`translate(${x}, ${y + bobOffset})`}>
+      <g transform={`translate(${x}, ${y + (bodyOnly ? 0 : bobOffset)})`}>
         {(bleedStacks ?? 0) > 0 && (
           <text x={32} y={-55} fontSize="15" textAnchor="middle" fill="#ff0000">
             🩸{(bleedStacks ?? 0) > 1 ? bleedStacks : ''}
@@ -182,7 +182,7 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
     const trailAlpha = 0.15 + Math.sin(frame * 0.1) * 0.05;
 
     return (
-      <g transform={`translate(${x}, ${y + floatY})`}>
+      <g transform={`translate(${x}, ${y + (bodyOnly ? 0 : floatY)})`}>
         {(bleedStacks ?? 0) > 0 && (
           <text x={32} y={-60} fontSize="15" textAnchor="middle" fill="#ff0000">
             🩸{(bleedStacks ?? 0) > 1 ? bleedStacks : ''}
@@ -272,18 +272,20 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
         {/* Damage overlay */}
         {recentlyHit && hitFlash && <rect x={-20} y={-15} width={104} height={105} fill="#ff0000" opacity={0.12} rx={4} />}
 
-        {/* Health bar */}
-        <rect x={-10} y={-35} width={84} height={10} fill={COLORS.healthBg} rx={2} />
-        <rect x={-8} y={-33} width={Math.max(0, (health / maxHealth) * 80)} height={6}
-              fill="#8844cc" rx={1} />
-        <text x={32} y={-39} fill="#bb88ee" fontSize="11" textAnchor="middle" fontWeight="bold">
-          👻 WRAITH KING #{zone !== undefined ? zone + 1 : ''}
-        </text>
-        {showHpNumbers && (
-          <text x={32} y={-47} fontSize="10" textAnchor="middle" fill="#fff" fontWeight="bold">
-            {health}/{maxHealth}
+        {!bodyOnly && <>
+          {/* Health bar */}
+          <rect x={-10} y={-35} width={84} height={10} fill={COLORS.healthBg} rx={2} />
+          <rect x={-8} y={-33} width={Math.max(0, (health / maxHealth) * 80)} height={6}
+                fill="#8844cc" rx={1} />
+          <text x={32} y={-39} fill="#bb88ee" fontSize="11" textAnchor="middle" fontWeight="bold">
+            👻 WRAITH KING #{zone !== undefined ? zone + 1 : ''}
           </text>
-        )}
+          {showHpNumbers && (
+            <text x={32} y={-47} fontSize="10" textAnchor="middle" fill="#fff" fontWeight="bold">
+              {health}/{maxHealth}
+            </text>
+          )}
+        </>}
       </g>
     );
   }
@@ -307,7 +309,7 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
     const paw3Y = 20 + Math.sin(frame * 0.06 + 4.2) * 18;
 
     return (
-      <g transform={`translate(${x}, ${y + bobOffset})`}>
+      <g transform={`translate(${x}, ${y + (bodyOnly ? 0 : bobOffset)})`}>
         {(bleedStacks ?? 0) > 0 && (
           <text x={32} y={-55} fontSize="15" textAnchor="middle" fill="#ff0000">
             {'\u{1FA78}'}{(bleedStacks ?? 0) > 1 ? bleedStacks : ''}
@@ -393,18 +395,20 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
         {/* Damage overlay */}
         {recentlyHit && hitFlash && <rect x={-20} y={-15} width={100} height={100} fill="#ff0000" opacity={0.12} rx={4} />}
 
-        {/* Health bar */}
-        <rect x={-10} y={-30} width={84} height={10} fill={COLORS.healthBg} rx={2} />
-        <rect x={-8} y={-28} width={Math.max(0, (health / maxHealth) * 80)} height={6}
-              fill="#cc4400" rx={1} />
-        <text x={32} y={-34} fill="#ff8844" fontSize="11" textAnchor="middle" fontWeight="bold">
-          {'\u{1F43A}'} BROODMOTHER #{zone !== undefined ? zone + 1 : ''}
-        </text>
-        {showHpNumbers && (
-          <text x={32} y={-42} fontSize="10" textAnchor="middle" fill="#fff" fontWeight="bold">
-            {health}/{maxHealth}
+        {!bodyOnly && <>
+          {/* Health bar */}
+          <rect x={-10} y={-30} width={84} height={10} fill={COLORS.healthBg} rx={2} />
+          <rect x={-8} y={-28} width={Math.max(0, (health / maxHealth) * 80)} height={6}
+                fill="#cc4400" rx={1} />
+          <text x={32} y={-34} fill="#ff8844" fontSize="11" textAnchor="middle" fontWeight="bold">
+            {'\u{1F43A}'} BROODMOTHER #{zone !== undefined ? zone + 1 : ''}
           </text>
-        )}
+          {showHpNumbers && (
+            <text x={32} y={-42} fontSize="10" textAnchor="middle" fill="#fff" fontWeight="bold">
+              {health}/{maxHealth}
+            </text>
+          )}
+        </>}
       </g>
     );
   }
@@ -419,7 +423,7 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
     const crownGem = '#44ff44';
 
     return (
-      <g transform={`translate(${x}, ${y + floatOffset}) scale(2)`}>
+      <g transform={`translate(${x}, ${y + (bodyOnly ? 0 : floatOffset)}) scale(2)`}>
         {(bleedStacks ?? 0) > 0 && (
           <text x={15} y={-32} fontSize="8" textAnchor="middle" fill="#ff0000">
             {'\u{1FA78}'}{(bleedStacks ?? 0) > 1 ? bleedStacks : ''}
@@ -492,17 +496,19 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
           <circle cx={15} cy={20} r={20 + Math.sin(frame * 0.4) * 3} fill="#44ff44" opacity={0.12} />
         )}
 
-        {/* Health bar */}
-        <rect x={-2} y={-16} width={34} height={4} fill="#333" rx={1} />
-        <rect x={-2} y={-16} width={34 * Math.max(0, health / maxHealth)} height={4} fill="#44cc44" rx={1} />
-        <text x={15} y={-19} fill="#44ff44" fontSize="5" textAnchor="middle" fontWeight="bold">
-          {'\u{1F451}'} DUNGEON LICH
-        </text>
-        {showHpNumbers && (
-          <text x={15} y={-23} fontSize="5" textAnchor="middle" fill="#fff" fontWeight="bold">
-            {health}/{maxHealth}
+        {!bodyOnly && <>
+          {/* Health bar */}
+          <rect x={-2} y={-16} width={34} height={4} fill="#333" rx={1} />
+          <rect x={-2} y={-16} width={34 * Math.max(0, health / maxHealth)} height={4} fill="#44cc44" rx={1} />
+          <text x={15} y={-19} fill="#44ff44" fontSize="5" textAnchor="middle" fontWeight="bold">
+            {'\u{1F451}'} DUNGEON LICH
           </text>
-        )}
+          {showHpNumbers && (
+            <text x={15} y={-23} fontSize="5" textAnchor="middle" fill="#fff" fontWeight="bold">
+              {health}/{maxHealth}
+            </text>
+          )}
+        </>}
       </g>
     );
   }
@@ -595,17 +601,19 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
         {/* Damage overlay */}
         {recentlyHit && hitFlash && <rect x={-5} y={10} width={60} height={78} fill="#ff0000" opacity={0.12} rx={4} />}
 
-        {/* Health bar */}
-        <rect x={-5} y={-5} width={60} height={8} fill={COLORS.healthBg} rx={2} />
-        <rect x={-3} y={-3} width={Math.max(0, (health / maxHealth) * 56)} height={4} fill="#44ddff" rx={1} />
-        <text x={25} y={-9} fill="#44ddff" fontSize="9" textAnchor="middle" fontWeight="bold">
-          ❄️ ICE CONJURER #{zone !== undefined ? zone + 1 : ''}
-        </text>
-        {showHpNumbers && (
-          <text x={25} y={-17} fontSize="8" textAnchor="middle" fill="#fff" fontWeight="bold">
-            {health}/{maxHealth}
+        {!bodyOnly && <>
+          {/* Health bar */}
+          <rect x={-5} y={-5} width={60} height={8} fill={COLORS.healthBg} rx={2} />
+          <rect x={-3} y={-3} width={Math.max(0, (health / maxHealth) * 56)} height={4} fill="#44ddff" rx={1} />
+          <text x={25} y={-9} fill="#44ddff" fontSize="9" textAnchor="middle" fontWeight="bold">
+            ❄️ ICE CONJURER #{zone !== undefined ? zone + 1 : ''}
           </text>
-        )}
+          {showHpNumbers && (
+            <text x={25} y={-17} fontSize="8" textAnchor="middle" fill="#fff" fontWeight="bold">
+              {health}/{maxHealth}
+            </text>
+          )}
+        </>}
       </g>
     );
   }
@@ -623,7 +631,7 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
     const sway = Math.sin(frame * 0.06) * 1;
 
     return (
-      <g transform={`translate(${x - 25}, ${y - 12 + bobOffset})`}>
+      <g transform={`translate(${x - 25}, ${y - 12 + (bodyOnly ? 0 : bobOffset)})`}>
         {/* Shadow */}
         <ellipse cx={25} cy={88} rx={18} ry={4} fill="#000" opacity={0.15} />
 
@@ -678,17 +686,19 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
         {/* Damage flash */}
         {recentlyHit && hitFlash && <rect x={-2} y={15} width={54} height={72} fill="#ff0000" opacity={0.12} rx={4} />}
 
-        {/* Health bar */}
-        <rect x={-5} y={-5} width={60} height={8} fill={COLORS.healthBg} rx={2} />
-        <rect x={-3} y={-3} width={Math.max(0, (health / maxHealth) * 56)} height={4} fill="#eeeeee" rx={1} />
-        <text x={25} y={-9} fill="#eee" fontSize="9" textAnchor="middle" fontWeight="bold">
-          🥷 SNOW NINJA #{zone !== undefined ? zone + 1 : ''}
-        </text>
-        {showHpNumbers && (
-          <text x={25} y={-17} fontSize="8" textAnchor="middle" fill="#fff" fontWeight="bold">
-            {health}/{maxHealth}
+        {!bodyOnly && <>
+          {/* Health bar */}
+          <rect x={-5} y={-5} width={60} height={8} fill={COLORS.healthBg} rx={2} />
+          <rect x={-3} y={-3} width={Math.max(0, (health / maxHealth) * 56)} height={4} fill="#eeeeee" rx={1} />
+          <text x={25} y={-9} fill="#eee" fontSize="9" textAnchor="middle" fontWeight="bold">
+            🥷 SNOW NINJA #{zone !== undefined ? zone + 1 : ''}
           </text>
-        )}
+          {showHpNumbers && (
+            <text x={25} y={-17} fontSize="8" textAnchor="middle" fill="#fff" fontWeight="bold">
+              {health}/{maxHealth}
+            </text>
+          )}
+        </>}
       </g>
     );
   }
@@ -710,7 +720,7 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
     const pullGlow = isPulling ? 0.3 + Math.sin(frame * 0.4) * 0.15 : 0;
 
     return (
-      <g transform={`translate(${x - 25}, ${y - 16 + bobOffset})`}>
+      <g transform={`translate(${x - 25}, ${y - 16 + (bodyOnly ? 0 : bobOffset)})`}>
         {(bleedStacks ?? 0) > 0 && (
           <text x={25} y={-60} fontSize="15" textAnchor="middle" fill="#ff0000">
             {'\u{1FA78}'}{(bleedStacks ?? 0) > 1 ? bleedStacks : ''}
@@ -816,17 +826,19 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
         {/* Damage overlay */}
         {recentlyHit && hitFlash && <rect x={-5} y={0} width={60} height={95} fill="#ff0000" opacity={0.12} rx={4} />}
 
-        {/* Health bar */}
-        <rect x={-5} y={-15} width={60} height={8} fill={COLORS.healthBg} rx={2} />
-        <rect x={-3} y={-13} width={Math.max(0, (health / maxHealth) * 56)} height={4} fill={fireColor} rx={1} />
-        <text x={25} y={-19} fill="#ff4400" fontSize="9" textAnchor="middle" fontWeight="bold">
-          🔥 INFERNAL GENERAL #{zone !== undefined ? zone + 1 : ''}
-        </text>
-        {showHpNumbers && (
-          <text x={25} y={-27} fontSize="8" textAnchor="middle" fill="#fff" fontWeight="bold">
-            {health}/{maxHealth}
+        {!bodyOnly && <>
+          {/* Health bar */}
+          <rect x={-5} y={-15} width={60} height={8} fill={COLORS.healthBg} rx={2} />
+          <rect x={-3} y={-13} width={Math.max(0, (health / maxHealth) * 56)} height={4} fill={fireColor} rx={1} />
+          <text x={25} y={-19} fill="#ff4400" fontSize="9" textAnchor="middle" fontWeight="bold">
+            🔥 INFERNAL GENERAL #{zone !== undefined ? zone + 1 : ''}
           </text>
-        )}
+          {showHpNumbers && (
+            <text x={25} y={-27} fontSize="8" textAnchor="middle" fill="#fff" fontWeight="bold">
+              {health}/{maxHealth}
+            </text>
+          )}
+        </>}
       </g>
     );
   }
@@ -853,7 +865,7 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
   const leaf3Y = 5 + Math.cos(frame * 0.08 + 3) * 6;
 
   return (
-    <g transform={`translate(${x}, ${y + bobOffset})`}>
+    <g transform={`translate(${x}, ${y + (bodyOnly ? 0 : bobOffset)})`}>
       {(bleedStacks ?? 0) > 0 && (
         <text x={32} y={-45} fontSize="15" textAnchor="middle" fill="#ff0000">
           🩸{(bleedStacks ?? 0) > 1 ? bleedStacks : ''}
@@ -953,18 +965,20 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
       {/* Damage overlay */}
       {recentlyHit && hitFlash && <rect x={-30} y={-25} width={124} height={100} fill="#ff0000" opacity={0.12} rx={4} />}
 
-      {/* Health bar */}
-      <rect x={-10} y={-30} width={84} height={10} fill={COLORS.healthBg} rx={2} />
-      <rect x={-8} y={-28} width={Math.max(0, (health / maxHealth) * 80)} height={6}
-            fill="#44aa22" rx={1} />
-      <text x={32} y={-34} fill="#88dd44" fontSize="11" textAnchor="middle" fontWeight="bold">
-        🌳 FOREST GUARDIAN #{zone !== undefined ? zone + 1 : ''}
-      </text>
-      {showHpNumbers && (
-        <text x={32} y={-42} fontSize="10" textAnchor="middle" fill="#fff" fontWeight="bold">
-          {health}/{maxHealth}
+      {!bodyOnly && <>
+        {/* Health bar */}
+        <rect x={-10} y={-30} width={84} height={10} fill={COLORS.healthBg} rx={2} />
+        <rect x={-8} y={-28} width={Math.max(0, (health / maxHealth) * 80)} height={6}
+              fill="#44aa22" rx={1} />
+        <text x={32} y={-34} fill="#88dd44" fontSize="11" textAnchor="middle" fontWeight="bold">
+          🌳 FOREST GUARDIAN #{zone !== undefined ? zone + 1 : ''}
         </text>
-      )}
+        {showHpNumbers && (
+          <text x={32} y={-42} fontSize="10" textAnchor="middle" fill="#fff" fontWeight="bold">
+            {health}/{maxHealth}
+          </text>
+        )}
+      </>}
     </g>
   );
 }

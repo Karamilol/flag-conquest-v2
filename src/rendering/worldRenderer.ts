@@ -1,11 +1,34 @@
 import type { GameState, Flag, Chest, Banner, Barricade, IceWall, Boss } from '../types';
 import { GROUND_Y, VIEWPORT_W, VIEWPORT_H, GAME_HEIGHT, FLAG_HEIGHT, COLORS } from '../constants';
 import {
+  initBossSpriteCache, BOSS_VB, BOSS_IDLE_FRAME_COUNT,
+} from '../components/sprites/bossSpriteCache';
+import {
   buildingSVG, BLDG_VB_X, BLDG_VB_Y, BLDG_VB_W, BLDG_VB_H,
   BLDG_SCALE, BLDG_IMG_W, BLDG_IMG_H,
 } from './flagSVG';
 
 const WORLD_Y_OFFSET = VIEWPORT_H - GAME_HEIGHT; // same offset as canvasRenderer
+
+// ── Boss sprite image cache (blob URL → HTMLImageElement) ────────
+const bossImageCache = new Map<string, HTMLImageElement>();
+const bossPendingLoads = new Set<string>();
+
+function getBossImage(url: string): HTMLImageElement | null {
+  if (!url) return null;
+  const cached = bossImageCache.get(url);
+  if (cached) return cached;
+  if (bossPendingLoads.has(url)) return null;
+
+  bossPendingLoads.add(url);
+  const img = new Image();
+  img.onload = () => { bossImageCache.set(url, img); bossPendingLoads.delete(url); };
+  img.onerror = () => bossPendingLoads.delete(url);
+  img.src = url;
+  return null;
+}
+
+const BOSS_IDLE_TICKS_PER_FRAME = 12;
 
 // ── Building sprite cache ────────────────────────────────────────
 // Key: "type:active" → cached HTMLImageElement
@@ -1092,100 +1115,94 @@ function drawIceWall(ctx: CanvasRenderingContext2D, wall: IceWall, camX: number,
 }
 
 // ── Boss ──────────────────────────────────────────────────────────
+// ── Boss names per type (for HP bar label) ──
+const BOSS_NAMES = [
+  'FOREST GUARDIAN', 'WILD HUNTSMAN', 'WRAITH KING', 'BROODMOTHER',
+  'DUNGEON LICH', 'ICE CONJURER', 'SNOW NINJA', 'INFERNAL GENERAL',
+];
+const BOSS_HP_COLORS = [
+  '#44aa22', '#44aa22', '#8844cc', '#cc4400',
+  '#44cc44', '#44ddff', '#eeeeee', '#ff4400',
+];
+
 function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, camX: number, frame: number): void {
-  const sx = boss.x - camX;
-  const sy = boss.y + WORLD_Y_OFFSET;
-  const size = 40;
-  const hpFrac = boss.health / boss.maxHealth;
-  const bobY = Math.sin(frame * 0.04) * 2;
+  const bt = boss.bossType ?? 0;
+  const cache = initBossSpriteCache(bt);
+  const vb = BOSS_VB[bt] ?? BOSS_VB[0];
 
-  // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.beginPath();
-  ctx.ellipse(sx + size / 2, sy + 4, size / 2, 4, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Body
-  const bodyColor = boss.bossType === 0 ? '#4a2a1a' : '#2a1a4a';
-  ctx.fillStyle = bodyColor;
-  ctx.fillRect(sx + 4, sy - size + bobY + 8, size - 8, size - 8);
-
-  // Head
-  ctx.fillStyle = boss.bossType === 0 ? '#5a3a2a' : '#3a2a5a';
-  ctx.beginPath();
-  ctx.arc(sx + size / 2, sy - size + bobY + 6, 10, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Eyes (red, glowing)
-  const eyeGlow = 0.7 + Math.sin(frame * 0.1) * 0.3;
-  ctx.fillStyle = `rgba(255,50,50,${eyeGlow})`;
-  ctx.fillRect(sx + 14, sy - size + bobY + 3, 3, 3);
-  ctx.fillRect(sx + 23, sy - size + bobY + 3, 3, 3);
-
-  // Crown/horns
-  if (boss.bossType === 0) {
-    // Shooter boss — horns
-    ctx.fillStyle = '#8B6914';
-    ctx.beginPath();
-    ctx.moveTo(sx + 10, sy - size + bobY - 2);
-    ctx.lineTo(sx + 14, sy - size + bobY + 6);
-    ctx.lineTo(sx + 8, sy - size + bobY + 6);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(sx + 30, sy - size + bobY - 2);
-    ctx.lineTo(sx + 26, sy - size + bobY + 6);
-    ctx.lineTo(sx + 32, sy - size + bobY + 6);
-    ctx.fill();
-  } else {
-    // Laser mage — wizard hat
-    ctx.fillStyle = '#4a2a6a';
-    ctx.beginPath();
-    ctx.moveTo(sx + size / 2, sy - size + bobY - 12);
-    ctx.lineTo(sx + size / 2 + 10, sy - size + bobY + 2);
-    ctx.lineTo(sx + size / 2 - 10, sy - size + bobY + 2);
-    ctx.closePath();
-    ctx.fill();
-    // Hat star
-    ctx.fillStyle = '#ffd700';
-    ctx.font = '6px sans-serif';
-    ctx.fillText('★', sx + size / 2 - 3, sy - size + bobY - 3);
-  }
-
-  // Attack indicator
+  // Select frame (idle vs attack)
+  let spriteUrl: string;
+  const offset = Math.floor(Math.abs(boss.x) * 3);
   if (boss.isAttacking) {
-    ctx.strokeStyle = '#ff4444';
-    ctx.lineWidth = 2;
-    ctx.globalAlpha = 0.6 + Math.sin(frame * 0.3) * 0.3;
-    ctx.beginPath();
-    ctx.arc(sx + size / 2, sy - size / 2 + bobY, size / 2 + 4, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
+    // Attack frames cycle fast (every 4 ticks) for snappy wind-up/strike
+    const idx = Math.floor((frame + offset) / 4) % BOSS_IDLE_FRAME_COUNT;
+    spriteUrl = cache.attack[idx];
+  } else {
+    const idx = Math.floor((frame + offset) / BOSS_IDLE_TICKS_PER_FRAME) % BOSS_IDLE_FRAME_COUNT;
+    spriteUrl = cache.idle[idx];
   }
 
-  // Laser warning
+  const img = getBossImage(spriteUrl);
+  if (!img) return;
+
+  // Boss types 0-3 use translate(x, y+bob), type 4 uses scale(2),
+  // types 5-7 use translate(x-25, y-12/-16+bob)
+  const dx = boss.x - camX;
+  // Apply bob/float animation at draw time (not baked into cached frames)
+  const bobRate = (bt === 2 || bt === 4) ? 0.08 : 0.1;
+  const bobAmp = (bt === 2) ? 4 : (bt === 4) ? 3 : 3;
+  const bobY = Math.sin(frame * bobRate) * bobAmp;
+  const dy = boss.y + WORLD_Y_OFFSET + bobY;
+
+  // Scale: type 4 is 2x, all others 1x
+  const scale = bt === 4 ? 2 : 1;
+
+  // Draw the sprite
+  const sx = dx + vb.x * scale;
+  const sy = dy + vb.y * scale;
+  const sw = vb.w * scale;
+  const sh = vb.h * scale;
+  ctx.drawImage(img, sx, sy, sw, sh);
+
+  // Hit flash overlay
+  const timeSinceHit = frame - (boss.lastDamageTime || 0);
+  const recentlyHit = (boss.lastDamageTime || 0) > 0 && timeSinceHit >= 0 && timeSinceHit < 10;
+  if (recentlyHit) {
+    ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
+    ctx.fillRect(sx, sy, sw, sh);
+  }
+
+  // Laser warning (drawn on Canvas, not cached)
   if (boss.laserWarning > 0) {
     const warningAlpha = 0.3 + Math.sin(frame * 0.4) * 0.2;
     ctx.fillStyle = `rgba(255,100,255,${warningAlpha})`;
-    ctx.fillRect(sx - 200, sy - size / 2 + bobY - 2, 600, 4);
+    ctx.fillRect(dx - 200, dy - 2, 600, 4);
   }
 
   // HP bar (wide, above boss)
+  const hpFrac = Math.max(0, boss.health / boss.maxHealth);
   const barW = 50;
-  const barX = sx + size / 2 - barW / 2;
-  const barY = sy - size + bobY - 16;
+  const barX = dx + (vb.w * scale) / 2 + vb.x * scale - barW / 2;
+  const barY = sy - 14;
+
   ctx.fillStyle = '#333';
-  ctx.fillRect(barX, barY, barW, 4);
-  ctx.fillStyle = hpFrac > 0.5 ? '#cc2222' : hpFrac > 0.25 ? '#cc6622' : '#ffcc00';
-  ctx.fillRect(barX, barY, barW * hpFrac, 4);
+  ctx.fillRect(barX, barY, barW, 5);
+  ctx.fillStyle = BOSS_HP_COLORS[bt] || '#cc2222';
+  ctx.fillRect(barX + 0.5, barY + 0.5, Math.max(0, (barW - 1) * hpFrac), 4);
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 0.5;
-  ctx.strokeRect(barX, barY, barW, 4);
+  ctx.strokeRect(barX, barY, barW, 5);
+
+  // HP numbers
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 8px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${boss.health}/${boss.maxHealth}`, barX + barW / 2, barY - 2);
 
   // Boss name
-  ctx.fillStyle = '#ff8888';
+  ctx.fillStyle = BOSS_HP_COLORS[bt] || '#ff8888';
   ctx.font = 'bold 7px "Press Start 2P", monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText(boss.bossType === 0 ? 'WARLORD' : 'HUNTSMAN', sx + size / 2, barY - 3);
+  ctx.fillText(BOSS_NAMES[bt] || 'BOSS', barX + barW / 2, barY - 11);
   ctx.textAlign = 'left';
 }
 

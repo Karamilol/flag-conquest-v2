@@ -386,7 +386,7 @@ function filterPool(pool: PoolEntry[], filter?: RegaliaUnlockFilter): PoolEntry[
 export function buildUnlockFilter(upgrades: { unlockedUnits: string[]; disabledUnits?: string[]; [key: string]: unknown }): RegaliaUnlockFilter {
   const disabled = (upgrades.disabledUnits as string[]) || [];
   return {
-    unlockedUnits: (upgrades.unlockedUnits as string[]).filter(u => !disabled.includes(u)),
+    unlockedUnits: ((upgrades.unlockedUnits as string[]) || []).filter(u => !disabled.includes(u)),
     incomeTiers: {
       incomeTier2: (upgrades.incomeTier2 as number) || 0,
       incomeTier3: (upgrades.incomeTier3 as number) || 0,
