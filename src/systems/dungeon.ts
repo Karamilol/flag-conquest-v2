@@ -24,13 +24,17 @@ export function processDungeonWaveTimer(ts: TickState): void {
                 ts.enemyDungeonRats.length + ts.enemyFireImps.length + ts.enemyCursedKnights.length;
   ts.dungeonEnemiesAlive = alive;
 
-  // Wave cleared: award medals = wave number + quick clear bonus
+  // Wave cleared: award medals = wave number + elite bonus + quick clear bonus
+  // Track per-wave medal award to handle overlapping waves correctly
   if (alive === 0 && ts.dungeonWave > 0 && !ts.dungeonBonusMedalAwarded) {
-    const baseMedals = ts.dungeonWave;
+    const isEliteWave = ts.dungeonWave % ELITE_WAVE_FREQUENCY === 0;
+    const eliteBountyLevel = ts.dungeonMetaUpgrades?.eliteBounty || 0;
+    const baseMedals = ts.dungeonWave + (isEliteWave ? eliteBountyLevel : 0);
     ts.dungeonMedals += baseMedals;
     ts.dungeonBonusMedalAwarded = true;
+    const eliteText = isEliteWave && eliteBountyLevel > 0 ? ` (+${eliteBountyLevel} ELITE)` : '';
     ts.particles.push(makeParticle(ts.dungeonArenaRightX - 200, GROUND_Y - 80,
-      `+${baseMedals} MEDALS (WAVE ${ts.dungeonWave} CLEARED!)`, '#ffd700'));
+      `+${baseMedals} MEDALS (WAVE ${ts.dungeonWave} CLEARED!)${eliteText}`, '#ffd700'));
 
     // Quick clear bonus: extra medals if cleared fast
     const currentInterval = Math.max(WAVE_INTERVAL_MIN, WAVE_INTERVAL_BASE - ts.dungeonWave * WAVE_SPEEDUP);
@@ -46,6 +50,17 @@ export function processDungeonWaveTimer(ts: TickState): void {
   const waveInterval = Math.max(WAVE_INTERVAL_MIN, WAVE_INTERVAL_BASE - ts.dungeonWave * WAVE_SPEEDUP);
   const waveThreshold = ts.dungeonWave === 0 ? FIRST_WAVE_DELAY : waveInterval;
   if (ts.dungeonWaveTimer < waveThreshold) return;
+
+  // Award medals for current wave if not yet awarded (handles overlapping waves —
+  // wave timer expired before all enemies cleared, so force-award now before spawning next)
+  if (ts.dungeonWave > 0 && !ts.dungeonBonusMedalAwarded) {
+    const isEliteWave = ts.dungeonWave % ELITE_WAVE_FREQUENCY === 0;
+    const eliteBountyLevel = ts.dungeonMetaUpgrades?.eliteBounty || 0;
+    const baseMedals = Math.max(1, Math.floor(ts.dungeonWave * 0.5)) + (isEliteWave ? eliteBountyLevel : 0);
+    ts.dungeonMedals += baseMedals;
+    ts.particles.push(makeParticle(ts.dungeonArenaRightX - 200, GROUND_Y - 80,
+      `+${baseMedals} MEDALS (WAVE ${ts.dungeonWave} PARTIAL)`, '#cc8800'));
+  }
 
   // Spawn next wave
   ts.dungeonWaveTimer = 0;
@@ -64,7 +79,7 @@ export function processDungeonWaveTimer(ts: TickState): void {
   const enemyCount = isElite ? 8 + ts.dungeonWave : 4 + Math.floor(ts.dungeonWave * 0.5);
 
   for (let i = 0; i < enemyCount; i++) {
-    const xOffset = i * 25;
+    const xOffset = i * 15; // stagger spawn behind spawn point (enemies walk left)
     const roll = Math.random();
 
     if (zone >= 2 && roll < 0.08) {

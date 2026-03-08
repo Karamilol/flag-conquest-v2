@@ -40,7 +40,7 @@ export const ELITE_VARIANTS: EliteVariant[] = [
   { id: 'colossus',      name: 'COLOSSUS',       enemyType: 'sentinel',  unlockBosses: 7, isDungeon: false, hpMult: 7,   dmgMult: 1.5, defBonus: 5, spdMult: 0.5, glowColor: '#aaaaaa', scale: 1.8 },
   // ── Dungeon (3) ──
   { id: 'plagueKing',    name: 'PLAGUE KING',    enemyType: 'dungeonRat',    unlockBosses: 0, isDungeon: true, hpMult: 5,  dmgMult: 2,   defBonus: 1, spdMult: 1.3, glowColor: '#88aa00', scale: 1.6 },
-  { id: 'magmaLord',     name: 'MAGMA LORD',     enemyType: 'fireImp',       unlockBosses: 0, isDungeon: true, hpMult: 5,  dmgMult: 2.5, defBonus: 2, spdMult: 0.5, glowColor: '#ff4400', scale: 1.6 },
+  { id: 'magmaLord',     name: 'MAGMA LORD',     enemyType: 'fireImp',       unlockBosses: 0, isDungeon: true, hpMult: 5,  dmgMult: 1.8, defBonus: 2, spdMult: 0.5, glowColor: '#ff4400', scale: 1.6 },
   { id: 'deathKnight',   name: 'DEATH KNIGHT',   enemyType: 'cursedKnight',  unlockBosses: 0, isDungeon: true, hpMult: 6,  dmgMult: 2,   defBonus: 4, spdMult: 0.7, glowColor: '#6622aa', scale: 1.6 },
 ];
 

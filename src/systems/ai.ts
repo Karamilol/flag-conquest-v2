@@ -1530,8 +1530,19 @@ export function processAllyAI(ts: TickState): void {
         const target = clericTarget as any;
         ts.projectiles.push({ id: uid(), x: a.x + 15, y: a.y + (a.lane || 0) + 8, targetX: target.x, speed: -10, damage: clericDmg, type: 'clericBolt', crit: clericCrit });
       } else if (!clericTarget) {
-        const nextFlag = flags.find(f => !f.captured && f.x > a.x);
-        if (nextFlag) a.x += a.speed;
+        // Dungeon: follow dungeonAllyMode; Normal: advance to next flag
+        if (ts.inDungeon && ts.dungeonType !== 'timed') {
+          if (ts.dungeonAllyMode === 'advance') a.x += a.speed;
+          else if (ts.dungeonAllyMode === 'retreat' && a.x > ts.dungeonArenaLeftX + 90) a.x -= a.speed;
+        } else {
+          const nextFlag = flags.find(f => !f.captured && f.x > a.x);
+          if (nextFlag) a.x += a.speed;
+        }
+      }
+      // Wave dungeon wall clamp
+      if (ts.inDungeon && ts.dungeonType !== 'timed') {
+        const wallX = ts.dungeonArenaSpawnX - 1;
+        if (a.x > wallX) a.x = wallX;
       }
       a.speed = baseSpeed; a.damage = baseDamage; a.attackRate = baseAttackRate;
       continue;
@@ -1584,6 +1595,11 @@ export function processAllyAI(ts: TickState): void {
           const nextFlag = flags.find(f => !f.captured && f.x > a.x);
           if (nextFlag) a.x += a.speed;
         }
+      }
+      // Wave dungeon wall clamp
+      if (ts.inDungeon && ts.dungeonType !== 'timed') {
+        const wallX = ts.dungeonArenaSpawnX - 1;
+        if (a.x > wallX) a.x = wallX;
       }
 
       a.speed = baseSpeed; a.damage = baseDamage; a.attackRate = baseAttackRate;
@@ -1670,6 +1686,11 @@ export function processAllyAI(ts: TickState): void {
           const nextFlag = flags.find(f => !f.captured && f.x > a.x);
           if (nextFlag) a.x += a.speed;
         }
+      }
+      // Wave dungeon wall clamp
+      if (ts.inDungeon && ts.dungeonType !== 'timed') {
+        const wallX = ts.dungeonArenaSpawnX - 1;
+        if (a.x > wallX) a.x = wallX;
       }
 
       a.speed = baseSpeed; a.damage = baseDamage; a.attackRate = baseAttackRate;

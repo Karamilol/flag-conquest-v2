@@ -131,6 +131,7 @@ export default function App() {
   const [dungeonPityCounter, setDungeonPityCounter] = useState(saved?.dungeonPityCounter || 0);
   const [dungeonMetaUpgrades, setDungeonMetaUpgrades] = useState(saved?.dungeonMetaUpgrades || { headStart: 0, efficientMining: 0, eliteBounty: 0 });
   const [dungeonsEntered, setDungeonsEntered] = useState(saved?.dungeonsEntered || 0);
+  const [redeemedCodes, setRedeemedCodes] = useState<string[]>(saved?.redeemedCodes || []);
 
   // === UI state ===
   const [gameScreen, setGameScreen] = useState<GameScreen>(savedRun?.gameScreen === 'playing' ? 'playing' : 'menu');
@@ -469,6 +470,8 @@ export default function App() {
 
   // === Settings state ===
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [redeemInput, setRedeemInput] = useState('');
+  const [redeemMsg, setRedeemMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
   // === Shop state ===
   const [shopTab, setShopTab] = useState('units');
@@ -899,7 +902,7 @@ export default function App() {
       achievementProgress, ancientRelicsOwned, ancientRelicCopies, ancientFragments,
       backpack, challengeCompletions, regaliaState, petState,
       dungeonUnlocked, dungeonPityCounter, dungeonMetaUpgrades, dungeonsEntered,
-      dailyLoginDay, lastDailyClaimDate, musicClicks,
+      dailyLoginDay, lastDailyClaimDate, musicClicks, redeemedCodes,
     };
     try { localStorage.setItem('flag-conquest-save', JSON.stringify(saveData)); } catch {}
 
@@ -957,7 +960,7 @@ export default function App() {
       totalPlayTime, achievementProgress, ancientRelicsOwned, ancientRelicCopies,
       ancientFragments, backpack, challengeCompletions, regaliaState, petState,
       dungeonUnlocked, dungeonPityCounter, dungeonMetaUpgrades, dungeonsEntered,
-      dailyLoginDay, lastDailyClaimDate, musicClicks,
+      dailyLoginDay, lastDailyClaimDate, musicClicks, redeemedCodes,
     };
     try {
       localStorage.setItem('flag-conquest-save', JSON.stringify(saveData));
@@ -971,7 +974,7 @@ export default function App() {
       ancientRelicsOwned, ancientRelicCopies, ancientFragments, backpack,
       challengeCompletions, regaliaState, petState, dungeonUnlocked,
       dungeonPityCounter, dungeonMetaUpgrades, dungeonsEntered,
-      dailyLoginDay, lastDailyClaimDate, musicClicks]);
+      dailyLoginDay, lastDailyClaimDate, musicClicks, redeemedCodes]);
 
   // =============================================
   // SCREEN ROUTING
@@ -1875,6 +1878,60 @@ export default function App() {
                   fontSize: 10, marginTop: 6,
                 }}>
                   {cloudSaveMessage}
+                </div>
+              )}
+            </div>
+
+            {/* Redeem Code */}
+            <div style={{ borderTop: '1px solid rgba(138,74,223,0.25)', paddingTop: 16, marginBottom: 16 }}>
+              <div style={{ color: COLORS.gold, fontSize: 12, marginBottom: 8 }}>REDEEM CODE</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="text"
+                  value={redeemInput}
+                  onChange={e => { setRedeemInput(e.target.value); setRedeemMsg(null); }}
+                  placeholder="Enter code..."
+                  style={{
+                    flex: 1, padding: 8, fontSize: 12, fontFamily: F,
+                    background: 'rgba(20,15,30,0.85)', color: '#ccc',
+                    border: '2px solid #6a4a9a', borderRadius: 4,
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    const code = redeemInput.trim().toLowerCase();
+                    if (!code) return;
+                    if (redeemedCodes.includes(code)) {
+                      setRedeemMsg({ text: 'Code already redeemed!', ok: false });
+                      return;
+                    }
+                    // --- Code definitions ---
+                    const CODES: Record<string, { desc: string; apply: () => void }> = {
+                      thanks: {
+                        desc: '+50 Reroll Vouchers',
+                        apply: () => setBackpack(prev => ({ ...prev, rerollVoucher: Math.min(99, prev.rerollVoucher + 50) })),
+                      },
+                    };
+                    const entry = CODES[code];
+                    if (!entry) {
+                      setRedeemMsg({ text: 'Invalid code.', ok: false });
+                      return;
+                    }
+                    entry.apply();
+                    setRedeemedCodes(prev => [...prev, code]);
+                    setRedeemInput('');
+                    setRedeemMsg({ text: `Redeemed! ${entry.desc}`, ok: true });
+                  }}
+                  style={{
+                    padding: '8px 16px', fontSize: 11, fontFamily: F,
+                    background: 'rgba(74,159,255,0.15)', color: COLORS.heroBlue,
+                    border: '2px solid rgba(74,159,255,0.4)', borderRadius: 4, cursor: 'pointer',
+                  }}
+                >REDEEM</button>
+              </div>
+              {redeemMsg && (
+                <div style={{ color: redeemMsg.ok ? '#66cc66' : '#ff6666', fontSize: 10, marginTop: 6 }}>
+                  {redeemMsg.text}
                 </div>
               )}
             </div>
