@@ -586,6 +586,15 @@ export default function GameView({
                     const bossType = z % 7;
                     g.boss = { x: bossFlag.x, y: GROUND_Y - 70, health: hp, maxHealth: hp, damage: dmg, speed: 0, attackRate: 120, attackRange: 120, zone: z, bossType, frame: 0, attackCooldown: 60, isAttacking: false, laserWarning: 0 } as any;
                   }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: game?.boss ? 'rgba(255,60,60,0.3)' : 'rgba(20,15,30,0.85)', color: game?.boss ? '#ff8888' : '#ccc', border: `1px solid ${game?.boss ? '#ff4444' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>{game?.boss ? 'Boss Active' : 'Spawn Boss'}</button>
+                  <button onClick={() => {
+                    const g = gameRef.current; if (!g) return;
+                    const z = g.currentZone;
+                    const baseHp = Math.floor((50 + z * 40) * Math.pow(1.35, z * Math.pow(0.975, z)));
+                    const baseDmg = Math.floor(8 * Math.pow(1.3, z * Math.pow(0.975, z)));
+                    for (let i = 0; i < 100; i++) {
+                      g.enemies.push({ id: Date.now() + i, x: g.hero.x + 30 + Math.random() * 100, y: GROUND_Y, health: baseHp, maxHealth: baseHp, damage: baseDmg, speed: 0.3 + Math.random() * 0.3, attackRate: 90, attackRange: 40, attackCooldown: Math.floor(Math.random() * 60), frame: 0, isAttacking: false } as any);
+                    }
+                  }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: 'rgba(20,15,30,0.85)', color: '#ff8844', border: '1px solid rgba(255,120,60,0.4)', borderRadius: 3, cursor: 'pointer' }}>+100 Mobs</button>
                 </div>
                 {/* Zone warp row */}
                 {devWarpZone && (

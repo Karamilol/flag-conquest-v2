@@ -8,6 +8,7 @@ import { COLORS, VIEWPORT_W, VIEWPORT_H, GAME_HEIGHT, GROUND_Y, UNIT_STATS, DISP
 import { drawEnvironment } from './rendering/environment';
 import { drawWorldObjects } from './rendering/worldRenderer';
 import { TileCache } from './rendering/tileRenderer';
+import { perf } from './utils/perfProfiler';
 import { initGoblinSpriteCache, IDLE_FRAME_COUNT as GOBLIN_IDLE_FRAMES } from './components/sprites/goblinSpriteCache';
 import { initHeroSpriteCache, HERO_IDLE_FRAME_COUNT } from './components/sprites/heroSpriteCache';
 import {
@@ -924,6 +925,7 @@ export function drawEntities(
   killParticles: boolean = true,
   tileCache?: TileCache,
 ): void {
+  perf.begin('render');
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.save();
   // Derive scale from buffer size — fixed at mount, immune to browser zoom changes
@@ -934,12 +936,16 @@ export function drawEntities(
   ctx.imageSmoothingEnabled = false;
 
   // --- Environment (sky, mountains, treeline, ground) ---
+  perf.begin('render.environment');
   if (tileCache) {
     drawEnvironment(ctx, camX, frame, game.currentZone, game.inDungeon || false, (game as any).dungeonType, tileCache);
   }
+  perf.end('render.environment');
 
   // --- World objects (flags, chests, boss, barricades, portals) ---
+  perf.begin('render.worldObjects');
   drawWorldObjects(ctx, game, camX, frame);
+  perf.end('render.worldObjects');
 
   // Detect deaths and spawn explosions BEFORE drawing alive units (throttled to every 2nd frame)
   if (killParticles && (frame & 1) === 0) detectDeaths(game, frame, heroClass);
@@ -948,10 +954,19 @@ export function drawEntities(
   const cullRight = camX + VIEWPORT_W + 50;
   const isColosseum = game.challengeId === 'colosseum';
 
+  // Entity count gauges
+  perf.gauge('allies', (game.allies || []).length);
+  perf.gauge('enemies', (game.enemies || []).length);
+  perf.gauge('archers', ((game as any).enemyArchers || []).length);
+  perf.gauge('wraiths', ((game as any).enemyWraiths || []).length);
+  perf.gauge('projectiles', (game.projectiles || []).length);
+  perf.gauge('particles', (game.particles || []).length);
+
   // --- Explosions (behind alive units) ---
   if (killParticles) updateAndDrawExplosions(ctx, camX);
 
   // --- Aura indicators (behind units, on ground plane) ---
+  perf.begin('render.auras');
   if (game.hero.health > 0) {
     const hx = game.hero.x + 16 - camX;
     const groundAuraY = GROUND_Y + WORLD_Y_OFFSET + 4;
@@ -1010,7 +1025,10 @@ export function drawEntities(
     }
   }
 
+  perf.end('render.auras');
+
   // --- Allies (cached sprites only) ---
+  perf.begin('render.allies');
   for (const ally of game.allies || []) {
     if (ally.health <= 0 || ally.x < cullLeft || ally.x > cullRight) continue;
     // Skip special inline types — they stay SVG
@@ -1018,7 +1036,10 @@ export function drawEntities(
     drawAlly(ctx, ally, camX, frame, showHpNumbers, isColosseum);
   }
 
+  perf.end('render.allies');
+
   // --- Enemies (goblins + skeletons) ---
+  perf.begin('render.enemies');
   for (const enemy of game.enemies || []) {
     if (enemy.health <= 0 || enemy.x < cullLeft || enemy.x > cullRight) continue;
     const isSkeleton = !!(enemy as any).isLichSkeleton;
@@ -1159,24 +1180,31 @@ export function drawEntities(
       '#6644aa', -14, 24, isColosseum);
   }
 
+  perf.end('render.enemies');
+
   // --- Hero ---
+  perf.begin('render.hero');
   if (game.hero.health > 0) {
     drawHero(ctx, game.hero, camX, frame, heroClass);
   }
+  perf.end('render.hero');
 
   // --- Projectiles ---
+  perf.begin('render.projectiles');
   drawProjectiles(ctx, game.projectiles || [], camX, cullLeft, cullRight);
-
-  // --- In-flight cast visuals (flame callers + fire imps) ---
   drawCastingFireballs(ctx, game, camX, frame);
+  perf.end('render.projectiles');
 
   // --- Particles ---
+  perf.begin('render.particles');
   for (const p of game.particles || []) {
     if (p.x < cullLeft || p.x > cullRight) continue;
     drawParticle(ctx, p, camX);
   }
+  perf.end('render.particles');
 
   ctx.restore();
+  perf.end('render');
 }
 
 // ============================================================

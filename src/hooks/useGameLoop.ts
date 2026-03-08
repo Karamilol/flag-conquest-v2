@@ -19,6 +19,7 @@ import { processHeroFlagCapture, processAllyFlagCapture, processChestCollection,
 import { processDungeonWaveTimer, processDungeonMining, processDungeonEndCheck, processDungeonPortalTimer, processTimedDungeonPortalTimer, processTimedDungeonTimer, processTimedDungeonEnd, processTimedDungeonFlagIncome, processRegaliaKeyPortal, processDungeonTickCounter } from '../systems/dungeon';
 import { processPetTick } from '../systems/pets';
 import { processEliteTracking, processForceSpawnElite } from '../systems/elites';
+import { perf } from '../utils/perfProfiler';
 
 /** Shallow-copy an array of objects — uses Object.assign which is faster than spread for objects with many keys */
 function copyArray<T extends object>(arr: T[]): T[] {
@@ -44,7 +45,7 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
   }
 
   // Build mutable TickState from immutable GameState
-  const _copyStart = frame % 300 === 1 ? performance.now() : 0;
+  perf.begin('tick.copyState');
   const ts: TickState = {
     hero: { ...prev.hero, frame },
     flags: copyArray(prev.flags),
@@ -178,6 +179,8 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
     onCollectPet,
     ownedPets,
 
+    devGodMode: prev.devGodMode || false,
+
     heroClass: prev.heroClass,
     artifacts: prev.artifacts || [],
     ...(() => {
@@ -227,46 +230,53 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
     const bpM = getRelicLevel(ts.relicCollection['blueprints'] || 0) > 0 ? 1.5 : 1;
     ts.buildingCounts = { forge, warShrine, barracks, leatherworks, church, blueprintsMult: bpM };
   }
+  perf.end('tick.copyState');
 
   // === Run all systems in original execution order ===
-  // Performance profiling: log on one tick every 300 frames
-  const _doProfiling = frame % 300 === 1;
-  const _profStart = _doProfiling ? performance.now() : 0;
-  if (_doProfiling && _copyStart > 0) {
-    console.log(`[TICK PERF] copyArray=${(performance.now() - _copyStart).toFixed(2)}ms`);
-  }
 
   // Movement & interaction
+  perf.begin('tick.movement');
   processHeroMovement(ts);
   processHeroFlagCapture(ts);
   processChestCollection(ts);
+  perf.end('tick.movement');
 
   // Spawning (skip when dev tool disables spawns)
+  perf.begin('tick.spawning');
   const closestFlag = findClosestUncapturedFlag(ts);
   if (!prev.devSpawnsDisabled) {
     processEnemySpawning(ts, closestFlag);
     processBossSpawning(ts);
     processRoyalGuardSpawn(ts);
   }
+  perf.end('tick.spawning');
 
   // Boss & archer AI (run before projectile updates)
+  perf.begin('tick.bossArcherAI');
   processBossAI(ts);
   processArcherAI(ts);
+  perf.end('tick.bossArcherAI');
 
   // Projectiles
+  perf.begin('tick.projectiles');
   processProjectileMovement(ts);
   processProjectileHits(ts);
+  perf.end('tick.projectiles');
 
   // Unit respawn & economy
+  perf.begin('tick.economy');
   processUnitRespawn(ts);
   processEconomy(ts);
   processRelicFlagHaven(ts);
+  perf.end('tick.economy');
 
   // Ally AI & flag capture (runs first so allies move into position)
+  perf.begin('tick.allyAI');
   processAllyAI(ts);
   processAllyFlagCapture(ts);
   processFlagContest(ts);
   processFlagBuildings(ts);
+  perf.end('tick.allyAI');
 
   // Process banners: tick lifetime, apply aura
   ts.banners = ts.banners.filter(b => {
@@ -320,6 +330,7 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
   ts.iceWalls = ts.iceWalls.filter(w => w.health > 0);
 
   // Enemy AI (runs after allies so enemies see blocked state and counter-attack same tick)
+  perf.begin('tick.enemyAI');
   processEnemyAI(ts);
   processWraithAI(ts);
   processHoundAI(ts);
@@ -332,14 +343,18 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
   processCursedKnightAI(ts);
   processCrystalTurretAI(ts);
   processIceTurretAI(ts);
+  perf.end('tick.enemyAI');
 
   // Ranger DOT/debuff ticks
+  perf.begin('tick.debuffs');
   processPoisonTicks(ts);
   processMarkedTimers(ts);
   processBirdsEye(ts);
   processSnareTrap(ts);
+  perf.end('tick.debuffs');
 
   // Hero combat
+  perf.begin('tick.heroCombat');
   processHeroCombat(ts);
   processHeroEdgeDagger(ts);
   processSkillCooldowns(ts);
@@ -351,8 +366,10 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
     else processAutoFireball(ts);
   }
   processRelicFireball(ts);
+  perf.end('tick.heroCombat');
 
   // Boss defeat & zone transition
+  perf.begin('tick.cleanup');
   processBossDefeat(ts);
 
   // Cleanup
@@ -372,8 +389,10 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
   processBarrierTimers(ts);
   processSkillUnlockCheck(ts);
   processParticles(ts);
+  perf.end('tick.cleanup');
 
   // Dungeon key portals (player-spawned)
+  perf.begin('tick.dungeon');
   processDungeonKeyPortal(ts);
   processRegaliaKeyPortal(ts);
 
@@ -391,6 +410,7 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
     processTimedDungeonFlagIncome(ts);
     processTimedDungeonEnd(ts);
   }
+  perf.end('tick.dungeon');
 
   // Pet system
   processPetTick(ts);
@@ -445,17 +465,13 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
     ts.cameraX = Math.min(ts.cameraX, maxCam);
   }
 
-  // Performance profiling log every 5 seconds
-  if (_profStart > 0) {
-    const tickMs = performance.now() - _profStart;
-    const entityCount = ts.enemies.length + ts.enemyArchers.length + ts.enemyWraiths.length + ts.enemyHounds.length + ts.enemyLichs.length + ts.enemyShadowAssassins.length + ts.enemyFlameCallers.length + ts.enemyCorruptedSentinels.length + ts.allies.length + ts.projectiles.length + ts.particles.length;
-    console.log(`[TICK PERF] tick=${tickMs.toFixed(2)}ms entities=${entityCount} (enemies=${ts.enemies.length} allies=${ts.allies.length} proj=${ts.projectiles.length} particles=${ts.particles.length})`);
-  }
+  perf.end('tick');
 
+  perf.begin('tick.collapse');
   const goldDelta = ts.goldEarned - prev.goldEarned;
   const newTotalGold = (prev.totalGoldEarned || 0) + (goldDelta > 0 ? goldDelta : 0);
 
-  return {
+  const result: GameState = {
     ...prev,
     hero: ts.hero,
     flags: ts.flags,
@@ -574,9 +590,14 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
     // Pet state
     petCooldown: ts.petCooldown,
 
+    // Sync backpack from React state so HUD snapshot can read it
+    backpack: ts.backpack,
+
     gameOver,
     score: ts.flagsCaptured * 100 + Math.floor(ts.goldEarned),
   };
+  perf.end('tick.collapse');
+  return result;
 }
 
 /** Info passed to App.tsx when dungeon exits, for React state updates */
@@ -835,8 +856,7 @@ export function useGameLoop(
     };
     window.addEventListener('focus', onFocus);
 
-    let _tickCount = 0;
-    let _lastPerfLog = 0;
+    let _gameOverSignaled = false;
 
     const loop = (now: number) => {
       if (!running) return;
@@ -858,7 +878,6 @@ export function useGameLoop(
       if (ticksThisFrame >= MAX_TICKS_PER_FRAME) accumulator = 0;
 
       if (ticked) {
-        _tickCount += ticksThisFrame;
         const state = gameRef.current;
 
         // Dungeon exit: restore main game state when dungeonOver fires
@@ -870,17 +889,17 @@ export function useGameLoop(
         }
 
         // Signal React ONLY for modal events that need overlay rendering
-        if (state.gameOver || state.pendingArtifactChoice || state.pendingRelicChoice || state.pendingRoll || state.pendingSkillChoice || state.challengeLevelUpPending) {
+        // gameOver only signals once (avoid hammering React every frame)
+        const needsModal = state.pendingArtifactChoice || state.pendingRelicChoice || state.pendingRoll || state.pendingSkillChoice || state.challengeLevelUpPending;
+        const needsGameOver = state.gameOver && !_gameOverSignaled;
+        if (needsGameOver) _gameOverSignaled = true;
+        if (!state.gameOver) _gameOverSignaled = false;
+        if (needsModal || needsGameOver) {
           onModalEventRef.current();
         }
       }
 
-      if (now - _lastPerfLog >= 5000) {
-        const elapsed = (now - _lastPerfLog) / 1000;
-        console.log(`[LOOP PERF] ticks/sec=${(_tickCount / elapsed).toFixed(1)}`);
-        _tickCount = 0;
-        _lastPerfLog = now;
-      }
+      perf.frame();
 
       rafId = requestAnimationFrame(loop);
     };

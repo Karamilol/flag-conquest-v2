@@ -161,6 +161,9 @@ export interface TickState {
   onCollectPet: (petId: string) => void;
   readonly ownedPets: string[];
 
+  // Dev tools
+  devGodMode?: boolean;
+
   // Read-only context (not mutated, but needed by systems)
   readonly artifacts: Artifact[];
   readonly ownedArtifactIds: Set<string>;
@@ -230,6 +233,7 @@ export function tickSkillBuffActive(ts: TickState, id: string): boolean {
 /** Helper: apply full hero damage reduction chain. Returns damage dealt (0 if invulnerable). */
 export function dealDamageToHero(ts: TickState, rawDmg: number, suffix = '', color = '#ffaa00'): number {
   const { hero } = ts;
+  if (ts.devGodMode) { hero.health = hero.maxHealth; return 0; }
   if ((hero.invulnTimer || 0) > 0) return 0;
   // Mana Shield: absorb entire hit if charges remain
   if ((hero.manaShieldCharges || 0) > 0) {

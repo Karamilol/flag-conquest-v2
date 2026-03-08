@@ -450,7 +450,7 @@ export default function App() {
       const tier = Math.min(freeUnitLevel, STAR_TIERS.length) - 1;
       let pool: string[] = [];
       for (let t = tier; t >= 0 && pool.length === 0; t--) {
-        pool = STAR_TIERS[t].filter(u => (upgrades.unlockedUnits as string[]).includes(u));
+        pool = STAR_TIERS[t].filter(u => ((upgrades.unlockedUnits as string[]) || ['soldier']).includes(u));
       }
       if (pool.length > 0) {
         const unitType = pool[Math.floor(Math.random() * pool.length)];
@@ -458,6 +458,7 @@ export default function App() {
       }
     }
     gameRef.current = newGame;
+    gameOverFiredRef.current = false;
     clearRunState();
     setSelectedChallenge(null);
     setShopTab(selectedChallenge === 'loneWolf' ? 'income' : 'units');
@@ -570,7 +571,7 @@ export default function App() {
   const rollForUnit = useCallback(() => {
     const game = gameRef.current;
     if (!game || game.goldEarned < game.rollCost || game.pendingRoll) return;
-    const allowed = (upgrades.unlockedUnits as string[]).filter((t: string) => !(upgrades.disabledUnits as string[] || []).includes(t));
+    const allowed = ((upgrades.unlockedUnits as string[]) || ['soldier']).filter((t: string) => !((upgrades.disabledUnits as string[]) || []).includes(t));
     const randomType = rollUnitType(allowed);
     if (!randomType) return;
     game.goldEarned -= game.rollCost;
@@ -944,9 +945,9 @@ export default function App() {
       // Brief delay before transitioning (lets death register visually)
       const timer = setTimeout(() => {
         handleGameOverRef.current();
-        gameOverFiredRef.current = false;
+        // Note: gameOverFiredRef stays true until new game starts
       }, 150);
-      return () => { clearTimeout(timer); gameOverFiredRef.current = false; };
+      return () => clearTimeout(timer);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalTick, gameScreen]);
@@ -1356,7 +1357,7 @@ export default function App() {
             </div>
             {/* Music controls */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 4, gap: 10 }}>
-              <span style={{ color: '#777', fontSize: 9, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'right' }}>{music.currentTrack || 'No Track'}</span>
+              <span style={{ color: '#777', fontSize: 9, width: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'right', display: 'inline-block', flexShrink: 0 }}>{music.currentTrack || 'No Track'}</span>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
                 <span onClick={music.prevTrack} style={{ cursor: 'pointer', color: '#888', fontSize: 11 }}>{'\u25C0'}</span>
                 <span onClick={music.togglePause} style={{ cursor: 'pointer', color: COLORS.gold, fontSize: 11 }}>{music.isPaused ? '\u25B6' : '\u23F8'}</span>
@@ -1511,7 +1512,7 @@ export default function App() {
                         </div>
                         {/* Music controls */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: 4, gap: 8 }}>
-                          <span style={{ color: '#777', fontSize: 8, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{music.currentTrack || 'No Track'}</span>
+                          <span style={{ color: '#777', fontSize: 8, width: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', flexShrink: 0 }}>{music.currentTrack || 'No Track'}</span>
                           <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
                             <span onClick={music.prevTrack} style={{ cursor: 'pointer', color: '#888', fontSize: 9 }}>{'\u25C0'}</span>
                             <span onClick={music.togglePause} style={{ cursor: 'pointer', color: COLORS.gold, fontSize: 9 }}>{music.isPaused ? '\u25B6' : '\u23F8'}</span>

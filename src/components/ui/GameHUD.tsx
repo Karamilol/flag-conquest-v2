@@ -219,8 +219,9 @@ const TopBar = memo(({ hud, cameraMode, onCycleCameraMode, onOpenSettings,
           <button onClick={onMusicNext} style={musicBtnStyle}>▶</button>
           <span style={{
             fontSize: 6, color: '#888', fontFamily: F,
-            marginLeft: 2, whiteSpace: 'nowrap', maxWidth: 80,
+            marginLeft: 2, whiteSpace: 'nowrap', width: 80,
             overflow: 'hidden', textOverflow: 'ellipsis',
+            display: 'inline-block', textAlign: 'left',
           }}>{label || 'No track'}</span>
           <button onClick={() => { onMusicClick?.(); if ((musicClicks ?? 0) >= 4) onOpenTrackSelector?.(); }} style={{
             ...musicBtnStyle, fontSize: 9, marginLeft: 2,
@@ -301,8 +302,9 @@ const ArmyRoster = memo(({ unitSlots, showTooltip, moveTooltip, hideTooltip }: {
   if (unitSlots.length === 0) return null;
   return (
     <div style={{
-      position: 'absolute', top: 64, left: 5,
+      position: 'absolute', top: 76, left: 5,
       display: 'flex', flexWrap: 'wrap', width: 34, gap: 2, zIndex: 10,
+      maxHeight: DISPLAY_H - 76 - 38, overflow: 'hidden',
     }}>
       {unitSlots.map((u, i) => {
         const stats = UNIT_STATS[u.type as keyof typeof UNIT_STATS] as any;
@@ -397,7 +399,7 @@ const BottomBar = memo(({
             const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
             const parent = (e.currentTarget as HTMLElement).offsetParent as HTMLElement;
             const pr = parent?.getBoundingClientRect() || r;
-            showTooltip(`Healing Potion (${potionCount})\nHeals hero for 60% of max HP`, r.left - pr.left + 14, DISPLAY_H - 36);
+            showTooltip(`Healing Potion (${potionCount})\nHeals hero for 60% of max HP`, r.left - pr.left + 14, DISPLAY_H - 62);
           }}
           onPointerMove={moveTooltip}
           onPointerLeave={hideTooltip}
@@ -445,8 +447,8 @@ const BottomBar = memo(({
             }}
             onPointerEnter={() => {
               const rangeStr = s.range ? ` (${s.range}px)` : '';
-              const autoStr = s.isAuto ? ' [AUTO]' : '\nRight-click: toggle auto';
-              showTooltip(`${s.name}: ${s.desc}${rangeStr}${autoStr}`, x + 14, DISPLAY_H - 36);
+              const autoStr = s.isAuto ? ' [AUTO]' : ' | Right-click: auto';
+              showTooltip(`${s.name}: ${s.desc}${rangeStr}${autoStr}`, x + 14, DISPLAY_H - 62);
             }}
             onPointerMove={moveTooltip}
             onPointerLeave={hideTooltip}
@@ -507,7 +509,7 @@ const BottomBar = memo(({
             key={s.id}
             onPointerEnter={() => {
               const rangeStr = s.range ? ` (${s.range}px)` : '';
-              showTooltip(`${s.name}: ${s.desc}${rangeStr}`, x + 14, DISPLAY_H - 36);
+              showTooltip(`${s.name}: ${s.desc}${rangeStr}`, x + 14, DISPLAY_H - 62);
             }}
             onPointerMove={moveTooltip}
             onPointerLeave={hideTooltip}
@@ -665,8 +667,6 @@ export default function GameHUD(props: GameHUDProps) {
         if (ty < 4) ty = 4;
         return (
           <div
-            onPointerEnter={() => { if (tooltipTimer.current) clearTimeout(tooltipTimer.current); }}
-            onPointerLeave={hideTooltip}
             style={{
               position: 'absolute',
               left: tx, top: ty,
@@ -675,7 +675,7 @@ export default function GameHUD(props: GameHUDProps) {
               border: '1px solid #B8860B',
               borderRadius: 3,
               padding: `${padY}px ${padX}px`,
-              pointerEvents: 'auto',
+              pointerEvents: 'none',
               zIndex: 100,
               color: '#ddd',
               fontSize: 8,
