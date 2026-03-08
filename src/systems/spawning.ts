@@ -333,7 +333,7 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
           damage: Math.floor(UNIT_STATS.dungeonRat.damage * zoneScale * dungeonFlagScale),
           speed: UNIT_STATS.dungeonRat.speed + Math.random() * 0.2,
           attackRate: UNIT_STATS.dungeonRat.attackRate,
-          attackRange: UNIT_STATS.dungeonRat.attackRange + Math.floor(Math.random() * 5) - 2,
+          attackRange: UNIT_STATS.dungeonRat.attackRange + Math.floor(Math.random() * 7) - 3,
           frame: 0, attackCooldown: 15,
           lane: Math.floor(Math.random() * 10) - 5,
         });
@@ -346,7 +346,7 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
           defense: UNIT_STATS.cursedKnight.defense,
           speed: UNIT_STATS.cursedKnight.speed,
           attackRate: UNIT_STATS.cursedKnight.attackRate,
-          attackRange: UNIT_STATS.cursedKnight.attackRange + Math.floor(Math.random() * 5) - 2,
+          attackRange: UNIT_STATS.cursedKnight.attackRange + Math.floor(Math.random() * 7) - 3,
           frame: 0, attackCooldown: 15,
           lane: Math.floor(Math.random() * 10) - 5,
         });
@@ -357,7 +357,7 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
           id: uid(), x: closestFlag.x + xOffset, y: GROUND_Y - 22, health: hp, maxHealth: hp,
           damage: Math.floor(UNIT_STATS.fireImp.damage * zoneScale * dungeonFlagScale),
           speed: UNIT_STATS.fireImp.speed,
-          attackRange: UNIT_STATS.fireImp.attackRange + Math.floor(Math.random() * 5) - 2,
+          attackRange: UNIT_STATS.fireImp.attackRange + Math.floor(Math.random() * 7) - 3,
           frame: 0, castTimer: 0, castTargetX: 0, castTargetY: 0,
           isCasting: false, castCooldown: 0,
           lane: Math.floor(Math.random() * 10) - 5,
@@ -383,7 +383,7 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
         defense: UNIT_STATS.enemyCorruptedSentinel.defense,
         speed: UNIT_STATS.enemyCorruptedSentinel.speed,
         attackRate: UNIT_STATS.enemyCorruptedSentinel.attackRate,
-        attackRange: UNIT_STATS.enemyCorruptedSentinel.attackRange + Math.floor(Math.random() * 5) - 2,
+        attackRange: UNIT_STATS.enemyCorruptedSentinel.attackRange + Math.floor(Math.random() * 7) - 3,
         frame: 0, attackCooldown: 15,
         reflectActive: false, reflectTimer: 0,
         lane: Math.floor(Math.random() * 10) - 5,
@@ -394,7 +394,7 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
         id: uid(), x: closestFlag.x + xOffset, y: GROUND_Y - 30, health: hp, maxHealth: hp,
         damage: Math.floor(UNIT_STATS.enemyFlameCaller.damage * zoneScale * flagScale),
         speed: UNIT_STATS.enemyFlameCaller.speed,
-        attackRange: UNIT_STATS.enemyFlameCaller.attackRange + Math.floor(Math.random() * 5) - 2,
+        attackRange: UNIT_STATS.enemyFlameCaller.attackRange + Math.floor(Math.random() * 7) - 3,
         frame: 0, castTimer: 0, castTargetX: 0, castTargetY: 0,
         isCasting: false, castCooldown: 0,
         lane: Math.floor(Math.random() * 10) - 5,
@@ -406,7 +406,7 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
         damage: Math.floor(UNIT_STATS.enemyShadowAssassin.damage * zoneScale * flagScale),
         speed: UNIT_STATS.enemyShadowAssassin.speed,
         attackRate: UNIT_STATS.enemyShadowAssassin.attackRate,
-        attackRange: UNIT_STATS.enemyShadowAssassin.attackRange + Math.floor(Math.random() * 5) - 2,
+        attackRange: UNIT_STATS.enemyShadowAssassin.attackRange + Math.floor(Math.random() * 7) - 3,
         frame: 0, attackCooldown: 15,
         stealthTimer: 120, visibleTimer: 0, teleportCooldown: 0, scanTimer: 0,
         lane: Math.floor(Math.random() * 10) - 5,
@@ -418,7 +418,7 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
         id: uid(), x: closestFlag.x + xOffset, y: GROUND_Y - 30,
         health: hp, maxHealth: hp, damage: 0,
         speed: UNIT_STATS.enemyLich.speed,
-        attackRange: UNIT_STATS.enemyLich.attackRange + Math.floor(Math.random() * 5) - 2,
+        attackRange: UNIT_STATS.enemyLich.attackRange + Math.floor(Math.random() * 7) - 3,
         frame: 0, healCooldown: 0, iceballCooldown: 0,
         lane: Math.floor(Math.random() * 10) - 5,
         activeSkeletons: 0, passiveSummonTimer: 0,
@@ -429,7 +429,7 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
         id: uid(), x: closestFlag.x + xOffset, y: GROUND_Y - 18, health: hp, maxHealth: hp,
         damage: Math.floor(UNIT_STATS.enemyHound.damage * zoneScale * flagScale),
         speed: UNIT_STATS.enemyHound.speed + Math.random() * 0.3, attackRate: UNIT_STATS.enemyHound.attackRate,
-        attackRange: UNIT_STATS.enemyHound.attackRange + Math.floor(Math.random() * 5) - 2, frame: 0, attackCooldown: 15,
+        attackRange: UNIT_STATS.enemyHound.attackRange + Math.floor(Math.random() * 7) - 3, frame: 0, attackCooldown: 15,
         lane: Math.floor(Math.random() * 10) - 5,
       });
     } else if (spawnArcher) {
@@ -438,7 +438,7 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
         id: uid(), x: closestFlag.x + xOffset, y: GROUND_Y - 22, health: hp, maxHealth: hp,
         damage: Math.floor(UNIT_STATS.enemyArcher.damage * zoneScale * flagScale),
         speed: UNIT_STATS.enemyArcher.speed, attackRate: UNIT_STATS.enemyArcher.attackRate,
-        attackRange: UNIT_STATS.enemyArcher.attackRange + Math.floor(Math.random() * 5) - 2, frame: 0, attackCooldown: 15,
+        attackRange: UNIT_STATS.enemyArcher.attackRange + Math.floor(Math.random() * 7) - 3, frame: 0, attackCooldown: 15,
         lane: Math.floor(Math.random() * 10) - 5,
       });
     } else if (spawnWraith) {
@@ -448,7 +448,7 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
         damage: Math.floor(UNIT_STATS.enemyWraith.damage * zoneScale * flagScale),
         defense: UNIT_STATS.enemyWraith.defense,
         speed: UNIT_STATS.enemyWraith.speed, attackRate: UNIT_STATS.enemyWraith.attackRate,
-        attackRange: UNIT_STATS.enemyWraith.attackRange + Math.floor(Math.random() * 5) - 2, knockback: UNIT_STATS.enemyWraith.knockback,
+        attackRange: UNIT_STATS.enemyWraith.attackRange + Math.floor(Math.random() * 7) - 3, knockback: UNIT_STATS.enemyWraith.knockback,
         frame: 0, attackCooldown: 15,
         lane: Math.floor(Math.random() * 10) - 5,
       });
@@ -458,7 +458,7 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
         id: uid(), x: closestFlag.x + xOffset, y: GROUND_Y - ENEMY_SIZE, health: hp, maxHealth: hp,
         damage: Math.floor((UNIT_STATS.enemy.damage + flagsCaptured) * zoneScale * flagScale),
         speed: UNIT_STATS.enemy.speed + Math.random() * 0.3, attackRate: UNIT_STATS.enemy.attackRate,
-        attackRange: UNIT_STATS.enemy.attackRange + Math.floor(Math.random() * 5) - 2, frame: 0, attackCooldown: 15,
+        attackRange: UNIT_STATS.enemy.attackRange + Math.floor(Math.random() * 7) - 3, frame: 0, attackCooldown: 15,
         lane: Math.floor(Math.random() * 10) - 5,
       });
     }
@@ -615,7 +615,7 @@ export function processUnitRespawn(ts: TickState): void {
       if (slot.type === 'soldier' && tickHasArtifact(ts, 'reinforced')) finalHealth = Math.floor(finalHealth * 1.2);
       if (slot.type === 'wizard' && tickHasArtifact(ts, 'manaCrystal')) allyAtkRate = Math.max(15, Math.floor(allyAtkRate * 0.92));
       const v = () => 0.98 + Math.random() * 0.04; // +/- 2% variance
-      let allyRange = Math.round(stats.attackRange * v());
+      let allyRange = Math.round(stats.attackRange * v()) + Math.floor(Math.random() * 7) - 3;
       const newAlly: Ally = {
         id: uid(), slotIndex: i, unitType: slot.type, x: portalX, y: GROUND_Y - 20,
         health: finalHealth, maxHealth: finalHealth, damage: allyDamage, defense: allyDef,
@@ -698,7 +698,7 @@ export function processUnitRespawn(ts: TickState): void {
     if (slot.type === 'soldier' && tickHasArtifact(ts, 'reinforced')) finalHealth2 = Math.floor(finalHealth2 * 1.2);
     if (slot.type === 'wizard' && tickHasArtifact(ts, 'manaCrystal')) allyAtkRate2 = Math.max(15, Math.floor(allyAtkRate2 * 0.92));
     const v2 = () => 0.98 + Math.random() * 0.04; // +/- 2% variance
-    let allyRange2 = Math.round(stats.attackRange * v2());
+    let allyRange2 = Math.round(stats.attackRange * v2()) + Math.floor(Math.random() * 7) - 3;
     const newAlly: Ally = {
       id: uid(), slotIndex: i, unitType: slot.type, x: portalX, y: GROUND_Y - 20,
       health: finalHealth2, maxHealth: finalHealth2, damage: allyDamage, defense: allyDef,

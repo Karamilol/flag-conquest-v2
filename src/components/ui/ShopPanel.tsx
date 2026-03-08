@@ -209,7 +209,7 @@ function UnitsTab({ game, upgrades, shardUpgrades, challengeCompletions, relicCo
   const unitComputations = useMemo(() => {
     const results: Record<string, { multi: { levels: number; totalCost: number }; cur: ReturnType<typeof computeFullUnitStats>; next: ReturnType<typeof computeFullUnitStats> }> = {};
     for (const { key, baseCost } of unitTypes) {
-      const isUnlocked = upgrades.unlockedUnits.includes(key);
+      const isUnlocked = (upgrades.unlockedUnits as string[] || []).includes(key);
       const hasActiveUnit = game.unitSlots.some(slot => slot.type === key);
       if (!isUnlocked || !hasActiveUnit) continue;
       const level = runUpgrades?.[key] || 0;
@@ -423,7 +423,7 @@ function UnitsTab({ game, upgrades, shardUpgrades, challengeCompletions, relicCo
 
       {/* Unit upgrades - only show unlocked units, hidden in Lone Wolf */}
       {game.challengeId !== 'loneWolf' && unitTypes.map(({ key, name, color, baseCost }) => {
-        const isUnlocked = upgrades.unlockedUnits.includes(key);
+        const isUnlocked = (upgrades.unlockedUnits as string[] || []).includes(key);
         const hasActiveUnit = game.unitSlots.some(slot => slot.type === key);
         if (!isUnlocked || !hasActiveUnit) {
           return (

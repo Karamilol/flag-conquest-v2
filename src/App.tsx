@@ -138,7 +138,7 @@ export default function App() {
   const [regaliaNotif, setRegaliaNotif] = useState<Regalia | null>(null);
   const collectedRegaliaIds = useRef(new Set<string>());
   const regaliaNotifTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [consumableNotif, setConsumableNotif] = useState<{ icon: string; name: string } | null>(null);
+  const [consumableNotif, setConsumableNotif] = useState<{ icon: string; name: string; desc: string } | null>(null);
   const consumableNotifTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Overlay panel toggles
@@ -287,7 +287,7 @@ export default function App() {
   const collectConsumable = useCallback((id: ConsumableId) => {
     setBackpack(prev => ({ ...prev, [id]: Math.min(99, prev[id] + 1) }));
     const cDef = getConsumableDef(id);
-    setConsumableNotif({ icon: cDef.icon, name: cDef.name });
+    setConsumableNotif({ icon: cDef.icon, name: cDef.name, desc: cDef.desc });
     if (consumableNotifTimer.current) clearTimeout(consumableNotifTimer.current);
     consumableNotifTimer.current = setTimeout(() => setConsumableNotif(null), 4000);
   }, []);
@@ -1234,20 +1234,29 @@ export default function App() {
           position: 'fixed', top: regaliaNotif ? '180px' : '40px', left: '50%', transform: 'translateX(-50%)',
           background: 'rgba(10,20,10,0.95)', border: '2px solid #44ffaa',
           transition: 'top 0.3s ease',
-          borderRadius: '6px', padding: '8px 14px', zIndex: 9999,
-          maxWidth: '220px', width: '70%',
+          borderRadius: '6px', padding: '8px 12px', zIndex: 9999,
+          maxWidth: '280px', width: '85%',
           boxShadow: '0 0 20px #44ffaa44, 0 0 6px #44ffaa88',
           fontFamily: '"Press Start 2P", "Courier New", monospace',
-          textAlign: 'center',
         }}>
-          <div style={{ color: '#44ffaa', fontSize: '11px', fontWeight: 'bold', textShadow: '0 0 8px #44ffaa66', marginBottom: '4px' }}>
-            ITEM FOUND
+          <div style={{ textAlign: 'center', marginBottom: '6px' }}>
+            <div style={{ color: '#44ffaa', fontSize: '13px', fontWeight: 'bold', textShadow: '0 0 8px #44ffaa66' }}>
+              {'\u{1F381}'} ITEM FOUND {'\u{1F381}'}
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '18px' }}>{consumableNotif.icon}</span>
-            <span style={{ color: '#ddd', fontSize: '10px', fontWeight: 'bold' }}>{consumableNotif.name}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+            <span style={{ fontSize: '21px' }}>{consumableNotif.icon}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: '#44ffaa', fontSize: '10px', fontWeight: 'bold' }}>{consumableNotif.name}</div>
+              <div style={{ color: '#aaa', fontSize: '9px' }}>CONSUMABLE</div>
+            </div>
           </div>
-          <div style={{ marginTop: '6px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '6px', borderTop: '1px solid #44ffaa44', paddingTop: '4px' }}>
+            <div style={{ color: '#ddd', fontSize: '10px', background: 'rgba(255,255,255,0.06)', padding: '2px 4px', borderRadius: '2px' }}>
+              {consumableNotif.desc}
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
             <button onClick={() => { setConsumableNotif(null); if (consumableNotifTimer.current) clearTimeout(consumableNotifTimer.current); }} style={{
               padding: '3px 14px', fontSize: '8px', fontFamily: 'inherit',
               background: '#44ffaa33', color: '#44ffaa', border: '1px solid #44ffaa88',

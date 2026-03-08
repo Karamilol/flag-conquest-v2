@@ -784,9 +784,20 @@ export function useGameLoop(
   const dungeonExitRef = useRef(onDungeonExit);
   dungeonExitRef.current = onDungeonExit;
 
+  // Stable refs for values that change frequently but shouldn't restart the loop
+  const upgradesRef = useRef(upgrades);
+  upgradesRef.current = upgrades;
+  const shardUpgradesRef = useRef(shardUpgrades);
+  shardUpgradesRef.current = shardUpgrades;
+  const relicCollectionRef = useRef(relicCollection);
+  relicCollectionRef.current = relicCollection;
+
   useEffect(() => {
     if (gameScreen !== 'playing') return;
-    frameRef.current = 0;
+    // Only reset frame counter on first mount, not on effect re-runs
+    if (frameRef.current === 0 && gameRef.current) {
+      frameRef.current = gameRef.current.frame || 0;
+    }
 
     const TICK_MS = 1000 / 60;
     const MAX_TICKS_PER_FRAME = 4;
@@ -807,11 +818,22 @@ export function useGameLoop(
         lastTime = performance.now();
         accumulator = 0;
         if (elapsedTicks > 240) {
-          gameRef.current = fastForwardIncome(gameRef.current, elapsedTicks, upgrades, relicCollection, ancientRelicsRef.current, ancientRelicCopiesRef.current);
+          gameRef.current = fastForwardIncome(gameRef.current, elapsedTicks, upgradesRef.current, relicCollectionRef.current, ancientRelicsRef.current, ancientRelicCopiesRef.current);
         }
       }
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
+    // Also handle window focus (alt-tab between windows doesn't always fire visibilitychange)
+    const onFocus = () => {
+      if (hiddenAt > 0) {
+        onVisibilityChange();
+      } else {
+        // Reset timing to avoid huge delta on next frame
+        lastTime = performance.now();
+        accumulator = 0;
+      }
+    };
+    window.addEventListener('focus', onFocus);
 
     let _tickCount = 0;
     let _lastPerfLog = 0;
@@ -827,7 +849,7 @@ export function useGameLoop(
 
       while (accumulator >= TICK_MS && ticksThisFrame < MAX_TICKS_PER_FRAME) {
         const prev = gameRef.current;
-        const next = gameTick(prev, frameRef, upgrades, shardUpgrades, relicCollection, cameraModeRef.current, ancientRelicsRef.current, ancientRelicCopiesRef.current, backpackRef.current, collectConsumableRef.current, challengeCompletionsRef.current, equippedRegaliasRef.current, collectRegaliaRef.current, equippedPetRef.current, ownedPetsRef.current, collectPetRef.current);
+        const next = gameTick(prev, frameRef, upgradesRef.current, shardUpgradesRef.current, relicCollectionRef.current, cameraModeRef.current, ancientRelicsRef.current, ancientRelicCopiesRef.current, backpackRef.current, collectConsumableRef.current, challengeCompletionsRef.current, equippedRegaliasRef.current, collectRegaliaRef.current, equippedPetRef.current, ownedPetsRef.current, collectPetRef.current);
         gameRef.current = next;
         accumulator -= TICK_MS;
         ticksThisFrame++;
@@ -864,8 +886,9 @@ export function useGameLoop(
     };
 
     rafId = requestAnimationFrame(loop);
-    return () => { running = false; cancelAnimationFrame(rafId); document.removeEventListener('visibilitychange', onVisibilityChange); };
-  }, [gameScreen, upgrades, shardUpgrades, relicCollection, gameRef]);
+    return () => { running = false; cancelAnimationFrame(rafId); document.removeEventListener('visibilitychange', onVisibilityChange); window.removeEventListener('focus', onFocus); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameScreen, gameRef]);
 
   return { frameRef };
 }

@@ -657,18 +657,7 @@ export function drawEnvironment(
     drawCampfire(ctx, camX, frame);
   }
 
-  // ── 8. Cave torches (animated, screen-space) ──
-  if (!isDungeon && primaryBiome === 'cave') {
-    ctx.save();
-    ctx.globalAlpha = blendPrimaryOp;
-    drawCaveTorches(ctx, frame);
-    ctx.restore();
-  } else if (!isDungeon && secondaryBiome === 'cave') {
-    ctx.save();
-    ctx.globalAlpha = blendSecondaryOp;
-    drawCaveTorches(ctx, frame);
-    ctx.restore();
-  }
+  // Cave torches removed — they were screen-space fixed and didn't scroll with the world
 }
 
 // ── Helpers ──────────────────────────────────────────────────────

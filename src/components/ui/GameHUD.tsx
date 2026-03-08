@@ -64,6 +64,8 @@ interface HUDValues {
   heroHp: number;
   heroMaxHp: number;
   potionCount: number;
+  eliteVariant: string | null;
+  eliteTimeLeft: number; // frames remaining
 }
 
 function snapshotHUD(game: GameState): HUDValues {
@@ -100,6 +102,10 @@ function snapshotHUD(game: GameState): HUDValues {
     heroHp: game.hero.health,
     heroMaxHp: game.hero.maxHealth,
     potionCount: game.backpack?.healingPotion || 0,
+    eliteVariant: game.activeEliteVariant || null,
+    eliteTimeLeft: game.activeEliteId != null
+      ? Math.max(0, 10800 - (game.frame - (game.eliteLastSpawnFrame || 0)))
+      : 0,
   };
 }
 
@@ -153,6 +159,30 @@ const TopBar = memo(({ hud, cameraMode, onCycleCameraMode, onOpenSettings,
           GOLD: {formatNumber(hud.gold)}
         </div>
       </div>
+
+      {/* Center: elite timer */}
+      {hud.eliteVariant && hud.eliteTimeLeft > 0 && (() => {
+        const sec = Math.ceil(hud.eliteTimeLeft / 60);
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        const urgent = sec <= 30;
+        return (
+          <div style={{
+            position: 'absolute', top: 3, left: '50%', transform: 'translateX(-50%)',
+            background: urgent ? 'rgba(120,20,20,0.9)' : 'rgba(60,20,80,0.9)',
+            border: `1px solid ${urgent ? '#ff4444' : '#aa66dd'}`,
+            borderRadius: 4, padding: '2px 8px',
+            fontSize: 9, textAlign: 'center', pointerEvents: 'none',
+            color: urgent ? '#ff6666' : '#ddaaff',
+            animation: urgent ? 'pulse 1s infinite' : undefined,
+          }}>
+            <div style={{ fontSize: 8, color: urgent ? '#ff8888' : '#bb88dd', marginBottom: 1 }}>
+              ELITE: {hud.eliteVariant.toUpperCase()}
+            </div>
+            <div>{m}:{s.toString().padStart(2, '0')}</div>
+          </div>
+        );
+      })()}
 
       {/* Right: settings, camera, music */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
