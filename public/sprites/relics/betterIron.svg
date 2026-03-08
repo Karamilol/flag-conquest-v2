@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Iron ingot stack with hammer and anvil hint -->
+  <!-- Bottom ingot -->
+  <path d="M4,22 L8,18 L28,18 L28,22 L24,26 L4,26Z" fill="#777777"/>
+  <path d="M4,22 L8,18 L28,18 L28,22Z" fill="#999999" opacity="0.4"/>
+  <path d="M28,18 L28,22 L24,26 L24,22Z" fill="#555555" opacity="0.4"/>
+  <!-- Middle ingot -->
+  <path d="M6,18 L10,14 L26,14 L26,18 L22,22 L6,22Z" fill="#888888"/>
+  <path d="M6,18 L10,14 L26,14 L26,18Z" fill="#aaaaaa" opacity="0.4"/>
+  <path d="M26,14 L26,18 L22,22 L22,18Z" fill="#666666" opacity="0.4"/>
+  <!-- Top ingot -->
+  <path d="M8,14 L12,10 L24,10 L24,14 L20,18 L8,18Z" fill="#999999"/>
+  <path d="M8,14 L12,10 L24,10 L24,14Z" fill="#bbbbbb" opacity="0.4"/>
+  <path d="M24,10 L24,14 L20,18 L20,14Z" fill="#777777" opacity="0.4"/>
+  <!-- Quality mark on top ingot -->
+  <text x="16" y="15" text-anchor="middle" font-size="4" font-weight="bold" fill="#dddddd" opacity="0.5">Fe+</text>
+  <!-- Metal shine -->
+  <path d="M13,11 L20,11" fill="none" stroke="#ffffff" stroke-width="0.4" opacity="0.25" stroke-linecap="round"/>
+  <circle cx="13" cy="11" r="0.5" fill="#ffffff" opacity="0.25"/>
+  <!-- Sparkle for quality -->
+  <g fill="#ffdd88" opacity="0.4">
+    <path d="M26,6 L26.3,4.5 L26.6,6 L28,5.5 L26.6,6.3 L26.3,7.5 L26,6.3 L24.5,5.5Z"/>
+  </g>
+</svg>

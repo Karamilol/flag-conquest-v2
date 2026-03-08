@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Flaming meteor hurtling down -->
+  <!-- Trail -->
+  <path d="M14,14 Q20,6 28,2" fill="none" stroke="#ff8800" stroke-width="2" opacity="0.3" stroke-linecap="round"/>
+  <path d="M14,14 Q22,8 30,4" fill="none" stroke="#ffaa33" stroke-width="1" opacity="0.2" stroke-linecap="round"/>
+  <!-- Flame tail -->
+  <path d="M16,12 Q20,8 26,4 Q22,6 20,10 Q22,6 24,4 Q20,8 18,12Z" fill="#ff6600" opacity="0.6"/>
+  <path d="M15,14 Q18,10 22,6 Q20,9 18,13Z" fill="#ffaa33" opacity="0.4"/>
+  <!-- Meteor rock body -->
+  <circle cx="12" cy="18" r="7" fill="#664422"/>
+  <circle cx="12" cy="18" r="7" fill="none" stroke="#553311" stroke-width="0.5"/>
+  <!-- Rock texture/craters -->
+  <circle cx="10" cy="16" r="2" fill="#553311" opacity="0.5"/>
+  <circle cx="14" cy="20" r="1.5" fill="#553311" opacity="0.4"/>
+  <circle cx="9" cy="20" r="1" fill="#553311" opacity="0.4"/>
+  <!-- Molten cracks -->
+  <path d="M8,15 L10,18 L8,21" fill="none" stroke="#ff6600" stroke-width="0.6" opacity="0.7"/>
+  <path d="M12,14 L14,17 L12,19" fill="none" stroke="#ff8800" stroke-width="0.5" opacity="0.6"/>
+  <path d="M15,16 L16,20" fill="none" stroke="#ff6600" stroke-width="0.5" opacity="0.5"/>
+  <!-- Fire aura around meteor -->
+  <circle cx="12" cy="18" r="9" fill="#ff4400" opacity="0.1"/>
+  <circle cx="12" cy="18" r="8" fill="#ff6600" opacity="0.08"/>
+  <!-- Impact zone indicator -->
+  <ellipse cx="12" cy="28" rx="6" ry="2" fill="#ff4400" opacity="0.2"/>
+  <ellipse cx="12" cy="28" rx="4" ry="1.2" fill="#ff6600" opacity="0.15"/>
+  <!-- Debris particles -->
+  <circle cx="6" cy="24" r="0.5" fill="#885533" opacity="0.5"/>
+  <circle cx="18" cy="24" r="0.6" fill="#885533" opacity="0.4"/>
+  <circle cx="4" cy="20" r="0.4" fill="#996644" opacity="0.4"/>
+</svg>

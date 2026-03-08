@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Impact flash glow -->
+  <circle cx="16" cy="14" r="8" fill="#ff8" opacity="0.15"/>
+  <circle cx="16" cy="14" r="5" fill="#ffa" opacity="0.2"/>
+  <!-- Left sword blade -->
+  <path d="M6 4 L14 14 L15 16 L12 15 L4 7 Z" fill="#c0c0c0"/>
+  <path d="M6 4 L13 13 L12 15 L4 7 Z" fill="#e0e0e0" opacity="0.5"/>
+  <path d="M7 5 L12 11" stroke="white" stroke-width="0.5" opacity="0.4"/>
+  <!-- Left sword edge -->
+  <path d="M6 4 L14 14 L15 16 L12 15 L4 7 Z" stroke="#888" stroke-width="0.5" fill="none"/>
+  <!-- Left hilt -->
+  <path d="M4 7 L3 8 L6 11 L7 10 Z" fill="#8B6914"/>
+  <rect x="2" y="6" width="4" height="1.2" rx="0.3" fill="#DAA520" transform="rotate(-45 4 7)"/>
+  <circle cx="3" cy="8" r="0.8" fill="#DAA520"/>
+  <circle cx="3" cy="8" r="0.5" fill="#fc6" opacity="0.5"/>
+  <!-- Right sword blade -->
+  <path d="M26 4 L18 14 L17 16 L20 15 L28 7 Z" fill="#c0c0c0"/>
+  <path d="M26 4 L19 13 L20 15 L28 7 Z" fill="#e0e0e0" opacity="0.5"/>
+  <path d="M25 5 L20 11" stroke="white" stroke-width="0.5" opacity="0.4"/>
+  <!-- Right sword edge -->
+  <path d="M26 4 L18 14 L17 16 L20 15 L28 7 Z" stroke="#888" stroke-width="0.5" fill="none"/>
+  <!-- Right hilt -->
+  <path d="M28 7 L29 8 L26 11 L25 10 Z" fill="#8B6914"/>
+  <rect x="26" y="6" width="4" height="1.2" rx="0.3" fill="#DAA520" transform="rotate(45 28 7)"/>
+  <circle cx="29" cy="8" r="0.8" fill="#DAA520"/>
+  <circle cx="29" cy="8" r="0.5" fill="#fc6" opacity="0.5"/>
+  <!-- Impact flash star -->
+  <polygon points="16,8 17,12 21,13 17.5,15 18.5,19 16,16.5 13.5,19 14.5,15 11,13 15,12" fill="#ff8" opacity="0.7"/>
+  <polygon points="16,10 16.5,12.5 19,13 17,14.5 17.5,17 16,15.5 14.5,17 15,14.5 13,13 15.5,12.5" fill="white" opacity="0.5"/>
+  <!-- Spark particles -->
+  <circle cx="12" cy="10" r="0.6" fill="#ffa" opacity="0.6"/>
+  <circle cx="20" cy="10" r="0.5" fill="#ffa" opacity="0.5"/>
+  <circle cx="16" cy="7" r="0.4" fill="white" opacity="0.6"/>
+  <circle cx="14" cy="18" r="0.4" fill="#ff8" opacity="0.4"/>
+  <circle cx="18" cy="18" r="0.4" fill="#ff8" opacity="0.4"/>
+  <!-- Impact lines -->
+  <line x1="16" y1="6" x2="16" y2="3" stroke="#ff8" stroke-width="0.6" opacity="0.4" stroke-linecap="round"/>
+  <line x1="11" y1="9" x2="9" y2="7" stroke="#ff8" stroke-width="0.5" opacity="0.3" stroke-linecap="round"/>
+  <line x1="21" y1="9" x2="23" y2="7" stroke="#ff8" stroke-width="0.5" opacity="0.3" stroke-linecap="round"/>
+  <!-- Ground shadow -->
+  <ellipse cx="16" cy="28" rx="8" ry="2" fill="#000" opacity="0.1"/>
+</svg>

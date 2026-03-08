@@ -1,5 +1,6 @@
 import { COLORS } from '../../constants';
 import { ACHIEVEMENTS, CATEGORY_ORDER, CATEGORY_LABELS, type AchievementProgress } from '../../achievements';
+import { SpriteIcon } from '../sprites/SpriteIcon';
 
 interface Props {
   achievementProgress: AchievementProgress[];
@@ -83,7 +84,7 @@ export function AchievementPanel({ achievementProgress, stats, onClaim, onClose 
                   }}
                 >
                   {/* Icon */}
-                  <span style={{ fontSize: '15px', width: '20px', textAlign: 'center' }}>{def.icon}</span>
+                  <span style={{ width: '20px', textAlign: 'center', display: 'inline-flex', justifyContent: 'center' }}><SpriteIcon path={`achievements/${def.id}`} size={18} fallback={def.icon} /></span>
 
                   {/* Name + description + tier label */}
                   <div style={{ flex: 1, minWidth: 0 }}>

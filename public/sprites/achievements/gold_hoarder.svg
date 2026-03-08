@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Chest body -->
+  <rect x="5" y="14" width="22" height="13" rx="2" fill="#5a3210"/>
+  <rect x="6" y="15" width="20" height="11" rx="1" fill="#7a4a1a"/>
+  <!-- Wood grain -->
+  <line x1="6" y1="18" x2="26" y2="18" stroke="#5a3210" stroke-width="0.5" opacity="0.5"/>
+  <line x1="6" y1="22" x2="26" y2="22" stroke="#5a3210" stroke-width="0.5" opacity="0.5"/>
+  <!-- Metal bands -->
+  <rect x="5" y="14" width="22" height="2" rx="0.5" fill="#8B7355" opacity="0.6"/>
+  <rect x="5" y="25" width="22" height="2" rx="0.5" fill="#8B7355" opacity="0.6"/>
+  <!-- Chest lid (open, tilted back) -->
+  <path d="M5,14 Q5,8 7,7 L25,7 Q27,8 27,14 Z" fill="#6b3c14"/>
+  <path d="M6,13 Q6,9 8,8 L24,8 Q26,9 26,13 Z" fill="#8a5520"/>
+  <!-- Lid highlight -->
+  <path d="M8,9 L24,9 Q25,10 25,12 L7,12 Q7,10 8,9 Z" fill="#a06828" opacity="0.5"/>
+  <!-- Lock/clasp -->
+  <rect x="14" y="13" width="4" height="3" rx="0.5" fill="#c9a84c"/>
+  <rect x="14.5" y="13.5" width="3" height="2" rx="0.3" fill="#dab850" opacity="0.7"/>
+  <circle cx="16" cy="14.5" r="0.6" fill="#5a3210"/>
+  <!-- Gold coins overflowing -->
+  <ellipse cx="10" cy="10" rx="2.5" ry="1.5" fill="#e8b830"/>
+  <ellipse cx="10" cy="10" rx="2" ry="1" fill="#f0d040" opacity="0.7"/>
+  <ellipse cx="10" cy="9.5" rx="1" ry="0.5" fill="#fff4a0" opacity="0.5"/>
+  <ellipse cx="15" cy="8" rx="2.5" ry="1.5" fill="#daa520"/>
+  <ellipse cx="15" cy="8" rx="2" ry="1" fill="#f0c838" opacity="0.7"/>
+  <ellipse cx="15" cy="7.5" rx="1" ry="0.5" fill="#fff4a0" opacity="0.5"/>
+  <ellipse cx="21" cy="9" rx="2.5" ry="1.5" fill="#e8b830"/>
+  <ellipse cx="21" cy="9" rx="2" ry="1" fill="#f0d040" opacity="0.7"/>
+  <ellipse cx="21" cy="8.5" rx="1" ry="0.5" fill="#fff4a0" opacity="0.5"/>
+  <ellipse cx="13" cy="5" rx="2" ry="1.2" fill="#daa520"/>
+  <ellipse cx="13" cy="5" rx="1.5" ry="0.8" fill="#f0c838" opacity="0.6"/>
+  <ellipse cx="18" cy="6" rx="2" ry="1.2" fill="#e0a828"/>
+  <ellipse cx="18" cy="6" rx="1.5" ry="0.8" fill="#f0d040" opacity="0.6"/>
+  <!-- Coin detail marks -->
+  <circle cx="10" cy="10" r="0.7" fill="#c89820" opacity="0.5"/>
+  <circle cx="15" cy="8" r="0.7" fill="#c89820" opacity="0.5"/>
+  <circle cx="21" cy="9" r="0.7" fill="#c89820" opacity="0.5"/>
+  <!-- Gold glow -->
+  <ellipse cx="16" cy="8" rx="10" ry="5" fill="#ffd700" opacity="0.12"/>
+  <ellipse cx="16" cy="7" rx="6" ry="3" fill="#fff4a0" opacity="0.1"/>
+  <!-- Sparkles -->
+  <path d="M8,4 L8.5,3 L9,4 L8.5,5 Z" fill="#fff8c0" opacity="0.8"/>
+  <path d="M23,4 L23.4,3.2 L23.8,4 L23.4,4.8 Z" fill="#fff8c0" opacity="0.7"/>
+  <path d="M16,3 L16.3,2.2 L16.6,3 L16.3,3.8 Z" fill="#ffffff" opacity="0.6"/>
+</svg>

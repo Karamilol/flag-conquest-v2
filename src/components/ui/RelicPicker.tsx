@@ -1,6 +1,7 @@
 import { COLORS } from '../../constants';
 import { RELIC_SETS, getRelicLevel } from '../../relics';
 import type { RelicCollection } from '../../relics';
+import { SpriteIcon } from '../sprites/SpriteIcon';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#888',
@@ -61,7 +62,7 @@ export function RelicPicker({ relics, onSelect, relicCollection }: Props) {
               {(() => { const setName = getSetNameForRelic(relic.id); return setName ? (
                 <div style={{ fontSize: '7px', color: '#8888cc', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{setName}</div>
               ) : null; })()}
-              <div style={{ fontSize: '22px', marginBottom: '5px' }}>{relic.icon}</div>
+              <div style={{ marginBottom: '5px' }}><SpriteIcon path={`relics/${relic.id}`} size={28} fallback={relic.icon} /></div>
               <div style={{ color: '#FFD700', fontSize: '10px', marginBottom: '3px' }}>{relic.name}</div>
               <div style={{ color: borderColor, fontSize: '9px', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '1px' }}>
                 {RARITY_LABELS[relic.rarity] || 'Common'}

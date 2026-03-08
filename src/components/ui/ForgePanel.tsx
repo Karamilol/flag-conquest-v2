@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { COLORS } from '../../constants';
 import { ANCIENT_RELIC_DEFS, FORGE_COST, forgeAncientRelic, getAncientRelicLevel } from '../../ancientRelics';
+import { SpriteIcon } from '../sprites/SpriteIcon';
 
 interface Props {
   ancientFragments: number;
@@ -78,7 +79,7 @@ export function ForgePanel({ ancientFragments, ancientRelicsOwned, ancientRelicC
               transition: 'all 0.3s',
             }}>
               <div style={{ display: 'flex', gap: '5px', alignItems: 'center', marginBottom: '2px' }}>
-                <span style={{ fontSize: '15px' }}>{relic.icon}</span>
+                <SpriteIcon path={`relics/${relic.id}`} size={18} fallback={relic.icon} />
                 <div style={{ flex: 1 }}>
                   <div style={{ color: owned ? '#fff' : '#666', fontSize: '9px', fontWeight: 'bold' }}>{relic.name}</div>
                   <div style={{ color: catColors[relic.category] || '#888', fontSize: '8px' }}>{relic.category.toUpperCase()}</div>
@@ -108,7 +109,7 @@ export function ForgePanel({ ancientFragments, ancientRelicsOwned, ancientRelicC
           borderRadius: '6px', padding: '10px', textAlign: 'center',
           marginBottom: '10px', width: '100%',
         }}>
-          <div style={{ fontSize: '25px', marginBottom: '4px' }}>{forgedDef.icon}</div>
+          <div style={{ marginBottom: '4px' }}><SpriteIcon path={`relics/${forgedDef.id}`} size={30} fallback={forgedDef.icon} /></div>
           <div style={{ color: '#dd88ff', fontSize: '12px', fontWeight: 'bold', marginBottom: '3px' }}>
             {forgedDef.name}
             {(ancientRelicCopies[forgedDef.id] || 0) > 1 && <span style={{ color: '#aa88ff', fontSize: '9px' }}> (DUPLICATE - Lv{getAncientRelicLevel(ancientRelicCopies[forgedDef.id] || 1)})</span>}

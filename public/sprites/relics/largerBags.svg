@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Gold coin pouch -->
+  <path d="M10,12 Q8,12 7,14 L6,24 Q6,28 10,28 L22,28 Q26,28 26,24 L25,14 Q24,12 22,12Z" fill="#8B6914"/>
+  <path d="M10,12 Q8,12 7.5,14 L7,22 Q8,20 12,20 L12,13 Q11,12 10,12Z" fill="#a07a1e" opacity="0.5"/>
+  <!-- Bag tie -->
+  <path d="M10,12 Q12,9 16,8 Q20,9 22,12" fill="none" stroke="#6a4a10" stroke-width="1.2"/>
+  <ellipse cx="16" cy="10" rx="3" ry="1.5" fill="#c4984a"/>
+  <!-- Bag texture lines -->
+  <line x1="12" y1="15" x2="12" y2="26" stroke="#6a4a10" stroke-width="0.4" opacity="0.3"/>
+  <line x1="20" y1="15" x2="20" y2="26" stroke="#6a4a10" stroke-width="0.4" opacity="0.3"/>
+  <!-- Coins peeking out top -->
+  <circle cx="14" cy="9" r="2.5" fill="#daa520" stroke="#b8860b" stroke-width="0.4"/>
+  <circle cx="18" cy="8" r="2.3" fill="#eebb33" stroke="#cc9922" stroke-width="0.4"/>
+  <circle cx="14" cy="9" r="1.5" fill="none" stroke="#b8860b" stroke-width="0.3"/>
+  <circle cx="18" cy="8" r="1.4" fill="none" stroke="#cc9922" stroke-width="0.3"/>
+  <!-- Coin shine -->
+  <circle cx="13" cy="8" r="0.5" fill="#ffffff" opacity="0.4"/>
+  <circle cx="17" cy="7" r="0.4" fill="#ffffff" opacity="0.35"/>
+  <!-- Bag bottom shadow -->
+  <ellipse cx="16" cy="28" rx="8" ry="1.5" fill="#5a3a10" opacity="0.2"/>
+</svg>

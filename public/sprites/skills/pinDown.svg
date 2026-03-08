@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Arrows pinning down into ground -->
+  <!-- Ground -->
+  <path d="M2,26 Q16,24 30,26 L30,30 Q16,28 2,30Z" fill="#5a4a3a" opacity="0.4"/>
+  <!-- Arrow 1 (left, stuck in ground) -->
+  <line x1="8" y1="5" x2="10" y2="24" stroke="#8B6914" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M10,24 L8,20 L10,21 L12,20Z" fill="#8899aa"/>
+  <path d="M8,5 L7,7 L8,6.5 L9,7Z" fill="#cc4444" opacity="0.7"/>
+  <!-- Arrow 2 (center, stuck in ground) -->
+  <line x1="16" y1="3" x2="16" y2="23" stroke="#8B6914" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M16,23 L14,19 L16,20 L18,19Z" fill="#8899aa"/>
+  <path d="M16,3 L15,5 L16,4.5 L17,5Z" fill="#cc4444" opacity="0.7"/>
+  <!-- Arrow 3 (right, stuck in ground) -->
+  <line x1="24" y1="6" x2="22" y2="25" stroke="#8B6914" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M22,25 L20,21 L22,22 L24,21Z" fill="#8899aa"/>
+  <path d="M24,6 L23,8 L24,7.5 L25,8Z" fill="#cc4444" opacity="0.7"/>
+  <!-- Impact cracks in ground -->
+  <path d="M10,25 L8,27" stroke="#4a3a2a" stroke-width="0.5" opacity="0.5"/>
+  <path d="M10,25 L12,27" stroke="#4a3a2a" stroke-width="0.5" opacity="0.5"/>
+  <path d="M16,24 L14,26" stroke="#4a3a2a" stroke-width="0.5" opacity="0.5"/>
+  <path d="M16,24 L18,26.5" stroke="#4a3a2a" stroke-width="0.5" opacity="0.5"/>
+  <path d="M22,25.5 L20,27.5" stroke="#4a3a2a" stroke-width="0.5" opacity="0.5"/>
+  <!-- Slow effect waves -->
+  <path d="M4,18 Q10,16 16,18 Q22,20 28,18" fill="none" stroke="#aa6622" stroke-width="0.6" opacity="0.3"/>
+  <path d="M4,20 Q10,18 16,20 Q22,22 28,20" fill="none" stroke="#aa6622" stroke-width="0.5" opacity="0.2"/>
+</svg>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Crystal ball on ornate stand -->
+  <!-- Glow -->
+  <circle cx="16" cy="14" r="12" fill="#8855cc" opacity="0.06"/>
+  <!-- Ball -->
+  <circle cx="16" cy="14" r="9" fill="#553399" opacity="0.6"/>
+  <circle cx="16" cy="14" r="9" fill="none" stroke="#7755bb" stroke-width="0.6"/>
+  <!-- Inner mist -->
+  <path d="M10,12 Q14,8 20,12 Q22,16 18,18 Q14,20 10,16Z" fill="#7755cc" opacity="0.3"/>
+  <!-- Swirling energy -->
+  <path d="M12,10 Q16,8 20,12" fill="none" stroke="#9977dd" stroke-width="0.8" opacity="0.4" stroke-linecap="round"/>
+  <path d="M20,14 Q18,18 14,18" fill="none" stroke="#aa88ee" stroke-width="0.6" opacity="0.3" stroke-linecap="round"/>
+  <!-- Highlight -->
+  <circle cx="12" cy="10" r="2.5" fill="#ffffff" opacity="0.15"/>
+  <circle cx="11.5" cy="9.5" r="1" fill="#ffffff" opacity="0.25"/>
+  <!-- Vision inside (eye shape) -->
+  <path d="M12,14 Q16,11 20,14 Q16,17 12,14Z" fill="#aa77ff" opacity="0.2"/>
+  <circle cx="16" cy="14" r="1.2" fill="#cc99ff" opacity="0.3"/>
+  <!-- Stand base -->
+  <path d="M10,22 Q10,24 8,25 L24,25 Q22,24 22,22Z" fill="#c4984a"/>
+  <path d="M8,25 L24,25 L26,28 L6,28Z" fill="#8B6914"/>
+  <path d="M8,25 L24,25 L25,26 L7,26Z" fill="#a07a1e" opacity="0.4"/>
+  <!-- Stand claws -->
+  <path d="M11,22 Q12,23 11,24" fill="none" stroke="#c4984a" stroke-width="1" stroke-linecap="round"/>
+  <path d="M21,22 Q20,23 21,24" fill="none" stroke="#c4984a" stroke-width="1" stroke-linecap="round"/>
+  <!-- Magic particles -->
+  <circle cx="8" cy="6" r="0.5" fill="#cc99ff" opacity="0.5"/>
+  <circle cx="24" cy="8" r="0.4" fill="#cc99ff" opacity="0.4"/>
+  <circle cx="6" cy="18" r="0.4" fill="#bb88ff" opacity="0.35"/>
+</svg>

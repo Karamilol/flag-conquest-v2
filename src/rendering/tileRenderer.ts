@@ -224,12 +224,11 @@ export class TileCache {
     worldYOffset: number,
   ): void {
     if (!this.sanctuary || !this.sanctuary.ready) return;
-    // Sanctuary SVG viewBox: x=0, y=265, w=200, h=80
-    // baseX=60, so the SVG covers world x 0-200
-    const drawX = 0 - camX;
-    const drawY = (GROUND_Y - 55) + worldYOffset;
+    // Sanctuary SVG viewBox: x=-15, y=GY-85, w=200, h=110
+    const drawX = -15 - camX;
+    const drawY = (GROUND_Y - 85) + worldYOffset;
     if (drawX > VIEWPORT_W + 60 || drawX + 200 < -60) return;
-    ctx.drawImage(this.sanctuary.img, drawX, drawY, 200, 80);
+    ctx.drawImage(this.sanctuary.img, drawX, drawY, 200, 110);
   }
 
   /** Clear all cached tiles (call on zone change) */

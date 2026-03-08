@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Pulsing rings -->
+  <circle cx="16" cy="16" r="15" stroke="#0ff" stroke-width="0.4" fill="none" opacity="0.15"/>
+  <circle cx="16" cy="16" r="13" stroke="#0ff" stroke-width="0.5" fill="none" opacity="0.2"/>
+  <circle cx="16" cy="16" r="11" stroke="#4ff" stroke-width="0.5" fill="none" opacity="0.25"/>
+  <!-- Outer orb glow -->
+  <circle cx="16" cy="16" r="9" fill="#036" opacity="0.3"/>
+  <circle cx="16" cy="16" r="8" fill="#048" opacity="0.4"/>
+  <!-- Orb body -->
+  <circle cx="16" cy="16" r="7" fill="#0a6a8a"/>
+  <circle cx="16" cy="16" r="7" fill="#0c8aaa" opacity="0.4"/>
+  <!-- Orb shading (bottom dark) -->
+  <ellipse cx="16" cy="19" rx="6" ry="4" fill="#044" opacity="0.3"/>
+  <!-- Orb inner glow -->
+  <circle cx="16" cy="16" r="4.5" fill="#0ae" opacity="0.3"/>
+  <circle cx="16" cy="15" r="3" fill="#0cf" opacity="0.25"/>
+  <!-- Energy core center -->
+  <circle cx="16" cy="16" r="2" fill="#4ff"/>
+  <circle cx="16" cy="16" r="2" fill="white" opacity="0.3"/>
+  <circle cx="16" cy="15.5" r="1.2" fill="white" opacity="0.4"/>
+  <!-- Core highlight -->
+  <circle cx="14.5" cy="13.5" r="1.5" fill="white" opacity="0.2"/>
+  <circle cx="14" cy="13" r="0.7" fill="white" opacity="0.35"/>
+  <!-- Energy lines radiating from core -->
+  <line x1="16" y1="9" x2="16" y2="7" stroke="#4ff" stroke-width="0.6" opacity="0.4" stroke-linecap="round"/>
+  <line x1="16" y1="23" x2="16" y2="25" stroke="#4ff" stroke-width="0.6" opacity="0.3" stroke-linecap="round"/>
+  <line x1="9" y1="16" x2="7" y2="16" stroke="#4ff" stroke-width="0.6" opacity="0.4" stroke-linecap="round"/>
+  <line x1="23" y1="16" x2="25" y2="16" stroke="#4ff" stroke-width="0.6" opacity="0.3" stroke-linecap="round"/>
+  <line x1="11" y1="11" x2="9.5" y2="9.5" stroke="#4ff" stroke-width="0.5" opacity="0.3" stroke-linecap="round"/>
+  <line x1="21" y1="11" x2="22.5" y2="9.5" stroke="#4ff" stroke-width="0.5" opacity="0.3" stroke-linecap="round"/>
+  <line x1="11" y1="21" x2="9.5" y2="22.5" stroke="#4ff" stroke-width="0.5" opacity="0.25" stroke-linecap="round"/>
+  <line x1="21" y1="21" x2="22.5" y2="22.5" stroke="#4ff" stroke-width="0.5" opacity="0.25" stroke-linecap="round"/>
+  <!-- Orbiting particles -->
+  <circle cx="10" cy="8" r="0.6" fill="#4ff" opacity="0.5"/>
+  <circle cx="23" cy="10" r="0.5" fill="#4ff" opacity="0.4"/>
+  <circle cx="22" cy="23" r="0.5" fill="#0cf" opacity="0.4"/>
+  <circle cx="8" cy="22" r="0.4" fill="#0cf" opacity="0.35"/>
+  <!-- Orb outline -->
+  <circle cx="16" cy="16" r="7" stroke="#088" stroke-width="0.5" fill="none" opacity="0.5"/>
+</svg>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Top hat with +1 defense -->
+  <!-- Hat brim -->
+  <ellipse cx="16" cy="22" rx="12" ry="3" fill="#222222"/>
+  <ellipse cx="16" cy="22" rx="12" ry="3" fill="none" stroke="#444444" stroke-width="0.5"/>
+  <!-- Hat brim top -->
+  <ellipse cx="16" cy="21.5" rx="11" ry="2.5" fill="#333333" opacity="0.5"/>
+  <!-- Hat body (cylinder) -->
+  <rect x="8" y="6" width="16" height="16" rx="1" fill="#222222"/>
+  <rect x="8" y="6" width="6" height="16" rx="0.5" fill="#333333" opacity="0.3"/>
+  <!-- Hat band -->
+  <rect x="8" y="18" width="16" height="2" fill="#cc3333"/>
+  <rect x="8" y="18" width="16" height="0.7" fill="#dd5555" opacity="0.3"/>
+  <!-- Hat top -->
+  <ellipse cx="16" cy="6" rx="8" ry="2.5" fill="#2a2a2a"/>
+  <ellipse cx="14" cy="5.5" rx="3" ry="1" fill="#444444" opacity="0.3"/>
+  <!-- Shine -->
+  <path d="M10,8 L10,16" fill="none" stroke="#555555" stroke-width="0.5" opacity="0.3" stroke-linecap="round"/>
+  <circle cx="10" cy="8" r="0.5" fill="#ffffff" opacity="0.15"/>
+  <!-- Defense shield emblem on band -->
+  <path d="M16,17.5 Q14.5,18 14.5,19 Q14.5,20 16,20.5 Q17.5,20 17.5,19 Q17.5,18 16,17.5Z" fill="#aabbcc" opacity="0.5"/>
+  <!-- +1 text -->
+  <text x="26" y="10" font-size="5" font-weight="bold" fill="#44aaff" opacity="0.5">+1</text>
+  <!-- Sparkle -->
+  <g fill="#ffdd88" opacity="0.4">
+    <path d="M26,14 L26.3,12.5 L26.6,14 L28,13.5 L26.6,14.3 L26.3,15.5 L26,14.3 L24.5,13.5Z"/>
+  </g>
+</svg>

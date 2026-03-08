@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Sturdy kite shield with defense aura -->
+  <!-- Shield aura glow -->
+  <path d="M16,1 Q4,6 4,14 Q4,24 16,31 Q28,24 28,14 Q28,6 16,1Z" fill="#6666cc" opacity="0.15"/>
+  <!-- Shield body -->
+  <path d="M16,3 Q6,7 6,14 Q6,23 16,29 Q26,23 26,14 Q26,7 16,3Z" fill="#4455aa"/>
+  <!-- Shield inner border -->
+  <path d="M16,5 Q8,8 8,14 Q8,22 16,27 Q24,22 24,14 Q24,8 16,5Z" fill="#5566bb"/>
+  <!-- Shield cross emblem -->
+  <rect x="14.5" y="8" width="3" height="16" rx="0.5" fill="#8899cc"/>
+  <rect x="9" y="14" width="14" height="3" rx="0.5" fill="#8899cc"/>
+  <!-- Emblem highlight -->
+  <rect x="15" y="8.5" width="1.2" height="15" rx="0.3" fill="#aabbdd" opacity="0.4"/>
+  <rect x="9.5" y="14.5" width="13" height="1.2" rx="0.3" fill="#aabbdd" opacity="0.4"/>
+  <!-- Shield rim -->
+  <path d="M16,3 Q6,7 6,14 Q6,23 16,29 Q26,23 26,14 Q26,7 16,3Z" fill="none" stroke="#334488" stroke-width="1"/>
+  <!-- Metal studs -->
+  <circle cx="10" cy="10" r="0.8" fill="#aabbcc"/>
+  <circle cx="22" cy="10" r="0.8" fill="#aabbcc"/>
+  <circle cx="10" cy="20" r="0.8" fill="#aabbcc"/>
+  <circle cx="22" cy="20" r="0.8" fill="#aabbcc"/>
+  <!-- Shine -->
+  <path d="M10,8 Q12,7 14,7" fill="none" stroke="#ffffff" stroke-width="0.6" opacity="0.3" stroke-linecap="round"/>
+  <circle cx="10" cy="8" r="0.6" fill="#ffffff" opacity="0.25"/>
+</svg>

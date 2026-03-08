@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Blueprint paper with building plans -->
+  <!-- Paper body -->
+  <rect x="4" y="4" width="24" height="24" rx="1" fill="#2255aa"/>
+  <!-- Grid lines -->
+  <g stroke="#4477cc" stroke-width="0.3" opacity="0.4">
+    <line x1="4" y1="8" x2="28" y2="8"/>
+    <line x1="4" y1="12" x2="28" y2="12"/>
+    <line x1="4" y1="16" x2="28" y2="16"/>
+    <line x1="4" y1="20" x2="28" y2="20"/>
+    <line x1="4" y1="24" x2="28" y2="24"/>
+    <line x1="8" y1="4" x2="8" y2="28"/>
+    <line x1="12" y1="4" x2="12" y2="28"/>
+    <line x1="16" y1="4" x2="16" y2="28"/>
+    <line x1="20" y1="4" x2="20" y2="28"/>
+    <line x1="24" y1="4" x2="24" y2="28"/>
+  </g>
+  <!-- Building outline drawing -->
+  <g stroke="#88bbff" stroke-width="0.6" fill="none" opacity="0.8">
+    <!-- Foundation -->
+    <line x1="8" y1="24" x2="24" y2="24"/>
+    <!-- Walls -->
+    <line x1="8" y1="24" x2="8" y2="14"/>
+    <line x1="24" y1="24" x2="24" y2="14"/>
+    <!-- Roof -->
+    <line x1="8" y1="14" x2="16" y2="8"/>
+    <line x1="24" y1="14" x2="16" y2="8"/>
+    <!-- Door -->
+    <rect x="14" y="19" width="4" height="5"/>
+    <!-- Window -->
+    <rect x="10" y="16" width="3" height="3"/>
+  </g>
+  <!-- Dimension arrows -->
+  <g stroke="#aaddff" stroke-width="0.3" opacity="0.5">
+    <line x1="8" y1="26" x2="24" y2="26"/>
+    <line x1="8" y1="25.5" x2="8" y2="26.5"/>
+    <line x1="24" y1="25.5" x2="24" y2="26.5"/>
+  </g>
+  <!-- Corner curls -->
+  <path d="M26,4 Q28,4 28,6" fill="#2255aa" stroke="#1144aa" stroke-width="0.5"/>
+  <!-- Paper edge shadow -->
+  <rect x="4" y="4" width="24" height="24" rx="1" fill="none" stroke="#1144aa" stroke-width="0.5"/>
+</svg>

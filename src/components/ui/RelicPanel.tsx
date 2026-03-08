@@ -5,6 +5,7 @@ import {
   type RelicCollection, type RelicDef, type RelicSetDef,
 } from '../../relics';
 import { ANCIENT_RELIC_DEFS, getAncientRelicLevel, getAncientRelicDesc } from '../../ancientRelics';
+import { SpriteIcon } from '../sprites/SpriteIcon';
 
 interface Props {
   relicCollection: RelicCollection;
@@ -49,7 +50,7 @@ function RelicIcon({ relic, copies }: { relic: RelicDef; copies: number }) {
       display: 'flex', alignItems: 'flex-start', gap: '4px',
       padding: '1px 2px',
     }} title={`${relic.name}: ${scaledRelicDesc(relic, copies)}`}>
-      <span style={{ fontSize: '13px', flexShrink: 0 }}>{relic.icon}</span>
+      <SpriteIcon path={`relics/${relic.id}`} size={16} fallback={relic.icon} style={{ flexShrink: 0 }} />
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: '10px', color, fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {relic.name}
@@ -221,7 +222,7 @@ export function RelicPanel({ relicCollection, onClose, ancientFragments, dungeon
                     display: 'flex', alignItems: 'flex-start', gap: '4px',
                     padding: '1px 2px', opacity: owned ? 1 : 0.3,
                   }} title={owned ? `${relic.name}: ${getAncientRelicDesc(relic.id, level)}` : '???'}>
-                    <span style={{ fontSize: '13px', flexShrink: 0 }}>{owned ? relic.icon : '\u2753'}</span>
+                    <span style={{ fontSize: '13px', flexShrink: 0 }}>{owned ? <SpriteIcon path={`relics/${relic.id}`} size={16} fallback={relic.icon} /> : '\u2753'}</span>
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: '10px', color: owned ? (catColors[relic.category] || '#aa44ff') : '#444', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {owned ? relic.name : '???'}

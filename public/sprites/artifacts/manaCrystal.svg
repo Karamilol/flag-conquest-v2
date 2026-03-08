@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Background mana glow -->
+  <ellipse cx="16" cy="18" rx="10" ry="8" fill="#60f" opacity="0.08"/>
+  <ellipse cx="16" cy="16" rx="7" ry="6" fill="#80f" opacity="0.1"/>
+  <!-- Crystal main body -->
+  <path d="M16 3 L22 12 L20 26 L16 28 L12 26 L10 12 Z" fill="#4428a0"/>
+  <!-- Crystal facets - left -->
+  <path d="M16 3 L10 12 L12 26 L16 28 Z" fill="#5538b0" opacity="0.7"/>
+  <!-- Crystal facets - right -->
+  <path d="M16 3 L22 12 L20 26 L16 28 Z" fill="#3318a0" opacity="0.7"/>
+  <!-- Crystal facets - center highlight -->
+  <path d="M16 3 L13 12 L14 26 L16 28 L16 3 Z" fill="#7758d0" opacity="0.3"/>
+  <!-- Inner glow -->
+  <path d="M16 6 L19 12 L18 24 L16 26 L14 24 L13 12 Z" fill="#6648c0" opacity="0.4"/>
+  <path d="M16 8 L17 13 L16.5 22 L16 24 L15.5 22 L15 13 Z" fill="#8868e0" opacity="0.3"/>
+  <!-- Facet edge lines -->
+  <line x1="16" y1="3" x2="16" y2="28" stroke="#9978f0" stroke-width="0.3" opacity="0.4"/>
+  <line x1="10" y1="12" x2="22" y2="12" stroke="#9978f0" stroke-width="0.3" opacity="0.3"/>
+  <line x1="12" y1="26" x2="20" y2="26" stroke="#7758d0" stroke-width="0.3" opacity="0.3"/>
+  <!-- Crystal outline -->
+  <path d="M16 3 L22 12 L20 26 L16 28 L12 26 L10 12 Z" stroke="#3318a0" stroke-width="0.6" fill="none"/>
+  <!-- Bright highlight -->
+  <path d="M14 6 L12 11 L13 10 Z" fill="white" opacity="0.25"/>
+  <circle cx="14" cy="8" r="0.6" fill="white" opacity="0.3"/>
+  <!-- Sparkle at top -->
+  <path d="M16 1 L16.5 2.5 L18 3 L16.5 3.5 L16 5 L15.5 3.5 L14 3 L15.5 2.5 Z" fill="#b8f" opacity="0.6"/>
+  <!-- Side sparkles -->
+  <circle cx="9" cy="14" r="0.4" fill="#a8f" opacity="0.4"/>
+  <circle cx="23" cy="14" r="0.4" fill="#a8f" opacity="0.4"/>
+  <circle cx="11" cy="22" r="0.3" fill="#a8f" opacity="0.3"/>
+  <circle cx="21" cy="22" r="0.3" fill="#a8f" opacity="0.3"/>
+  <!-- Mana mist at base -->
+  <ellipse cx="16" cy="27" rx="5" ry="2" fill="#80f" opacity="0.15"/>
+  <ellipse cx="14" cy="27" rx="3" ry="1.5" fill="#a0f" opacity="0.1"/>
+</svg>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Outer ring -->
+  <circle cx="16" cy="16" r="14" fill="#c9a020" stroke="#8B6914" stroke-width="0.8"/>
+  <circle cx="16" cy="16" r="13" fill="#d4b040" stroke="#b08a18" stroke-width="0.4"/>
+  <!-- Inner ring -->
+  <circle cx="16" cy="16" r="11.5" fill="#e8d8b0" stroke="#8B6914" stroke-width="0.5"/>
+  <circle cx="16" cy="16" r="10.5" fill="#f0e8d0" stroke="#c9a020" stroke-width="0.3"/>
+
+  <!-- Compass degree marks -->
+  <path d="M16,3.5 L16,5.5" stroke="#6a5a40" stroke-width="0.5"/>
+  <path d="M16,26.5 L16,28.5" stroke="#6a5a40" stroke-width="0.5"/>
+  <path d="M3.5,16 L5.5,16" stroke="#6a5a40" stroke-width="0.5"/>
+  <path d="M26.5,16 L28.5,16" stroke="#6a5a40" stroke-width="0.5"/>
+  <!-- Minor tick marks -->
+  <path d="M21.5,4.5 L20.8,5.8" stroke="#8a7a60" stroke-width="0.3"/>
+  <path d="M26.5,9.5 L25.2,10.2" stroke="#8a7a60" stroke-width="0.3"/>
+  <path d="M26.5,22.5 L25.2,21.8" stroke="#8a7a60" stroke-width="0.3"/>
+  <path d="M21.5,27.5 L20.8,26.2" stroke="#8a7a60" stroke-width="0.3"/>
+  <path d="M10.5,27.5 L11.2,26.2" stroke="#8a7a60" stroke-width="0.3"/>
+  <path d="M5.5,22.5 L6.8,21.8" stroke="#8a7a60" stroke-width="0.3"/>
+  <path d="M5.5,9.5 L6.8,10.2" stroke="#8a7a60" stroke-width="0.3"/>
+  <path d="M10.5,4.5 L11.2,5.8" stroke="#8a7a60" stroke-width="0.3"/>
+
+  <!-- Cardinal direction letters -->
+  <text x="16" y="8.5" font-size="3" fill="#4a3a20" text-anchor="middle" font-family="serif" font-weight="bold">N</text>
+  <text x="16" y="26" font-size="2.5" fill="#6a5a40" text-anchor="middle" font-family="serif">S</text>
+  <text x="7.5" y="17" font-size="2.5" fill="#6a5a40" text-anchor="middle" font-family="serif">W</text>
+  <text x="24.5" y="17" font-size="2.5" fill="#6a5a40" text-anchor="middle" font-family="serif">E</text>
+
+  <!-- Compass needle - North (red) -->
+  <path d="M16,6 L17.5,16 L16,14 L14.5,16 Z" fill="#8B1A1A" stroke="#5a0f0f" stroke-width="0.3"/>
+  <path d="M16,6 L16,14 L14.5,16 Z" fill="#a02020" opacity="0.6"/>
+  <!-- Compass needle - South (silver) -->
+  <path d="M16,26 L17.5,16 L16,18 L14.5,16 Z" fill="#8a8a9a" stroke="#5a5a6a" stroke-width="0.3"/>
+  <path d="M16,26 L16,18 L14.5,16 Z" fill="#a0a0b0" opacity="0.6"/>
+
+  <!-- Center pivot -->
+  <circle cx="16" cy="16" r="1.5" fill="#c9a020" stroke="#8B6914" stroke-width="0.4"/>
+  <circle cx="16" cy="16" r="0.8" fill="#e0c040" opacity="0.7"/>
+  <circle cx="15.5" cy="15.5" r="0.3" fill="#fff" opacity="0.3"/>
+
+  <!-- Glass highlight -->
+  <path d="M10,8 Q12,6 14,7" fill="none" stroke="#fff" stroke-width="0.5" opacity="0.2"/>
+  <!-- Outer ring highlights -->
+  <path d="M6,10 Q10,4 16,3.5" fill="none" stroke="#e0c040" stroke-width="0.6" opacity="0.3"/>
+</svg>

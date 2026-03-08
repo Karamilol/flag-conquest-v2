@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { CAMERA_OFFSET, VIEWPORT_W } from '../constants';
+import { CAMERA_OFFSET, VIEWPORT_W, GROUND_Y } from '../constants';
 import { makeParticle } from '../utils/helpers';
-import type { GameState, PermanentUpgrades, ShardUpgrades, GameScreen, Artifact, CameraMode, Backpack, ConsumableId, ChallengeCompletions } from '../types';
+import type { GameState, PermanentUpgrades, ShardUpgrades, GameScreen, Artifact, CameraMode, Backpack, ConsumableId, ChallengeCompletions, DungeonMetaUpgrades } from '../types';
+import { passiveGoldPerMin } from '../utils/economy';
 import type { TickState } from '../systems/tickState';
 import { RELIC_SETS, getSetPieceCount, getRelicLevel, type RelicCollection } from '../relics';
 import { SYNERGY_PAIRS } from '../artifacts';
@@ -18,7 +19,6 @@ import { processHeroFlagCapture, processAllyFlagCapture, processChestCollection,
 import { processDungeonWaveTimer, processDungeonMining, processDungeonEndCheck, processDungeonPortalTimer, processTimedDungeonPortalTimer, processTimedDungeonTimer, processTimedDungeonEnd, processTimedDungeonFlagIncome, processRegaliaKeyPortal, processDungeonTickCounter } from '../systems/dungeon';
 import { processPetTick } from '../systems/pets';
 import { processEliteTracking, processForceSpawnElite } from '../systems/elites';
-import type { DungeonMetaUpgrades } from '../types';
 
 /** Shallow-copy an array of objects — uses Object.assign which is faster than spread for objects with many keys */
 function copyArray<T extends object>(arr: T[]): T[] {
@@ -579,6 +579,157 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
   };
 }
 
+/** Info passed to App.tsx when dungeon exits, for React state updates */
+export interface DungeonExitInfo {
+  fragmentsEarned: number;
+  metaUpgrades: DungeonMetaUpgrades;
+  dungeonUnlocked: boolean;
+  pityCounter: number;
+}
+
+/** Restore savedMainState onto gameRef when dungeonOver fires */
+function handleDungeonExit(g: GameState): DungeonExitInfo | null {
+  if (!g.inDungeon || !g.dungeonOver || !g.savedMainState) return null;
+  const ss = g.savedMainState;
+  const wasWave = g.dungeonType === 'wave';
+  const wasTimed = g.dungeonType === 'timed';
+
+  const fragmentsEarned = wasWave ? g.dungeonFragmentsEarned : 0;
+  const exitInfo: DungeonExitInfo = {
+    fragmentsEarned,
+    metaUpgrades: { ...g.dungeonMetaUpgrades },
+    dungeonUnlocked: g.dungeonUnlocked,
+    pityCounter: g.dungeonPityCounter,
+  };
+
+  // Gold restoration
+  const savedGold = ss.goldEarned;
+  let restoredGold: number;
+  if (wasTimed) {
+    const dungeonGoldDelta = Math.max(0, g.goldEarned - savedGold);
+    restoredGold = savedGold + dungeonGoldDelta;
+  } else {
+    const goldPerMin = passiveGoldPerMin(ss.runUpgrades as any);
+    const ticksInDungeon = g.dungeonTicksSpent || 0;
+    const passiveGold = Math.floor(goldPerMin * (ticksInDungeon / 3600) * 0.30);
+    restoredGold = savedGold + passiveGold;
+  }
+
+  // Hero returns at portal position with clamped HP
+  const portalIdx = ss.portalFlagIndex;
+  const portalX = portalIdx >= 0 ? (ss.flags[portalIdx]?.x || 40) : 40;
+
+  // Build exit particles
+  const exitParticles = [];
+  if (wasTimed) {
+    if (g.timedDungeonVictory) {
+      exitParticles.push(makeParticle(200, GROUND_Y - 80, 'REGALIA DUNGEON COMPLETE!', '#ffd700'));
+      exitParticles.push(makeParticle(200, GROUND_Y - 60, 'REGALIA EARNED!', '#ff88cc'));
+    } else {
+      exitParticles.push(makeParticle(200, GROUND_Y - 60, 'Regalia dungeon failed...', '#ff4444'));
+    }
+  } else {
+    exitParticles.push(makeParticle(200, GROUND_Y - 60, `Dungeon complete! +${fragmentsEarned} fragments`, '#aa44ff'));
+    const wavePassive = restoredGold - savedGold;
+    if (wavePassive > 0) {
+      exitParticles.push(makeParticle(200, GROUND_Y - 40, `+${wavePassive}g (Passive Income)`, '#44ff44'));
+    }
+  }
+  if (wasTimed) {
+    const dungeonEarnings = restoredGold - savedGold;
+    if (dungeonEarnings > 0) {
+      exitParticles.push(makeParticle(200, GROUND_Y - 40, `+${dungeonEarnings}g earned`, '#ffd700'));
+    }
+  }
+
+  // Restore all saved state fields
+  g.inDungeon = false;
+  g.dungeonType = null;
+  g.savedMainState = null;
+  g.flags = ss.flags;
+  g.enemies = ss.enemies;
+  g.enemyArchers = ss.enemyArchers;
+  g.enemyWraiths = ss.enemyWraiths;
+  g.enemyHounds = ss.enemyHounds;
+  g.enemyLichs = ss.enemyLichs;
+  g.enemyShadowAssassins = ss.enemyShadowAssassins;
+  g.enemyFlameCallers = ss.enemyFlameCallers;
+  g.enemyCorruptedSentinels = ss.enemyCorruptedSentinels;
+  g.enemyDungeonRats = [];
+  g.enemyFireImps = [];
+  g.enemyCursedKnights = [];
+  g.boss = ss.boss;
+  g.currentZone = ss.currentZone;
+  g.bossesDefeated = ss.bossesDefeated;
+  g.goldEarned = restoredGold;
+  g.totalGoldEarned = ss.totalGoldEarned;
+  g.flagsCaptured = ss.flagsCaptured;
+  g.portalFlagIndex = portalIdx;
+  g.armyHoldMode = ss.armyHoldMode;
+  g.cameraX = ss.cameraX;
+  g.incomeTimer = wasTimed ? g.incomeTimer : ss.incomeTimer;
+  g.incomeTimer2 = wasTimed ? g.incomeTimer2 : ss.incomeTimer2;
+  g.incomeTimer3 = wasTimed ? g.incomeTimer3 : ss.incomeTimer3;
+  g.incomeTimer4 = wasTimed ? g.incomeTimer4 : ss.incomeTimer4;
+  g.incomeTimer5 = wasTimed ? g.incomeTimer5 : ss.incomeTimer5;
+  g.incomeTimer6 = wasTimed ? g.incomeTimer6 : ss.incomeTimer6;
+  g.incomeTimer7 = wasTimed ? g.incomeTimer7 : ss.incomeTimer7;
+  g.incomeTimer8 = wasTimed ? g.incomeTimer8 : ss.incomeTimer8;
+  g.projectiles = ss.projectiles;
+  g.chests = ss.chests;
+  g.banners = ss.banners;
+  g.barricades = ss.barricades;
+  g.crystalTurrets = ss.crystalTurrets;
+  g.iceWalls = ss.iceWalls;
+  g.iceTurrets = ss.iceTurrets;
+  g.smithingBonusStacks = ss.smithingBonusStacks;
+  g.gemsThisRun = ss.gemsThisRun;
+  g.shardsThisRun = ss.shardsThisRun;
+  g.relicDrops = ss.relicDrops;
+  g.enemiesKilled = ss.enemiesKilled;
+  g.eliteKills = ss.eliteKills;
+  g.eliteLastSpawnFrame = ss.eliteLastSpawnFrame;
+  g.activeEliteId = ss.activeEliteId;
+  g.activeEliteVariant = ss.activeEliteVariant;
+  g.lastEliteVariants = ss.lastEliteVariants;
+  g.unitSlots = ss.unitSlots;
+  g.allies = ss.allies.map(a => ({ ...a, x: portalX + Math.random() * 30 }));
+  g.runUpgrades = ss.runUpgrades;
+
+  // Hero: restore saved hero, place at portal, clamp health
+  const savedHero = ss.hero;
+  g.hero = {
+    ...savedHero,
+    x: portalX,
+    targetFlagIndex: portalIdx,
+    health: Math.max(1, Math.min(g.hero.health, savedHero.maxHealth)),
+  };
+
+  g.particles = exitParticles;
+
+  // Reset all dungeon state
+  g.dungeonWave = 0;
+  g.dungeonWaveTimer = 0;
+  g.dungeonMiningTimer = 0;
+  g.dungeonMedals = 0;
+  g.dungeonFragmentsEarned = 0;
+  g.dungeonEnemiesAlive = 0;
+  g.dungeonShopOpen = false;
+  g.dungeonOver = false;
+  g.dungeonMeleeBoost = 0;
+  g.dungeonRangedBoost = 0;
+  g.dungeonMagicBoost = 0;
+  g.dungeonAllyMode = 'advance';
+  g.dungeonUnitsRolled = 0;
+  g.dungeonTicksSpent = 0;
+  g.timedDungeonTimer = 0;
+  g.timedDungeonVictory = false;
+  g.timedDungeonPortalTimer = 0;
+  g.timedDungeonPortalFlagId = -1;
+
+  return exitInfo;
+}
+
 /**
  * Hook that runs the 60fps game loop, orchestrating all game systems.
  *
@@ -605,6 +756,7 @@ export function useGameLoop(
   equippedPet: string = '',
   ownedPets: string[] = [],
   onCollectPet: (petId: string) => void = () => {},
+  onDungeonExit: (info: DungeonExitInfo) => void = () => {},
 ): { frameRef: React.MutableRefObject<number> } {
   const frameRef = useRef(0);
   const ancientRelicsRef = useRef(ancientRelicsOwned);
@@ -629,6 +781,8 @@ export function useGameLoop(
   collectPetRef.current = onCollectPet;
   const onModalEventRef = useRef(onModalEvent);
   onModalEventRef.current = onModalEvent;
+  const dungeonExitRef = useRef(onDungeonExit);
+  dungeonExitRef.current = onDungeonExit;
 
   useEffect(() => {
     if (gameScreen !== 'playing') return;
@@ -684,6 +838,15 @@ export function useGameLoop(
       if (ticked) {
         _tickCount += ticksThisFrame;
         const state = gameRef.current;
+
+        // Dungeon exit: restore main game state when dungeonOver fires
+        if (state.inDungeon && state.dungeonOver) {
+          const exitInfo = handleDungeonExit(state);
+          if (exitInfo) {
+            dungeonExitRef.current(exitInfo);
+          }
+        }
+
         // Signal React ONLY for modal events that need overlay rendering
         if (state.gameOver || state.pendingArtifactChoice || state.pendingRelicChoice || state.pendingRoll || state.pendingSkillChoice || state.challengeLevelUpPending) {
           onModalEventRef.current();

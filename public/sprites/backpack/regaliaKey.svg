@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Silver regalia key with purple gem -->
+  <!-- Key glow -->
+  <ellipse cx="12" cy="10" rx="8" ry="8" fill="#8855cc" opacity="0.06"/>
+  <!-- Key bow (head) - diamond shape -->
+  <path d="M12,4 L18,10 L12,16 L6,10Z" fill="#aabbcc" stroke="#8899aa" stroke-width="0.8"/>
+  <!-- Inner diamond -->
+  <path d="M12,6 L16,10 L12,14 L8,10Z" fill="#8899aa" stroke="#778899" stroke-width="0.4"/>
+  <!-- Center purple gem -->
+  <circle cx="12" cy="10" r="2.5" fill="#7733bb"/>
+  <circle cx="12" cy="10" r="1.8" fill="#9955dd" opacity="0.5"/>
+  <circle cx="11" cy="9" r="0.7" fill="#ffffff" opacity="0.4"/>
+  <!-- Bow highlight -->
+  <path d="M10,6 L12,4 L14,6" fill="none" stroke="#ccddee" stroke-width="0.5" opacity="0.4" stroke-linecap="round"/>
+  <!-- Key shaft -->
+  <rect x="17" y="9" width="12" height="2.5" rx="0.3" fill="#aabbcc"/>
+  <rect x="17" y="9" width="12" height="1" rx="0.2" fill="#ccddee" opacity="0.4"/>
+  <!-- Key teeth - more complex pattern -->
+  <rect x="27" y="11.5" width="1.5" height="3.5" rx="0.3" fill="#aabbcc"/>
+  <rect x="25" y="11.5" width="1" height="2" rx="0.2" fill="#aabbcc"/>
+  <rect x="23" y="11.5" width="1.5" height="4.5" rx="0.3" fill="#aabbcc"/>
+  <rect x="20.5" y="11.5" width="1" height="2.5" rx="0.2" fill="#aabbcc"/>
+  <!-- Teeth shading -->
+  <rect x="23" y="14" width="1.5" height="2" rx="0.2" fill="#8899aa" opacity="0.3"/>
+  <rect x="27" y="13" width="1.5" height="2" rx="0.2" fill="#8899aa" opacity="0.3"/>
+  <!-- Shaft detail groove -->
+  <line x1="17" y1="10.3" x2="29" y2="10.3" stroke="#8899aa" stroke-width="0.3" opacity="0.3"/>
+  <!-- Shine -->
+  <circle cx="19" cy="9.5" r="0.5" fill="#ffffff" opacity="0.3"/>
+  <!-- Purple magic particles -->
+  <circle cx="6" cy="4" r="0.5" fill="#bb88ff" opacity="0.4"/>
+  <circle cx="18" cy="5" r="0.4" fill="#bb88ff" opacity="0.3"/>
+  <circle cx="4" cy="14" r="0.4" fill="#bb88ff" opacity="0.35"/>
+</svg>

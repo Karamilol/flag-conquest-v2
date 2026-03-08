@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Scroll shadow -->
+  <ellipse cx="17" cy="29" rx="9" ry="1.5" fill="#1A1A2E" opacity="0.2" />
+  <!-- Scroll body (parchment) -->
+  <rect x="7" y="4" width="18" height="22" rx="1" fill="#F5E6C8" />
+  <rect x="7" y="4" width="18" height="22" rx="1" fill="#E8D5A8" opacity="0.5" />
+  <!-- Parchment aging/texture -->
+  <rect x="8" y="5" width="16" height="20" fill="#F0DDB8" opacity="0.4" />
+  <path d="M9,8 Q16,7 23,8.5" fill="none" stroke="#D4C098" stroke-width="0.3" opacity="0.4" />
+  <path d="M9,12 Q14,11 23,12" fill="none" stroke="#D4C098" stroke-width="0.3" opacity="0.3" />
+  <path d="M9,16 Q18,15 23,16.5" fill="none" stroke="#D4C098" stroke-width="0.3" opacity="0.3" />
+  <!-- Top scroll roll -->
+  <ellipse cx="16" cy="4" rx="10" ry="2" fill="#E8D5A8" />
+  <ellipse cx="16" cy="4" rx="10" ry="1.5" fill="#F5E6C8" />
+  <ellipse cx="16" cy="4" rx="10" ry="1.5" fill="white" opacity="0.15" />
+  <!-- Top roll shadow line -->
+  <ellipse cx="16" cy="5" rx="9.5" ry="0.5" fill="#C4AA78" opacity="0.4" />
+  <!-- Top roll highlight -->
+  <path d="M7,3.5 Q16,2 25,3.5" fill="none" stroke="white" stroke-width="0.4" opacity="0.3" />
+  <!-- Bottom scroll roll -->
+  <ellipse cx="16" cy="26" rx="10" ry="2" fill="#D4C098" />
+  <ellipse cx="16" cy="26" rx="10" ry="1.5" fill="#E8D5A8" />
+  <!-- Bottom roll highlight -->
+  <path d="M7,25.5 Q16,24.5 25,25.5" fill="none" stroke="white" stroke-width="0.3" opacity="0.25" />
+  <!-- Bottom roll shadow -->
+  <ellipse cx="16" cy="27" rx="9.5" ry="0.5" fill="#B09468" opacity="0.3" />
+  <!-- Roll end caps (left) -->
+  <circle cx="6" cy="4" r="2" fill="#B8860B" />
+  <circle cx="6" cy="4" r="1.5" fill="#C9A84C" />
+  <circle cx="5.7" cy="3.7" r="0.5" fill="white" opacity="0.3" />
+  <circle cx="6" cy="26" r="2" fill="#8B6914" />
+  <circle cx="6" cy="26" r="1.5" fill="#B8860B" />
+  <circle cx="5.7" cy="25.7" r="0.5" fill="white" opacity="0.2" />
+  <!-- Roll end caps (right) -->
+  <circle cx="26" cy="4" r="2" fill="#B8860B" />
+  <circle cx="26" cy="4" r="1.5" fill="#C9A84C" />
+  <circle cx="25.7" cy="3.7" r="0.5" fill="white" opacity="0.3" />
+  <circle cx="26" cy="26" r="2" fill="#8B6914" />
+  <circle cx="26" cy="26" r="1.5" fill="#B8860B" />
+  <circle cx="25.7" cy="25.7" r="0.5" fill="white" opacity="0.2" />
+  <!-- Royal header line -->
+  <line x1="10" y1="8" x2="22" y2="8" stroke="#8B6914" stroke-width="0.5" opacity="0.6" />
+  <!-- Fake text lines (decree content) -->
+  <line x1="10" y1="10.5" x2="22" y2="10.5" stroke="#8B7355" stroke-width="0.6" opacity="0.35" />
+  <line x1="10" y1="12.5" x2="20" y2="12.5" stroke="#8B7355" stroke-width="0.6" opacity="0.35" />
+  <line x1="10" y1="14.5" x2="22" y2="14.5" stroke="#8B7355" stroke-width="0.6" opacity="0.35" />
+  <line x1="10" y1="16.5" x2="18" y2="16.5" stroke="#8B7355" stroke-width="0.6" opacity="0.35" />
+  <!-- Royal crown symbol at top -->
+  <path d="M14,7 L14.5,6 L15.5,6.8 L16,5.8 L16.5,6.8 L17.5,6 L18,7 Z" fill="#C9A84C" opacity="0.7" />
+  <rect x="14" y="7" width="4" height="0.5" fill="#C9A84C" opacity="0.7" />
+  <!-- Wax seal -->
+  <circle cx="16" cy="21" r="3" fill="#8B1A1A" />
+  <circle cx="16" cy="21" r="2.5" fill="#A52020" />
+  <circle cx="16" cy="21" r="2.5" fill="#C93030" opacity="0.3" />
+  <!-- Seal edge detail -->
+  <circle cx="16" cy="21" r="3" fill="none" stroke="#6B0E0E" stroke-width="0.3" />
+  <!-- Seal inner ring -->
+  <circle cx="16" cy="21" r="1.8" fill="none" stroke="#6B0E0E" stroke-width="0.3" opacity="0.6" />
+  <!-- Seal emblem (crown/shield) -->
+  <path d="M15,20.5 L15.5,19.8 L16,20.3 L16.5,19.8 L17,20.5 L17,21.5 L15,21.5 Z" fill="#6B0E0E" opacity="0.7" />
+  <!-- Seal highlight -->
+  <circle cx="15.3" cy="20.3" r="0.8" fill="white" opacity="0.15" />
+  <!-- Seal drip -->
+  <path d="M14,23 Q13.5,24 14,24.5 Q14.5,24 14,23 Z" fill="#8B1A1A" opacity="0.7" />
+  <!-- Ribbon from seal -->
+  <path d="M13.5,22 Q12,24 11,26" fill="none" stroke="#8B1A1A" stroke-width="0.8" opacity="0.6" />
+  <path d="M18.5,22 Q20,24 21,26" fill="none" stroke="#8B1A1A" stroke-width="0.8" opacity="0.6" />
+  <!-- Parchment edge highlight -->
+  <line x1="7" y1="5" x2="7" y2="25" stroke="white" stroke-width="0.3" opacity="0.15" />
+  <!-- Subtle glow around seal -->
+  <circle cx="16" cy="21" r="4.5" fill="#FF4444" opacity="0.08" />
+</svg>

@@ -1,18 +1,18 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import type { GameState, PermanentUpgrades, ShardUpgrades, GameScreen, CameraMode, Backpack, ChallengeCompletions, ChallengeId } from './types';
+import type { GameState, PermanentUpgrades, ShardUpgrades, GameScreen, CameraMode, Backpack, ChallengeCompletions, ChallengeId, ConsumableId } from './types';
 import type { RelicCollection } from './relics';
-import type { Regalia, RegaliaSlot, RegaliaState } from './regalias';
+import { rollRegalia, type Regalia, type RegaliaSlot, type RegaliaState } from './regalias';
 import type { PetState } from './pets';
 import type { HeroClassId } from './classes';
 import type { CosmeticCategory } from './cosmetics';
-import { createInitialState } from './state';
-import { useGameLoop } from './hooks/useGameLoop';
+import { createInitialState, generateZoneFlags, generateDungeonArena, generateTimedDungeonArena } from './state';
+import { useGameLoop, type DungeonExitInfo } from './hooks/useGameLoop';
 import { useMusicManager } from './hooks/useMusicManager';
 import { preloadSprites } from './canvasRenderer';
 import { getClassDef } from './classes';
 import { heroTotalHp, heroTotalDmg, unitHpMult, unitDmgMult } from './utils/economy';
 import { rollUnitType, COLORS, GROUND_Y } from './constants';
-import { makeParticle, formatNumber } from './utils/helpers';
+import { makeParticle, formatNumber, uid } from './utils/helpers';
 import { SHARD_UPGRADES } from './shardUpgrades';
 import { COSMETICS } from './cosmetics';
 import { getSalvageRewards, getUpgradeCost, levelUpRegalia, getEnhanceCost, enhanceModifier, getMaxStars, getTotalStars, addStar, STAR_COST, MAX_STASH, findAutoSalvageTarget, RARITY_COLORS as REGALIA_RARITY_COLORS, SLOT_ICONS, getModDisplayText } from './regalias';
@@ -20,8 +20,8 @@ import { getChallengeDef, getChallengeShardsPerLevel } from './challenges';
 import { DEFAULT_KEYBINDINGS, ACTION_ORDER, ACTION_LABELS, displayKey } from './keybindings';
 import type { KeyBindings, ActionId } from './keybindings';
 import { uploadCloudSave, downloadCloudSave } from './firebase';
-import { getUnclaimedCount, ACHIEVEMENTS } from './achievements';
-import { totalConsumables } from './consumables';
+import { getUnclaimedCount, ACHIEVEMENTS, checkAchievements } from './achievements';
+import { totalConsumables, getConsumableDef } from './consumables';
 import { canClaimDaily, getTodayString } from './dailyLogin';
 import { ClassPicker } from './components/ui/ClassPicker';
 import { ChallengeSelect } from './components/ui/ChallengeSelect';
@@ -127,20 +127,24 @@ export default function App() {
   const settingsReturnTo = useRef<GameScreen>('menu');
   const [deathTab, setDeathTab] = useState<'shop' | 'regalia' | 'relics'>('shop');
   const [seenShopTabs] = useState(() => new Set<string>());
+  const [mercyReward, setMercyReward] = useState<number | null>(null);
 
   // Daily login
   const [dailyLoginDay, setDailyLoginDay] = useState(saved?.dailyLoginDay ?? 0);
   const [lastDailyClaimDate, setLastDailyClaimDate] = useState(saved?.lastDailyClaimDate ?? '');
   const dailyClaimAvailable = canClaimDaily(lastDailyClaimDate);
 
-  // Regalia notification
+  // Loot notifications
   const [regaliaNotif, setRegaliaNotif] = useState<Regalia | null>(null);
   const collectedRegaliaIds = useRef(new Set<string>());
   const regaliaNotifTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [consumableNotif, setConsumableNotif] = useState<{ icon: string; name: string } | null>(null);
+  const consumableNotifTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Overlay panel toggles
   const [showAchievements, setShowAchievements] = useState(false);
   const [showBackpack, setShowBackpack] = useState(false);
+  const [showRelics, setShowRelics] = useState(false);
   const [showDailyLogin, setShowDailyLogin] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
 
@@ -149,6 +153,11 @@ export default function App() {
   const [sfxVolume, setSfxVolume] = useState(settings?.sfxVolume ?? 0.5);
   const [showHpNumbers, setShowHpNumbers] = useState(settings?.showHpNumbers ?? true);
   const [killParticles, setKillParticles] = useState(settings?.killParticles ?? true);
+
+  // Music / track selector
+  const [musicClicks, setMusicClicks] = useState<number>(saved?.musicClicks ?? (saved?.upgrades?.musicClicks as number) ?? 0);
+  const [trackSelectorOpen, setTrackSelectorOpen] = useState(false);
+  const [blockedTracks, setBlockedTracks] = useState<string[]>(settings?.blockedTracks || []);
 
   // Keybindings
   const [keybindings, setKeybindings] = useState<KeyBindings>(() => {
@@ -165,6 +174,17 @@ export default function App() {
     try { const v = localStorage.getItem('flag-conquest-leaderboard-optin'); return v === null ? true : v === 'true'; } catch { return true; }
   });
 
+  // Save error
+  const [saveError, setSaveError] = useState(false);
+
+  // Splash screen
+  const [splashPhase, setSplashPhase] = useState<'studio' | 'loading' | 'done'>('studio');
+  const [splashOpacity, setSplashOpacity] = useState(0);
+
+  // FPS counter
+  const [showFps, setShowFps] = useState(false);
+  const [fpsValue, setFpsValue] = useState(0);
+
   // Cloud save
   const [cloudSaveStatus, setCloudSaveStatus] = useState<'idle' | 'uploading' | 'downloading' | 'success' | 'error'>('idle');
   const [cloudSavePin, setCloudSavePin] = useState('');
@@ -175,8 +195,8 @@ export default function App() {
 
   // Persist settings to localStorage
   useEffect(() => {
-    try { localStorage.setItem('flag-conquest-settings', JSON.stringify({ volume, sfxVolume, showHpNumbers, killParticles })); } catch {}
-  }, [volume, sfxVolume, showHpNumbers, killParticles]);
+    try { localStorage.setItem('flag-conquest-settings', JSON.stringify({ volume, sfxVolume, showHpNumbers, killParticles, blockedTracks })); } catch {}
+  }, [volume, sfxVolume, showHpNumbers, killParticles, blockedTracks]);
 
   // Persist keybindings
   useEffect(() => {
@@ -202,6 +222,38 @@ export default function App() {
     return () => window.removeEventListener('keydown', handler);
   }, [rebindingAction]);
 
+  // Splash screen sequence
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    timers.push(setTimeout(() => setSplashOpacity(1), 50));
+    timers.push(setTimeout(() => setSplashOpacity(0), 1500));
+    timers.push(setTimeout(() => setSplashPhase('loading'), 2000));
+    document.fonts.ready.then(() => {
+      timers.push(setTimeout(() => setSplashPhase('done'), 2200));
+    });
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  // FPS counter
+  useEffect(() => {
+    if (!showFps) return;
+    let rafCount = 0;
+    let lastTime = performance.now();
+    let rafId: number;
+    const tick = () => {
+      rafCount++;
+      const now = performance.now();
+      if (now - lastTime >= 1000) {
+        setFpsValue(Math.round(rafCount * 1000 / (now - lastTime)));
+        rafCount = 0;
+        lastTime = now;
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [showFps]);
+
   // === GAME STATE — lives in useRef, NOT useState ===
   const gameRef = useRef<GameState>(createInitialState(upgrades));
 
@@ -211,6 +263,56 @@ export default function App() {
   const onModalEvent = useCallback(() => {
     setModalTick(t => t + 1);
   }, []);
+
+  // === Pet collection ===
+  const collectPet = useCallback((petId: string) => {
+    setPetState(prev => {
+      if (prev.ownedPets.includes(petId)) return prev;
+      return { ...prev, ownedPets: [...prev.ownedPets, petId] };
+    });
+  }, []);
+
+  // === Music click (Audiophile achievement) ===
+  const handleMusicClick = useCallback(() => {
+    setMusicClicks((prev: number) => {
+      const next = prev + 1;
+      if (next === 5) {
+        setAchievementProgress((ap: any[]) => checkAchievements({ musicClicks: next }, ap));
+      }
+      return next;
+    });
+  }, []);
+
+  // === Consumable collection & usage ===
+  const collectConsumable = useCallback((id: ConsumableId) => {
+    setBackpack(prev => ({ ...prev, [id]: Math.min(99, prev[id] + 1) }));
+    const cDef = getConsumableDef(id);
+    setConsumableNotif({ icon: cDef.icon, name: cDef.name });
+    if (consumableNotifTimer.current) clearTimeout(consumableNotifTimer.current);
+    consumableNotifTimer.current = setTimeout(() => setConsumableNotif(null), 4000);
+  }, []);
+
+  const useConsumable = useCallback((id: ConsumableId) => {
+    const g = gameRef.current;
+    if (!g) return;
+    if (id === 'healingPotion') {
+      if (backpack.healingPotion <= 0) return;
+      if (g.hero.health <= 0 || g.hero.health >= g.hero.maxHealth) return;
+      const healPct = g.challengeId === 'cursedLands' ? 0.30 : 0.60;
+      const heal = Math.floor(g.hero.maxHealth * healPct);
+      const oldHp = g.hero.health;
+      const newHp = Math.min(g.hero.maxHealth, g.hero.health + heal);
+      g.hero.health = newHp;
+      g.particles.push(makeParticle(g.hero.x, g.hero.y - 20, `+${newHp - oldHp} HP \u{1F9EA}`, '#4aff4a'));
+      setBackpack(prev => ({ ...prev, healingPotion: prev.healingPotion - 1 }));
+    }
+    if (id === 'rerollVoucher') {
+      if (backpack.rerollVoucher <= 0) return;
+      g.freeRerolls = (g.freeRerolls || 0) + 1;
+      g.particles.push(makeParticle(g.hero.x, g.hero.y - 20, 'FREE REROLL! \u{1F3B0}', '#a855f7'));
+      setBackpack(prev => ({ ...prev, rerollVoucher: prev.rerollVoucher - 1 }));
+    }
+  }, [backpack]);
 
   // === Regalia collection ===
   const collectRegalia = useCallback((regalia: Regalia) => {
@@ -232,17 +334,28 @@ export default function App() {
     regaliaNotifTimer.current = setTimeout(() => setRegaliaNotif(null), 8000);
   }, []);
 
+  // === Dungeon exit callback (React state updates) ===
+  const onDungeonExit = useCallback((info: DungeonExitInfo) => {
+    if (info.fragmentsEarned > 0) {
+      setAncientFragments((f: number) => f + info.fragmentsEarned);
+    }
+    setDungeonMetaUpgrades({ ...info.metaUpgrades });
+    setDungeonUnlocked(info.dungeonUnlocked);
+    setDungeonPityCounter(info.pityCounter);
+  }, []);
+
   // === Game loop ===
   const { frameRef } = useGameLoop(
     gameScreen, upgrades, shardUpgrades, relicCollection,
     gameRef, onModalEvent, cameraModeRef,
     ancientRelicsOwned, ancientRelicCopies, backpack,
-    (id) => { /* collectConsumable */ },
+    collectConsumable,
     challengeCompletions,
     regaliaState.equipped,
     collectRegalia,
     petState.equippedPet, petState.ownedPets,
-    (p) => { /* collectPet */ },
+    collectPet,
+    onDungeonExit,
   );
 
   // === Music ===
@@ -262,7 +375,7 @@ export default function App() {
     }, 500);
     return () => clearInterval(iv);
   }, [gameRef]);
-  const music = useMusicManager(gameScreen, musicGame, volume);
+  const music = useMusicManager(gameScreen, musicGame, volume, blockedTracks);
 
   // Preload sprites on first play
   const spritesLoadedRef = useRef(false);
@@ -324,6 +437,13 @@ export default function App() {
   const [shopTab, setShopTab] = useState('units');
   const [shopTick, setShopTick] = useState(0);
   const refreshShop = useCallback(() => setShopTick(t => t + 1), []);
+
+  // Periodic shop refresh so prices update as gold changes from combat/income
+  useEffect(() => {
+    if (gameScreen !== 'playing') return;
+    const iv = setInterval(() => setShopTick(t => t + 1), 250);
+    return () => clearInterval(iv);
+  }, [gameScreen]);
 
   // === Shop callbacks — mutate gameRef directly ===
   const buyRunUpgrade = useCallback((type: string, cost: number) => {
@@ -742,9 +862,14 @@ export default function App() {
       achievementProgress, ancientRelicsOwned, ancientRelicCopies, ancientFragments,
       backpack, challengeCompletions, regaliaState, petState,
       dungeonUnlocked, dungeonPityCounter, dungeonMetaUpgrades, dungeonsEntered,
-      dailyLoginDay, lastDailyClaimDate,
+      dailyLoginDay, lastDailyClaimDate, musicClicks,
     };
     try { localStorage.setItem('flag-conquest-save', JSON.stringify(saveData)); } catch {}
+
+    // Mercy reward: consolation bonus when reaching a new personal best (only after first boss)
+    if ((game.bossesDefeated || 0) > highestZone && highestZone >= 1) {
+      setMercyReward(3);
+    }
 
     // Go to game over screen (death hub)
     setDeathTab('shop');
@@ -756,6 +881,30 @@ export default function App() {
       ancientFragments, backpack, challengeCompletions, regaliaState, petState,
       dungeonUnlocked, dungeonPityCounter, dungeonMetaUpgrades, dungeonsEntered]);
 
+  // Mercy reward claim
+  const claimMercyReward = useCallback(() => {
+    if (mercyReward) {
+      setGems((g: number) => g + mercyReward);
+      setTotalGemsEarned((g: number) => g + mercyReward);
+    }
+    setMercyReward(null);
+  }, [mercyReward]);
+
+  // Auto-transition to void screen on death (like v1 — no popup, direct transition)
+  const gameOverFiredRef = useRef(false);
+  useEffect(() => {
+    const g = gameRef.current;
+    if (g?.gameOver && gameScreen === 'playing' && !gameOverFiredRef.current) {
+      gameOverFiredRef.current = true;
+      // Brief delay before transitioning (lets death register visually)
+      const timer = setTimeout(() => {
+        handleGameOver();
+        gameOverFiredRef.current = false;
+      }, 1000);
+      return () => { clearTimeout(timer); gameOverFiredRef.current = false; };
+    }
+  }, [modalTick, gameScreen, handleGameOver]);
+
   // === Save persistent state whenever it changes ===
   useEffect(() => {
     const saveData = {
@@ -765,26 +914,78 @@ export default function App() {
       totalPlayTime, achievementProgress, ancientRelicsOwned, ancientRelicCopies,
       ancientFragments, backpack, challengeCompletions, regaliaState, petState,
       dungeonUnlocked, dungeonPityCounter, dungeonMetaUpgrades, dungeonsEntered,
-      dailyLoginDay, lastDailyClaimDate,
+      dailyLoginDay, lastDailyClaimDate, musicClicks,
     };
-    try { localStorage.setItem('flag-conquest-save', JSON.stringify(saveData)); } catch {}
+    try {
+      localStorage.setItem('flag-conquest-save', JSON.stringify(saveData));
+      if (saveError) setSaveError(false);
+    } catch {
+      setSaveError(true);
+    }
   }, [gems, shards, upgrades, shardUpgrades, relicCollection, highestZone, highestFlags,
       totalRuns, totalGemsEarned, totalShardsEarned, totalBossesDefeated, totalFlagsCaptured,
       totalDistance, totalRetreats, totalPlayTime, achievementProgress,
       ancientRelicsOwned, ancientRelicCopies, ancientFragments, backpack,
       challengeCompletions, regaliaState, petState, dungeonUnlocked,
       dungeonPityCounter, dungeonMetaUpgrades, dungeonsEntered,
-      dailyLoginDay, lastDailyClaimDate]);
+      dailyLoginDay, lastDailyClaimDate, musicClicks]);
 
   // =============================================
   // SCREEN ROUTING
   // =============================================
 
+  // --- Splash screen ---
+  if (splashPhase === 'studio') {
+    return (
+      <div style={{ minHeight: '100vh', background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: F }}>
+        <div style={{ opacity: splashOpacity, transition: 'opacity 0.5s ease-in-out', textAlign: 'center' }}>
+          <div style={{ color: '#8a4adf', fontSize: '22px', fontWeight: 'bold', letterSpacing: '6px', textShadow: '0 0 20px rgba(138,74,223,0.6), 0 0 40px rgba(138,74,223,0.3)' }}>
+            KARAMILABS
+          </div>
+          <div style={{ color: '#555', fontSize: '8px', marginTop: '10px', letterSpacing: '3px' }}>
+            PRESENTS
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (splashPhase === 'loading') {
+    return (
+      <div style={{ minHeight: '100vh', background: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: F }}>
+        <h1 style={{ color: COLORS.gold, fontSize: '19px', marginBottom: '20px', textShadow: '3px 3px 0 #8b6914', letterSpacing: '2px' }}>FLAG CONQUEST</h1>
+        <div style={{ color: '#ccc', fontSize: '13px' }}>Loading...</div>
+      </div>
+    );
+  }
+
   const game = gameRef.current;
 
   // --- Playing ---
   if (gameScreen === 'playing') {
-    return (<>
+    return (
+    <div style={{
+      width: '100%', minHeight: '100vh',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'flex-start',
+      background: '#1a1a2e', color: '#fff',
+      fontFamily: F,
+      padding: '0 4px',
+    }}>
+      {saveError && (
+        <div style={{ width: '100%', maxWidth: '506px', background: '#661111', color: '#ff8888', fontSize: '10px', textAlign: 'center', padding: '4px 8px', flexShrink: 0, fontFamily: F }}>
+          {'\u26A0\uFE0F'} Save failed — storage full. Clear browser data or export your save.
+        </div>
+      )}
+      <div style={{
+        width: 631, maxWidth: '100%',
+        border: `3px solid ${COLORS.panelBorder}`,
+        boxSizing: 'border-box',
+        display: 'flex', flexDirection: 'column',
+        position: 'relative',
+      }}>
+      {showFps && (
+        <div style={{ position: 'absolute', top: '4px', right: '4px', padding: '2px 6px', background: 'rgba(0,0,0,0.6)', borderRadius: '3px', color: fpsValue >= 50 ? '#44ff44' : fpsValue >= 30 ? '#ffaa00' : '#ff4444', fontSize: '10px', fontFamily: 'monospace', zIndex: 9998, pointerEvents: 'none' }}>{fpsValue} FPS</div>
+      )}
       <GameView
         gameRef={gameRef}
         frameRef={frameRef}
@@ -795,15 +996,15 @@ export default function App() {
         shopTick={shopTick}
         cameraMode={cameraMode}
         onCycleCameraMode={cycleCameraMode}
+        setCameraMode={setCameraMode}
         onOpenSettings={() => setSettingsOpen(o => !o)}
-        onOpenAchievements={() => {}}
-        onOpenRelics={() => {}}
+        onOpenAchievements={() => setShowAchievements(p => !p)}
+        onOpenRelics={() => setShowRelics(p => !p)}
         musicTrack={music.currentTrack}
         musicPaused={music.isPaused}
         onMusicNext={music.nextTrack}
         onMusicPrev={music.prevTrack}
         onMusicToggle={music.togglePause}
-        onGameOver={handleGameOver}
         shopTab={shopTab}
         setShopTab={setShopTab}
         upgrades={upgrades}
@@ -828,6 +1029,9 @@ export default function App() {
         setSfxVolume={setSfxVolume}
         setShowHpNumbers={setShowHpNumbers}
         setKillParticles={setKillParticles}
+        showFps={showFps}
+        setShowFps={setShowFps}
+        fpsValue={fpsValue}
         keybindings={keybindings}
         setKeybindings={setKeybindings}
         rebindingAction={rebindingAction}
@@ -836,6 +1040,154 @@ export default function App() {
         setGems={setGems}
         shards={shards}
         setShards={setShards}
+        showBackpack={showBackpack}
+        setShowBackpack={setShowBackpack}
+        showAchievements={showAchievements}
+        setShowAchievements={setShowAchievements}
+        showRelics={showRelics}
+        setShowRelics={setShowRelics}
+        backpack={backpack}
+        achievementProgress={achievementProgress}
+        onClaimAchievement={claimAchievement}
+        onUseConsumable={useConsumable}
+        ancientFragments={ancientFragments}
+        dungeonUnlocked={dungeonUnlocked}
+        musicClicks={musicClicks}
+        onMusicClick={handleMusicClick}
+        trackSelectorOpen={trackSelectorOpen}
+        setTrackSelectorOpen={setTrackSelectorOpen}
+        blockedTracks={blockedTracks}
+        setBlockedTracks={setBlockedTracks}
+        allTracks={music.allTracks}
+        playTrack={music.playTrack}
+        activeBiome={music.activeBiome}
+        devSpawnArtifact={() => {
+          const g = gameRef.current; if (!g) return;
+          const tier = (['artifactCommon', 'artifactRare', 'artifactLegendary'] as const)[Math.floor(Math.random() * 3)];
+          g.chests.push({ id: uid(), x: g.hero.x + 40, y: GROUND_Y - 20, type: tier, value: 0, age: 0 });
+        }}
+        devSpawnRegalia={(rarity) => {
+          const g = gameRef.current; if (!g) return;
+          const slots: RegaliaSlot[] = ['sword', 'shield', 'necklace'];
+          const slot = slots[Math.floor(Math.random() * slots.length)];
+          const r = (rarity as any) || (['common', 'rare', 'legendary'] as const)[Math.floor(Math.random() * 3)];
+          const reg = rollRegalia(slot, (g.currentZone || 0) + 1, r);
+          g.chests.push({ id: uid(), x: g.hero.x + 40, y: GROUND_Y - 20, type: 'regalia', value: 0, age: 0, regaliaData: reg });
+        }}
+        devSpawnRelic={() => {
+          const g = gameRef.current; if (!g) return;
+          const tier = (['relicCommon', 'relicRare', 'relicLegendary'] as const)[Math.floor(Math.random() * 3)];
+          g.chests.push({ id: uid(), x: g.hero.x + 40, y: GROUND_Y - 20, type: tier, value: 0, age: 0 });
+        }}
+        devWarpZone={(z) => {
+          const g = gameRef.current; if (!g) return;
+          const flags = generateZoneFlags(z);
+          g.currentZone = z; g.bossesDefeated = z; g.flagsCaptured = 0; g.flags = flags;
+          g.hero.x = flags[0].x - 100; g.hero.health = g.hero.maxHealth; g.hero.targetFlagIndex = 0;
+          g.enemies = []; g.enemyArchers = []; g.enemyWraiths = []; g.enemyHounds = []; g.enemyLichs = [];
+          g.enemyShadowAssassins = []; g.enemyFlameCallers = []; g.enemyCorruptedSentinels = [];
+          g.enemyDungeonRats = []; g.enemyFireImps = []; g.enemyCursedKnights = [];
+          g.boss = null; g.projectiles = []; g.chests = []; g.banners = []; g.barricades = [];
+          g.cameraX = Math.max(0, flags[0].x - 200); g.portalFlagIndex = -1;
+        }}
+        devEnterWaveDungeon={() => {
+          const g = gameRef.current; if (!g || g.inDungeon) return;
+          g.savedMainState = {
+            flags: g.flags, enemies: g.enemies, enemyArchers: g.enemyArchers,
+            enemyWraiths: g.enemyWraiths, enemyHounds: g.enemyHounds, enemyLichs: g.enemyLichs,
+            enemyShadowAssassins: g.enemyShadowAssassins, enemyFlameCallers: g.enemyFlameCallers,
+            enemyCorruptedSentinels: g.enemyCorruptedSentinels,
+            boss: g.boss, currentZone: g.currentZone, bossesDefeated: g.bossesDefeated,
+            goldEarned: g.goldEarned, totalGoldEarned: g.totalGoldEarned,
+            flagsCaptured: g.flagsCaptured, lastFlagCaptureFrame: g.lastFlagCaptureFrame,
+            portalFlagIndex: g.portalFlagIndex, armyHoldMode: g.armyHoldMode, cameraX: g.cameraX,
+            incomeTimer: g.incomeTimer, incomeTimer2: g.incomeTimer2, incomeTimer3: g.incomeTimer3,
+            incomeTimer4: g.incomeTimer4, incomeTimer5: g.incomeTimer5,
+            incomeTimer6: g.incomeTimer6 || 0, incomeTimer7: g.incomeTimer7 || 0, incomeTimer8: g.incomeTimer8 || 0,
+            projectiles: g.projectiles, chests: g.chests, banners: g.banners || [], barricades: g.barricades || [],
+            crystalTurrets: g.crystalTurrets || [], iceWalls: g.iceWalls || [], iceTurrets: g.iceTurrets || [],
+            smithingBonusStacks: g.smithingBonusStacks || 0,
+            gemsThisRun: g.gemsThisRun, shardsThisRun: g.shardsThisRun, relicDrops: g.relicDrops,
+            enemiesKilled: g.enemiesKilled, killGoldEarned: g.killGoldEarned || 0,
+            eliteKills: g.eliteKills || 0, eliteLastSpawnFrame: g.eliteLastSpawnFrame ?? -99999,
+            activeEliteId: g.activeEliteId ?? null, activeEliteVariant: g.activeEliteVariant ?? null,
+            lastEliteVariants: g.lastEliteVariants ? [...g.lastEliteVariants] : [],
+            unitSlots: g.unitSlots, allies: [...g.allies], hero: { ...g.hero },
+            runUpgrades: { ...g.runUpgrades },
+          };
+          const dungeonFlags = generateDungeonArena();
+          const arenaLeftX = dungeonFlags[0].x;
+          const arenaRightX = dungeonFlags[3].x;
+          const spawnX = arenaRightX + 30;
+          const allySpawnX = arenaLeftX + 80;
+          const cls = getClassDef(g.heroClass);
+          const startingMedals = 1 + dungeonMetaUpgrades.headStart;
+          g.inDungeon = true; g.dungeonType = 'wave'; g.armyHoldMode = false;
+          g.flags = dungeonFlags;
+          g.enemies = []; g.enemyArchers = []; g.enemyWraiths = []; g.enemyHounds = []; g.enemyLichs = [];
+          g.enemyShadowAssassins = []; g.enemyFlameCallers = []; g.enemyCorruptedSentinels = [];
+          g.enemyDungeonRats = []; g.enemyFireImps = []; g.enemyCursedKnights = [];
+          g.boss = null; g.projectiles = []; g.chests = []; g.banners = []; g.barricades = [];
+          g.dungeonTicksSpent = 0;
+          g.hero.x = allySpawnX; g.hero.targetFlagIndex = -1;
+          g.hero.maxHealth = cls.baseStats.hp; g.hero.health = cls.baseStats.hp;
+          g.hero.damage = cls.baseStats.dmg; g.hero.defense = cls.baseStats.def; g.hero.speed = cls.baseStats.speed;
+          g.runUpgrades = { ...g.runUpgrades, hero: 0, soldier: 0, archer: 0, halberd: 0, knight: 0, wizard: 0, cleric: 0, conjurer: 0, bombard: 0 };
+          g.allies = []; g.unitSlots = []; g.portalFlagIndex = -1; g.cameraX = 0;
+          g.dungeonWave = 0; g.dungeonWaveTimer = 0; g.dungeonMiningTimer = 0;
+          g.dungeonMedals = startingMedals; g.dungeonFragmentsEarned = 0;
+          g.dungeonEnemiesAlive = 0; g.dungeonEliteWaveNext = false; g.dungeonBonusMedalAwarded = false;
+          g.dungeonArenaLeftX = arenaLeftX; g.dungeonArenaRightX = arenaRightX; g.dungeonArenaSpawnX = spawnX;
+          g.dungeonShopOpen = false; g.dungeonTriggerZone = Math.max(g.currentZone, 1);
+          g.dungeonTriggerFlags = g.flagsCaptured;
+          g.dungeonPortalTimer = 0; g.dungeonPortalFlagId = -1; g.dungeonOver = false;
+          g.dungeonMeleeBoost = 0; g.dungeonRangedBoost = 0; g.dungeonMagicBoost = 0;
+          g.dungeonAllyMode = 'advance'; g.dungeonUnitsRolled = 0;
+        }}
+        devEnterTimedDungeon={() => {
+          const g = gameRef.current; if (!g || g.inDungeon) return;
+          g.savedMainState = {
+            flags: g.flags, enemies: g.enemies, enemyArchers: g.enemyArchers,
+            enemyWraiths: g.enemyWraiths, enemyHounds: g.enemyHounds, enemyLichs: g.enemyLichs,
+            enemyShadowAssassins: g.enemyShadowAssassins, enemyFlameCallers: g.enemyFlameCallers,
+            enemyCorruptedSentinels: g.enemyCorruptedSentinels,
+            boss: g.boss, currentZone: g.currentZone, bossesDefeated: g.bossesDefeated,
+            goldEarned: g.goldEarned, totalGoldEarned: g.totalGoldEarned,
+            flagsCaptured: g.flagsCaptured, lastFlagCaptureFrame: g.lastFlagCaptureFrame,
+            portalFlagIndex: g.portalFlagIndex, armyHoldMode: g.armyHoldMode, cameraX: g.cameraX,
+            incomeTimer: g.incomeTimer, incomeTimer2: g.incomeTimer2, incomeTimer3: g.incomeTimer3,
+            incomeTimer4: g.incomeTimer4, incomeTimer5: g.incomeTimer5,
+            incomeTimer6: g.incomeTimer6 || 0, incomeTimer7: g.incomeTimer7 || 0, incomeTimer8: g.incomeTimer8 || 0,
+            projectiles: g.projectiles, chests: g.chests, banners: g.banners || [], barricades: g.barricades || [],
+            crystalTurrets: g.crystalTurrets || [], iceWalls: g.iceWalls || [], iceTurrets: g.iceTurrets || [],
+            smithingBonusStacks: g.smithingBonusStacks || 0,
+            gemsThisRun: g.gemsThisRun, shardsThisRun: g.shardsThisRun, relicDrops: g.relicDrops,
+            enemiesKilled: g.enemiesKilled, killGoldEarned: g.killGoldEarned || 0,
+            eliteKills: g.eliteKills || 0, eliteLastSpawnFrame: g.eliteLastSpawnFrame ?? -99999,
+            activeEliteId: g.activeEliteId ?? null, activeEliteVariant: g.activeEliteVariant ?? null,
+            lastEliteVariants: g.lastEliteVariants ? [...g.lastEliteVariants] : [],
+            unitSlots: g.unitSlots, allies: [...g.allies], hero: { ...g.hero },
+            runUpgrades: { ...g.runUpgrades },
+          };
+          const zone = g.currentZone;
+          const timedFlags = generateTimedDungeonArena(zone);
+          g.inDungeon = true; g.dungeonType = 'timed'; g.armyHoldMode = false;
+          g.flags = timedFlags;
+          g.enemies = []; g.enemyArchers = []; g.enemyWraiths = []; g.enemyHounds = []; g.enemyLichs = [];
+          g.enemyShadowAssassins = []; g.enemyFlameCallers = []; g.enemyCorruptedSentinels = [];
+          g.enemyDungeonRats = []; g.enemyFireImps = []; g.enemyCursedKnights = [];
+          g.boss = null; g.projectiles = []; g.chests = []; g.banners = []; g.barricades = [];
+          g.hero.x = 40; g.hero.targetFlagIndex = -1;
+          g.allies = g.allies.map(a => ({ ...a, x: 40 + Math.random() * 30 }));
+          g.portalFlagIndex = -1; g.cameraX = 0;
+          g.timedDungeonTimer = 18000; g.timedDungeonVictory = false;
+          g.timedDungeonPortalTimer = 0; g.timedDungeonPortalFlagId = -1;
+          g.dungeonTicksSpent = 0; g.dungeonTriggerZone = zone; g.dungeonTriggerFlags = g.flagsCaptured;
+          g.dungeonOver = false;
+          g.dungeonWave = 0; g.dungeonWaveTimer = 0; g.dungeonMiningTimer = 0;
+          g.dungeonMedals = 0; g.dungeonFragmentsEarned = 0; g.dungeonEnemiesAlive = 0;
+          g.dungeonShopOpen = false; g.dungeonPortalTimer = 0; g.dungeonPortalFlagId = -1;
+        }}
       />
       {/* Regalia loot notification */}
       {regaliaNotif && (
@@ -876,7 +1228,36 @@ export default function App() {
           </div>
         </div>
       )}
-    </>);
+      {/* Consumable loot notification */}
+      {consumableNotif && (
+        <div style={{
+          position: 'fixed', top: regaliaNotif ? '180px' : '40px', left: '50%', transform: 'translateX(-50%)',
+          background: 'rgba(10,20,10,0.95)', border: '2px solid #44ffaa',
+          transition: 'top 0.3s ease',
+          borderRadius: '6px', padding: '8px 14px', zIndex: 9999,
+          maxWidth: '220px', width: '70%',
+          boxShadow: '0 0 20px #44ffaa44, 0 0 6px #44ffaa88',
+          fontFamily: '"Press Start 2P", "Courier New", monospace',
+          textAlign: 'center',
+        }}>
+          <div style={{ color: '#44ffaa', fontSize: '11px', fontWeight: 'bold', textShadow: '0 0 8px #44ffaa66', marginBottom: '4px' }}>
+            ITEM FOUND
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '18px' }}>{consumableNotif.icon}</span>
+            <span style={{ color: '#ddd', fontSize: '10px', fontWeight: 'bold' }}>{consumableNotif.name}</span>
+          </div>
+          <div style={{ marginTop: '6px' }}>
+            <button onClick={() => { setConsumableNotif(null); if (consumableNotifTimer.current) clearTimeout(consumableNotifTimer.current); }} style={{
+              padding: '3px 14px', fontSize: '8px', fontFamily: 'inherit',
+              background: '#44ffaa33', color: '#44ffaa', border: '1px solid #44ffaa88',
+              borderRadius: '3px', cursor: 'pointer',
+            }}>OK</button>
+          </div>
+        </div>
+      )}
+      </div>
+    </div>);
   }
 
   // --- All non-playing screens share this layout ---
@@ -887,11 +1268,18 @@ export default function App() {
     <div style={{
       width: '100%', minHeight: '100vh',
       display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'flex-start',
       background: '#1a1a2e', color: '#fff',
       fontFamily: F,
+      padding: '0 4px',
     }}>
-      {/* Main content area */}
-      <div style={{ width: 629, maxWidth: '100%', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      {/* Main content area — bordered game container */}
+      <div style={{
+        width: 631, maxWidth: '100%', flex: 1,
+        display: 'flex', flexDirection: 'column',
+        border: `3px solid ${COLORS.panelBorder}`,
+        boxSizing: 'border-box',
+      }}>
 
         {/* === MENU === */}
         {gameScreen === 'menu' && (
@@ -1111,7 +1499,7 @@ export default function App() {
                   <div style={{ position: 'absolute', inset: 0, zIndex: 20, pointerEvents: 'auto', overflow: 'auto' }}>
                     <AchievementPanel
                       achievementProgress={achievementProgress}
-                      stats={{ totalRuns, totalFlagsCaptured, highestZone, totalBossesDefeated, totalDistance, totalPlayTime, totalRetreats, musicClicks: (upgrades.musicClicks as number) || 0 }}
+                      stats={{ totalRuns, totalFlagsCaptured, highestZone, totalBossesDefeated, totalDistance, totalPlayTime, totalRetreats, musicClicks }}
                       onClaim={claimAchievement}
                       onClose={() => setShowAchievements(false)}
                     />
@@ -1213,6 +1601,35 @@ export default function App() {
                 />
               )}
             </div>
+
+            {/* Mercy reward modal */}
+            {mercyReward !== null && (
+              <div style={{
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                zIndex: 100, fontFamily: F,
+              }}>
+                <div style={{
+                  background: 'rgba(20,15,30,0.95)', border: '2px solid #B8860B',
+                  borderRadius: 8, padding: '24px 32px', textAlign: 'center', maxWidth: 320,
+                }}>
+                  <div style={{ color: '#B8860B', fontSize: 14, marginBottom: 8 }}>ADVISOR</div>
+                  <div style={{ color: '#a89cc8', fontSize: 11, lineHeight: '1.6', marginBottom: 16 }}>
+                    You made it further than before... your effort was not in vain!
+                  </div>
+                  <div style={{ color: '#a855f7', fontSize: 19, marginBottom: 20 }}>
+                    +{mercyReward} {'\u{1F48E}'}
+                  </div>
+                  <button onClick={claimMercyReward} style={{
+                    padding: '12px 32px', fontSize: 14, fontFamily: F, fontWeight: 'bold',
+                    background: '#B8860B', color: '#fff', border: '2px solid #8B6508',
+                    borderRadius: 4, cursor: 'pointer',
+                  }}>
+                    CONTINUE
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
 

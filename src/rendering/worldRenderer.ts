@@ -1193,60 +1193,90 @@ function drawBoss(ctx: CanvasRenderingContext2D, boss: Boss, camX: number, frame
 function drawPortal(ctx: CanvasRenderingContext2D, x: number, camX: number, frame: number): void {
   const sx = x - camX;
   const gy = GROUND_Y + WORLD_Y_OFFSET;
-  const t = frame * 0.05;
+  const py = gy - 40;
+  const rotation = frame * 2;
+  const pulse = 0.7 + Math.sin(frame * 0.08) * 0.3;
 
   // Outer glow
-  const glowR = 18 + Math.sin(t) * 3;
-  const grd = ctx.createRadialGradient(sx, gy - 20, 2, sx, gy - 20, glowR);
-  grd.addColorStop(0, 'rgba(100,50,255,0.6)');
-  grd.addColorStop(0.5, 'rgba(100,50,255,0.2)');
-  grd.addColorStop(1, 'rgba(100,50,255,0)');
-  ctx.fillStyle = grd;
-  ctx.beginPath();
-  ctx.arc(sx, gy - 20, glowR, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = '#aa44ff';
+  ctx.beginPath(); ctx.ellipse(sx, py, 40 * pulse, 45 * pulse, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = '#8822dd';
+  ctx.beginPath(); ctx.ellipse(sx, py, 30 * pulse, 35 * pulse, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 
-  // Swirl ring
-  ctx.strokeStyle = '#aa66ff';
-  ctx.lineWidth = 2;
-  ctx.globalAlpha = 0.8;
-  ctx.beginPath();
-  ctx.ellipse(sx, gy - 20, 12, 14, 0, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Inner ring
-  ctx.strokeStyle = '#cc88ff';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.ellipse(sx, gy - 20, 7, 9, t * 0.5, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-
-  // Center dot
-  ctx.fillStyle = '#eeccff';
-  ctx.beginPath();
-  ctx.arc(sx, gy - 20, 3, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Particles spiraling
+  // Swirling arcs
   for (let i = 0; i < 4; i++) {
-    const a = t * 2 + i * Math.PI / 2;
-    const r = 10 + Math.sin(t + i) * 3;
-    const px = sx + Math.cos(a) * r;
-    const py = gy - 20 + Math.sin(a) * r * 0.8;
-    ctx.fillStyle = '#cc88ff';
-    ctx.globalAlpha = 0.5 + Math.sin(t + i * 2) * 0.3;
-    ctx.fillRect(px - 1, py - 1, 2, 2);
+    const angle = (rotation + i * 90) * Math.PI / 180;
+    const r = 22;
+    const ax = sx + Math.cos(angle) * r;
+    const ay = py + Math.sin(angle) * r * 0.8;
+    ctx.save();
+    ctx.globalAlpha = 0.4 + i * 0.1;
+    ctx.fillStyle = '#cc66ff';
+    ctx.beginPath(); ctx.arc(ax, ay, 4 - i * 0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
   }
-  ctx.globalAlpha = 1;
+
+  // Inner vortex rings (dashed, spinning)
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  ctx.strokeStyle = '#aa44ff';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 6]);
+  ctx.lineDashOffset = frame * 0.8;
+  ctx.beginPath(); ctx.ellipse(sx, py, 20, 24, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.globalAlpha = 0.6;
+  ctx.strokeStyle = '#cc66ff';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 4]);
+  ctx.lineDashOffset = -frame * 1.2;
+  ctx.beginPath(); ctx.ellipse(sx, py, 14, 17, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+
+  // Core
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = '#220044';
+  ctx.beginPath(); ctx.ellipse(sx, py, 8, 10, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 0.95;
+  ctx.fillStyle = '#110022';
+  ctx.beginPath(); ctx.ellipse(sx, py, 5, 6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // Floating rune particles
+  for (let i = 0; i < 5; i++) {
+    const a = (frame * 0.03 + i * 1.26) % (Math.PI * 2);
+    const dr = 18 + Math.sin(frame * 0.05 + i) * 6;
+    const rx = sx + Math.cos(a) * dr;
+    const ry = py + Math.sin(a) * dr * 0.7;
+    ctx.save();
+    ctx.globalAlpha = 0.5 + Math.sin(frame * 0.1 + i * 2) * 0.3;
+    ctx.fillStyle = '#dd88ff';
+    ctx.beginPath(); ctx.arc(rx, ry, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  // Label
+  ctx.save();
+  ctx.globalAlpha = 0.7 + Math.sin(frame * 0.06) * 0.3;
+  ctx.fillStyle = '#dd88ff';
+  ctx.font = 'bold 9px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('ANCIENT DUNGEON', sx, py - 32);
+  ctx.restore();
+
+  ctx.setLineDash([]);
 }
 
 // ── Home/Retreat Portal ──────────────────────────────────────────
 function drawHomePortal(ctx: CanvasRenderingContext2D, x: number, camX: number, frame: number): void {
   const sx = x - camX;
   const gy = GROUND_Y + WORLD_Y_OFFSET;
-  const t = frame * 0.05;
-  const pulse = 0.85 + Math.sin(t) * 0.15;
+  const portalSpin = frame * 1.5;
+  const pulse = 0.85 + Math.sin(frame * 0.05) * 0.15;
   const floatY = Math.sin(frame * 0.04) * 3;
 
   // Ground glow ellipse
@@ -1255,24 +1285,30 @@ function drawHomePortal(ctx: CanvasRenderingContext2D, x: number, camX: number, 
   ctx.ellipse(sx, gy + 1, 30 * pulse, 10 * pulse, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Outer swirl ring
+  // Outer swirl ring (filled)
   ctx.fillStyle = 'rgba(168,85,247,0.25)';
   ctx.beginPath();
   ctx.ellipse(sx, gy - 1, 25, 8, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Dashed spinning rings (canvas approximation — solid rings with varying opacity)
+  // Dashed spinning rings
+  ctx.save();
   ctx.strokeStyle = 'rgba(168,85,247,0.5)';
   ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 4]);
+  ctx.lineDashOffset = portalSpin;
   ctx.beginPath();
   ctx.ellipse(sx, gy - 1, 18, 6, 0, 0, Math.PI * 2);
   ctx.stroke();
 
   ctx.strokeStyle = 'rgba(200,130,255,0.6)';
   ctx.lineWidth = 1;
+  ctx.setLineDash([4, 3]);
+  ctx.lineDashOffset = -portalSpin * 0.7;
   ctx.beginPath();
   ctx.ellipse(sx, gy - 1, 12, 4.5, 0, 0, Math.PI * 2);
   ctx.stroke();
+  ctx.restore();
 
   // Inner filled core
   ctx.fillStyle = 'rgba(168,85,247,0.8)';
@@ -1314,67 +1350,435 @@ function drawHomePortal(ctx: CanvasRenderingContext2D, x: number, camX: number, 
   ctx.font = '8px "Press Start 2P", monospace';
   ctx.fillText('PORTAL', sx, gy + 15);
   ctx.textAlign = 'left';
+
+  ctx.setLineDash([]);
 }
 
 // ── Timed Dungeon Portal (fiery orange) ──────────────────────────
 function drawTimedDungeonPortal(ctx: CanvasRenderingContext2D, x: number, camX: number, frame: number, timerTicks: number): void {
   const sx = x - camX;
   const gy = GROUND_Y + WORLD_Y_OFFSET;
-  const t = frame * 0.05;
+  const py = gy - 40;
+  const rotation = frame * 2.5;
   const pulse = 0.7 + Math.sin(frame * 0.09) * 0.3;
 
-  // Outer glow (fiery orange)
-  const glowR = 20 + Math.sin(t) * 3;
-  const grd = ctx.createRadialGradient(sx, gy - 20, 2, sx, gy - 20, glowR);
-  grd.addColorStop(0, 'rgba(255,140,50,0.6)');
-  grd.addColorStop(0.5, 'rgba(255,100,30,0.2)');
-  grd.addColorStop(1, 'rgba(255,80,20,0)');
-  ctx.fillStyle = grd;
-  ctx.beginPath();
-  ctx.arc(sx, gy - 20, glowR, 0, Math.PI * 2);
-  ctx.fill();
+  // Outer glow (fiery)
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = '#ff6633';
+  ctx.beginPath(); ctx.ellipse(sx, py, 40 * pulse, 45 * pulse, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = '#cc4411';
+  ctx.beginPath(); ctx.ellipse(sx, py, 30 * pulse, 35 * pulse, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 
-  // Swirl ring
-  ctx.strokeStyle = '#ff8833';
-  ctx.lineWidth = 2;
-  ctx.globalAlpha = 0.8 * pulse;
-  ctx.beginPath();
-  ctx.ellipse(sx, gy - 20, 12, 14, 0, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Inner ring
-  ctx.strokeStyle = '#ffaa44';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.ellipse(sx, gy - 20, 7, 9, t * 0.5, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-
-  // Center dot
-  ctx.fillStyle = '#ffddaa';
-  ctx.beginPath();
-  ctx.arc(sx, gy - 20, 3, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Spiraling fire particles
+  // Swirling flame arcs
   for (let i = 0; i < 4; i++) {
-    const a = t * 2 + i * Math.PI / 2;
-    const r = 10 + Math.sin(t + i) * 3;
-    const px = sx + Math.cos(a) * r;
-    const py = gy - 20 + Math.sin(a) * r * 0.8;
-    ctx.fillStyle = '#ffaa44';
-    ctx.globalAlpha = 0.5 + Math.sin(t + i * 2) * 0.3;
-    ctx.fillRect(px - 1, py - 1, 2, 2);
+    const angle = (rotation + i * 90) * Math.PI / 180;
+    const r = 22;
+    const ax = sx + Math.cos(angle) * r;
+    const ay = py + Math.sin(angle) * r * 0.8;
+    ctx.save();
+    ctx.globalAlpha = 0.4 + i * 0.1;
+    ctx.fillStyle = '#ff8844';
+    ctx.beginPath(); ctx.arc(ax, ay, 4 - i * 0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
   }
-  ctx.globalAlpha = 1;
 
-  // Timer text
-  const timerSec = Math.ceil(timerTicks / 60);
-  ctx.fillStyle = '#ff8833';
-  ctx.font = 'bold 8px "Press Start 2P", monospace';
+  // Inner vortex rings (dashed, spinning)
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  ctx.strokeStyle = '#ff6633';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 6]);
+  ctx.lineDashOffset = frame * 0.9;
+  ctx.beginPath(); ctx.ellipse(sx, py, 20, 24, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.globalAlpha = 0.6;
+  ctx.strokeStyle = '#ff8844';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 4]);
+  ctx.lineDashOffset = -frame * 1.3;
+  ctx.beginPath(); ctx.ellipse(sx, py, 14, 17, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+
+  // Core
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = '#441100';
+  ctx.beginPath(); ctx.ellipse(sx, py, 8, 10, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 0.95;
+  ctx.fillStyle = '#220800';
+  ctx.beginPath(); ctx.ellipse(sx, py, 5, 6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // Floating ember particles
+  for (let i = 0; i < 5; i++) {
+    const a = (frame * 0.035 + i * 1.26) % (Math.PI * 2);
+    const dr = 18 + Math.sin(frame * 0.05 + i) * 6;
+    const rx = sx + Math.cos(a) * dr;
+    const ry = py + Math.sin(a) * dr * 0.7;
+    ctx.save();
+    ctx.globalAlpha = 0.5 + Math.sin(frame * 0.1 + i * 2) * 0.3;
+    ctx.fillStyle = '#ffaa44';
+    ctx.beginPath(); ctx.arc(rx, ry, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  // Labels
+  ctx.save();
+  ctx.globalAlpha = 0.7 + Math.sin(frame * 0.06) * 0.3;
+  ctx.fillStyle = '#ff8844';
+  ctx.font = 'bold 9px "Press Start 2P", monospace';
   ctx.textAlign = 'center';
-  ctx.fillText(`${timerSec}s`, sx, gy - 38);
+  ctx.fillText('REGALIA DUNGEON', sx, py - 32);
+  ctx.restore();
+
+  // Timer countdown
+  const timerSec = Math.ceil(timerTicks / 60);
+  ctx.save();
+  ctx.globalAlpha = 0.6 + Math.sin(frame * 0.08) * 0.3;
+  ctx.fillStyle = '#ff6633';
+  ctx.font = '8px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`TAP TO ENTER (${timerSec}s)`, sx, py + 38);
   ctx.textAlign = 'left';
+  ctx.restore();
+
+  ctx.setLineDash([]);
+}
+
+// ── Mining Camp (wave dungeon) ────────────────────────────────────
+function drawMiningCamp(
+  ctx: CanvasRenderingContext2D,
+  game: GameState,
+  baseX: number,
+  camX: number,
+  frame: number,
+): void {
+  const gy = GROUND_Y + WORLD_Y_OFFSET;
+  const sx = baseX - camX;
+  const pickSwing = Math.sin(frame * 0.1) * 35;
+  const miningMax = Math.max(3600, 5400 - ((game as any).dungeonMetaUpgrades?.efficientMining || 0) * 60);
+  const miningPct = Math.min(1, ((game as any).dungeonMiningTimer || 0) / miningMax);
+  const nearComplete = miningPct > 0.8;
+  const glowPulse = nearComplete ? 0.15 + Math.sin(frame * 0.06) * 0.1 : 0.05;
+
+  // Ground glow under camp
+  ctx.save();
+  ctx.globalAlpha = glowPulse;
+  ctx.fillStyle = '#aa44ff';
+  ctx.beginPath();
+  ctx.ellipse(sx + 35, gy - 2, 50, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Mine entrance (arch)
+  ctx.fillStyle = '#2a1a0a';
+  roundRect(ctx, sx - 5, gy - 55, 45, 55, 2);
+  ctx.fill();
+  // Arch top (dark)
+  ctx.fillStyle = '#1a0a00';
+  ctx.beginPath();
+  ctx.ellipse(sx + 17, gy - 55, 22, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Inner arch (darker)
+  ctx.fillStyle = '#0f0508';
+  ctx.beginPath();
+  ctx.ellipse(sx + 17, gy - 55, 18, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Wooden beam supports
+  ctx.fillStyle = '#6b4226';
+  ctx.fillRect(sx - 2, gy - 56, 4, 56);
+  ctx.fillRect(sx + 37, gy - 56, 4, 56);
+  // Cross beam
+  ctx.fillStyle = '#7a5230';
+  roundRect(ctx, sx - 4, gy - 58, 48, 5, 2);
+  ctx.fill();
+
+  // Lantern on beam
+  ctx.fillStyle = '#8a6a30';
+  roundRect(ctx, sx + 1, gy - 68, 5, 6, 1);
+  ctx.fill();
+  // Lantern glow
+  const lanternAlpha = 0.5 + Math.sin(frame * 0.07) * 0.3;
+  ctx.save();
+  ctx.globalAlpha = lanternAlpha;
+  ctx.fillStyle = '#ffaa22';
+  ctx.beginPath();
+  ctx.arc(sx + 3.5, gy - 62, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 0.06 + Math.sin(frame * 0.07) * 0.04;
+  ctx.beginPath();
+  ctx.arc(sx + 3.5, gy - 62, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Ore cart
+  const cartX = sx + 50;
+  const cartY = gy - 12;
+  ctx.fillStyle = '#4a3a2a';
+  roundRect(ctx, cartX, cartY + 4, 20, 8, 2);
+  ctx.fill();
+  // Wheels
+  ctx.fillStyle = '#5a4a3a';
+  ctx.strokeStyle = '#3a2a1a';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(cartX + 3, cartY + 14, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cartX + 17, cartY + 14, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  // Glowing fragments in cart
+  const fragColors = ['#bb66ff', '#9944dd', '#aa55ee'];
+  const fragPoints = [[4,2, 7,0, 6,4], [10,1, 13,0, 12,4], [15,2, 18,0, 16,3]];
+  for (let i = 0; i < 3; i++) {
+    ctx.save();
+    ctx.globalAlpha = 0.7 + Math.sin(frame * (0.04 + i * 0.01) + i) * 0.3;
+    ctx.fillStyle = fragColors[i];
+    const p = fragPoints[i];
+    ctx.beginPath();
+    ctx.moveTo(cartX + p[0], cartY + p[1]);
+    ctx.lineTo(cartX + p[2], cartY + p[3]);
+    ctx.lineTo(cartX + p[4], cartY + p[5]);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Miner
+  const minerX = sx + 20;
+  const minerY = gy - 22;
+  // Body
+  ctx.fillStyle = '#8b7355';
+  roundRect(ctx, minerX, minerY + 6, 10, 14, 2);
+  ctx.fill();
+  // Belt
+  ctx.fillStyle = '#5a4a3a';
+  ctx.fillRect(minerX, minerY + 12, 10, 2);
+  // Head
+  ctx.fillStyle = '#deb887';
+  ctx.beginPath(); ctx.arc(minerX + 5, minerY + 3, 5, 0, Math.PI * 2); ctx.fill();
+  // Hard hat
+  ctx.fillStyle = '#ddaa22';
+  ctx.beginPath(); ctx.ellipse(minerX + 5, minerY, 6, 3, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#cc9911';
+  roundRect(ctx, minerX - 1, minerY - 1, 12, 2, 1);
+  ctx.fill();
+  // Eyes
+  ctx.fillStyle = '#333';
+  ctx.beginPath(); ctx.arc(minerX + 3, minerY + 3, 0.8, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(minerX + 7, minerY + 3, 0.8, 0, Math.PI * 2); ctx.fill();
+  // Legs
+  ctx.fillStyle = '#5a4a3a';
+  roundRect(ctx, minerX + 1, minerY + 20, 3, 5, 1); ctx.fill();
+  roundRect(ctx, minerX + 6, minerY + 20, 3, 5, 1); ctx.fill();
+  // Pickaxe (animated swing)
+  ctx.save();
+  ctx.translate(minerX + 10, minerY + 10);
+  ctx.rotate(pickSwing * Math.PI / 180);
+  ctx.strokeStyle = '#7a6a5a';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(12, -14); ctx.stroke();
+  ctx.fillStyle = '#8899aa';
+  ctx.beginPath(); ctx.moveTo(10, -16); ctx.lineTo(14, -12); ctx.lineTo(12, -18); ctx.closePath(); ctx.fill();
+  ctx.restore();
+
+  // Friendly dungeon flag (purple themed)
+  const flagX = sx + 75;
+  const flagY = gy - 40;
+  ctx.fillStyle = '#6a4a8a';
+  ctx.fillRect(flagX, flagY, 2, 40);
+  // Flag cloth
+  const flagWave = Math.sin(frame * 0.04) * 2;
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = '#8a44cc';
+  ctx.beginPath();
+  ctx.moveTo(flagX + 2, flagY + 2);
+  ctx.lineTo(flagX + 22 + flagWave, flagY + 8);
+  ctx.lineTo(flagX + 20 + flagWave, flagY + 14);
+  ctx.lineTo(flagX + 2, flagY + 20);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Near-complete sparkles
+  if (nearComplete) {
+    for (let i = 0; i < 3; i++) {
+      const spX = sx + 15 + Math.sin(frame * 0.03 + i * 2.1) * 20;
+      const spY = gy - 40 - Math.abs(Math.sin(frame * 0.04 + i * 1.7)) * 25;
+      ctx.save();
+      ctx.globalAlpha = 0.3 + Math.sin(frame * 0.08 + i * 2) * 0.3;
+      ctx.fillStyle = '#cc88ff';
+      ctx.beginPath(); ctx.arc(spX, spY, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // Mining progress bar
+  const barW = 70;
+  const barX = sx;
+  const barY = gy - 85;
+  // Background
+  ctx.fillStyle = '#1a0a2a';
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth = 0.5;
+  roundRect(ctx, barX, barY, barW, 7, 3);
+  ctx.fill(); ctx.stroke();
+  // Fill
+  if (miningPct > 0) {
+    ctx.fillStyle = nearComplete ? '#cc66ff' : '#aa44ff';
+    roundRect(ctx, barX, barY, barW * miningPct, 7, 3);
+    ctx.fill();
+  }
+  // Text
+  ctx.fillStyle = '#fff';
+  ctx.font = '6px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`\u26CF ${Math.floor(miningPct * 100)}%`, barX + barW / 2, barY + 5.5);
+
+  // Label
+  ctx.fillStyle = '#aa66dd';
+  ctx.font = 'bold 8px "Press Start 2P", monospace';
+  ctx.fillText('MINING CAMP', sx + 35, gy - 95);
+
+  // Ally spawn portal (rally point)
+  const portalX = sx + 80;
+  const portalY = gy - 20;
+  const pp = 0.5 + Math.sin(frame * 0.06) * 0.3;
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = '#4488ff';
+  ctx.beginPath(); ctx.ellipse(portalX, portalY, 18 * pp, 22 * pp, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  // Outer ring
+  ctx.save();
+  ctx.globalAlpha = 0.4;
+  ctx.strokeStyle = '#6688ff';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 3]);
+  ctx.lineDashOffset = frame * 0.6;
+  ctx.beginPath(); ctx.ellipse(portalX, portalY, 12, 16, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+  // Inner ring
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  ctx.strokeStyle = '#88aaff';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 3]);
+  ctx.lineDashOffset = -frame * 0.9;
+  ctx.beginPath(); ctx.ellipse(portalX, portalY, 7, 9, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+  // Core
+  ctx.save();
+  ctx.globalAlpha = 0.8;
+  ctx.fillStyle = '#112244';
+  ctx.beginPath(); ctx.ellipse(portalX, portalY, 4, 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  // Label
+  ctx.save();
+  ctx.globalAlpha = 0.7;
+  ctx.fillStyle = '#88aaff';
+  ctx.font = '6px "Press Start 2P", monospace';
+  ctx.fillText('RALLY', portalX, portalY - 20);
+  ctx.restore();
+
+  ctx.setLineDash([]);
+  ctx.textAlign = 'left';
+}
+
+// ── Enemy Portal (wave dungeon) ──────────────────────────────────
+function drawEnemyPortal(
+  ctx: CanvasRenderingContext2D,
+  px: number,
+  camX: number,
+  frame: number,
+): void {
+  const gy = GROUND_Y + WORLD_Y_OFFSET;
+  const sx = px - camX;
+  const py = gy - 35;
+  const rot = frame * 2.5;
+  const pulse = 0.6 + Math.sin(frame * 0.07) * 0.3;
+
+  // Ground glow
+  ctx.save();
+  ctx.globalAlpha = 0.08 + Math.sin(frame * 0.04) * 0.04;
+  ctx.fillStyle = '#ff2244';
+  ctx.beginPath(); ctx.ellipse(sx, gy - 2, 30, 8, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // Outer dark glow
+  ctx.save();
+  ctx.globalAlpha = 0.1;
+  ctx.fillStyle = '#880022';
+  ctx.beginPath(); ctx.ellipse(sx, py, 35 * pulse, 40 * pulse, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = '#aa0033';
+  ctx.beginPath(); ctx.ellipse(sx, py, 26 * pulse, 30 * pulse, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // Swirling arcs
+  for (let i = 0; i < 5; i++) {
+    const angle = (rot + i * 72) * Math.PI / 180;
+    const r = 18;
+    const ax = sx + Math.cos(angle) * r;
+    const ay = py + Math.sin(angle) * r * 0.8;
+    ctx.save();
+    ctx.globalAlpha = 0.35 + i * 0.08;
+    ctx.fillStyle = '#ff4466';
+    ctx.beginPath(); ctx.arc(ax, ay, 3 - i * 0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  // Inner vortex rings
+  ctx.save();
+  ctx.globalAlpha = 0.45;
+  ctx.strokeStyle = '#cc2244';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 5]);
+  ctx.lineDashOffset = frame * 0.9;
+  ctx.beginPath(); ctx.ellipse(sx, py, 16, 20, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.globalAlpha = 0.5;
+  ctx.strokeStyle = '#ff4466';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 4]);
+  ctx.lineDashOffset = -frame * 1.3;
+  ctx.beginPath(); ctx.ellipse(sx, py, 10, 13, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+
+  // Dark core
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = '#1a0008';
+  ctx.beginPath(); ctx.ellipse(sx, py, 7, 9, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 0.95;
+  ctx.fillStyle = '#0a0004';
+  ctx.beginPath(); ctx.ellipse(sx, py, 4, 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // Floating embers
+  for (let i = 0; i < 4; i++) {
+    const a = (frame * 0.035 + i * 1.57) % (Math.PI * 2);
+    const dr = 15 + Math.sin(frame * 0.05 + i) * 5;
+    const ex = sx + Math.cos(a) * dr;
+    const ey = py + Math.sin(a) * dr * 0.7 - Math.abs(Math.sin(frame * 0.04 + i * 0.8)) * 8;
+    ctx.save();
+    ctx.globalAlpha = 0.4 + Math.sin(frame * 0.1 + i * 2) * 0.3;
+    ctx.fillStyle = '#ff6644';
+    ctx.beginPath(); ctx.arc(ex, ey, 1.2, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  // Label
+  ctx.save();
+  ctx.globalAlpha = 0.6 + Math.sin(frame * 0.05) * 0.2;
+  ctx.fillStyle = '#ff6666';
+  ctx.font = 'bold 7px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('\u{1F480} ENEMY PORTAL', sx, py - 30);
+  ctx.textAlign = 'left';
+  ctx.restore();
+
+  ctx.setLineDash([]);
 }
 
 // ── Master draw function ──────────────────────────────────────────
@@ -1417,10 +1821,24 @@ export function drawWorldObjects(
     }
   }
 
-  // Flags
-  for (const flag of game.flags) {
-    if (flag.x > cullLeft && flag.x < cullRight) {
-      drawFlag(ctx, flag, camX, frame);
+  // Flags (hidden in wave dungeon, shown in timed dungeon + main game)
+  if (!game.inDungeon || (game as any).dungeonType === 'timed') {
+    for (const flag of game.flags) {
+      if (flag.x > cullLeft && flag.x < cullRight) {
+        drawFlag(ctx, flag, camX, frame);
+      }
+    }
+  }
+
+  // Wave dungeon: mining camp + enemy portal
+  if (game.inDungeon && (game as any).dungeonType === 'wave') {
+    const arenaLeft = (game as any).dungeonArenaLeftX || 200;
+    if (arenaLeft > cullLeft - 100 && arenaLeft < cullRight + 100) {
+      drawMiningCamp(ctx, game, arenaLeft, camX, frame);
+    }
+    const spawnX = (game as any).dungeonArenaSpawnX || 800;
+    if (spawnX > cullLeft - 60 && spawnX < cullRight + 60) {
+      drawEnemyPortal(ctx, spawnX, camX, frame);
     }
   }
 

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Electric glow background -->
+  <ellipse cx="16" cy="16" rx="12" ry="13" fill="#ffe040" opacity="0.08"/>
+  <ellipse cx="16" cy="16" rx="8" ry="9" fill="#ffee60" opacity="0.1"/>
+  <!-- Outer crackling arcs -->
+  <path d="M8,5 Q6,8 9,10" fill="none" stroke="#ffd020" stroke-width="0.5" opacity="0.3" stroke-linecap="round"/>
+  <path d="M24,6 Q26,9 23,11" fill="none" stroke="#ffd020" stroke-width="0.5" opacity="0.3" stroke-linecap="round"/>
+  <path d="M6,20 Q4,22 7,24" fill="none" stroke="#ffd020" stroke-width="0.4" opacity="0.25" stroke-linecap="round"/>
+  <path d="M26,19 Q28,21 25,23" fill="none" stroke="#ffd020" stroke-width="0.4" opacity="0.25" stroke-linecap="round"/>
+  <!-- Small branch sparks -->
+  <path d="M9,3 L7,5 L9,4" fill="none" stroke="#ffe860" stroke-width="0.4" opacity="0.4" stroke-linecap="round"/>
+  <path d="M23,3 L25,5 L23,4.5" fill="none" stroke="#ffe860" stroke-width="0.4" opacity="0.4" stroke-linecap="round"/>
+  <path d="M5,16 L3,17 L5,17.5" fill="none" stroke="#ffe860" stroke-width="0.3" opacity="0.3" stroke-linecap="round"/>
+  <path d="M27,15 L29,16 L27,16.5" fill="none" stroke="#ffe860" stroke-width="0.3" opacity="0.3" stroke-linecap="round"/>
+  <!-- Main lightning bolt - dark outline layer -->
+  <path d="M18,1 L10,14 L15,14 L8,31 L24,14 L18,14 L24,1 Z" fill="#b88a00" opacity="0.4"/>
+  <!-- Main bolt body -->
+  <path d="M18,2 L11,14 L15.5,14 L9,30 L23,14 L18.5,14 L23,2 Z" fill="#e8b830"/>
+  <!-- Inner bright layer -->
+  <path d="M18,3 L12,14 L16,14 L10,29 L22,14 L19,14 L22,3 Z" fill="#f0d040"/>
+  <!-- Core bright layer -->
+  <path d="M18.5,4 L13,14 L16.5,14 L11,28 L21,14 L19.2,14 L21.5,4 Z" fill="#ffe860" opacity="0.7"/>
+  <!-- Hottest center -->
+  <path d="M19,5 L14,14 L17,14 L12,27 L20.5,14 L19.3,14 L21,5 Z" fill="#fff4a0" opacity="0.5"/>
+  <!-- White-hot core line -->
+  <path d="M19.5,6 L15,14 L17.5,14 L13,26" fill="none" stroke="#ffffff" stroke-width="0.8" opacity="0.3" stroke-linecap="round"/>
+  <!-- Branch lightning -->
+  <path d="M12,14 L8,12 L10,14" fill="none" stroke="#e8b830" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M9,12.5 L7,11" fill="none" stroke="#f0d040" stroke-width="0.5" opacity="0.5" stroke-linecap="round"/>
+  <path d="M22,14 L26,12 L23,14" fill="none" stroke="#e8b830" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M25,12.5 L27,11" fill="none" stroke="#f0d040" stroke-width="0.5" opacity="0.5" stroke-linecap="round"/>
+  <!-- Lower branches -->
+  <path d="M14,20 L10,22 L13,21" fill="none" stroke="#e8b830" stroke-width="0.8" stroke-linecap="round"/>
+  <path d="M18,20 L22,22 L19,21" fill="none" stroke="#e8b830" stroke-width="0.8" stroke-linecap="round"/>
+  <!-- Spark particles -->
+  <circle cx="7" cy="11" r="0.6" fill="#ffe860" opacity="0.6"/>
+  <circle cx="27" cy="11" r="0.5" fill="#ffe860" opacity="0.5"/>
+  <circle cx="10" cy="22" r="0.5" fill="#ffd040" opacity="0.5"/>
+  <circle cx="22" cy="22" r="0.4" fill="#ffd040" opacity="0.4"/>
+  <!-- Top sparkle -->
+  <path d="M20,0 L20.4,-1 L20.8,0 L20.4,1 Z" fill="#ffffff" opacity="0.6"/>
+  <path d="M19.6,0 L20.4,-0.4 L21.2,0 L20.4,0.4 Z" fill="#ffffff" opacity="0.4"/>
+  <!-- Bottom sparkle -->
+  <path d="M9,30 L9.3,29 L9.6,30 L9.3,31 Z" fill="#ffe860" opacity="0.5"/>
+</svg>

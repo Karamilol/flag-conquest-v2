@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <radialGradient id="fp_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4488ff" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#4488ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fp_feather" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="30%" stop-color="#eeddcc"/>
+      <stop offset="70%" stop-color="#ccaa88"/>
+      <stop offset="100%" stop-color="#aa8866"/>
+    </linearGradient>
+    <linearGradient id="fp_nib" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ddaa44"/>
+      <stop offset="100%" stop-color="#886622"/>
+    </linearGradient>
+    <linearGradient id="fp_ink" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1133aa"/>
+      <stop offset="100%" stop-color="#2244cc" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="16" cy="16" r="14" fill="url(#fp_glow)"/>
+  <!-- Ink trail (flowing curves) -->
+  <path d="M24 28 Q22 26 20 27 Q17 28 16 26 Q14 23 12 25 Q10 27 8 25" stroke="url(#fp_ink)" stroke-width="1" fill="none" opacity="0.5" stroke-linecap="round"/>
+  <path d="M24 28 Q23 27 22 27.5" stroke="#1133aa" stroke-width="0.6" fill="none" opacity="0.3"/>
+  <!-- Ink splatter -->
+  <circle cx="7" cy="25" r="1" fill="#1a2288" opacity="0.3"/>
+  <circle cx="8.5" cy="26.5" r="0.5" fill="#1a2288" opacity="0.25"/>
+  <circle cx="5.5" cy="24" r="0.4" fill="#1a2288" opacity="0.2"/>
+  <!-- Quill shaft -->
+  <line x1="24" y1="28" x2="8" y2="4" stroke="#ccaa88" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="23.5" y1="27.5" x2="8.5" y2="4.5" stroke="white" stroke-width="0.3" opacity="0.15"/>
+  <!-- Feather vane (right side) -->
+  <path d="M8 4 Q14 2 16 6 Q13 5 8 4" fill="url(#fp_feather)" stroke="#aa8866" stroke-width="0.3" opacity="0.9"/>
+  <path d="M9 5 Q14 4 15 7 Q12 6 9 5" fill="url(#fp_feather)" stroke="#aa8866" stroke-width="0.3" opacity="0.85"/>
+  <path d="M10 6 Q14 6 14.5 8.5 Q12 7.5 10 6" fill="url(#fp_feather)" stroke="#aa8866" stroke-width="0.3" opacity="0.8"/>
+  <!-- Feather vane (left side) -->
+  <path d="M8 4 Q4 1 2 3 Q5 3 8 4" fill="url(#fp_feather)" stroke="#aa8866" stroke-width="0.3" opacity="0.9"/>
+  <path d="M9 5 Q5 3 3 4.5 Q6 4.5 9 5" fill="url(#fp_feather)" stroke="#aa8866" stroke-width="0.3" opacity="0.85"/>
+  <path d="M10 6 Q6.5 5 5 6 Q7 6 10 6" fill="url(#fp_feather)" stroke="#aa8866" stroke-width="0.3" opacity="0.8"/>
+  <!-- Feather barb lines -->
+  <line x1="8.5" y1="4.5" x2="13" y2="3" stroke="#bb9977" stroke-width="0.2" opacity="0.4"/>
+  <line x1="9" y1="5.2" x2="13.5" y2="4.5" stroke="#bb9977" stroke-width="0.2" opacity="0.35"/>
+  <line x1="8.5" y1="4.5" x2="5" y2="2.5" stroke="#bb9977" stroke-width="0.2" opacity="0.35"/>
+  <line x1="9" y1="5.2" x2="6" y2="4" stroke="#bb9977" stroke-width="0.2" opacity="0.3"/>
+  <!-- Feather highlight -->
+  <path d="M8.5 4 Q12 2.5 14 5" stroke="white" stroke-width="0.3" fill="none" opacity="0.2"/>
+  <!-- Metal nib -->
+  <path d="M23 26 L25.5 29.5 L24 30 L22 27 Z" fill="url(#fp_nib)" stroke="#664400" stroke-width="0.3"/>
+  <path d="M23.5 27 L25 29" stroke="white" stroke-width="0.3" fill="none" opacity="0.2"/>
+  <!-- Nib slit -->
+  <line x1="24" y1="28" x2="24.8" y2="29.8" stroke="#442200" stroke-width="0.3"/>
+  <!-- Ornate band where nib meets shaft -->
+  <rect x="21.5" y="25" width="2.5" height="1.5" rx="0.3" fill="#ddaa44" stroke="#aa7722" stroke-width="0.2" transform="rotate(-60 22.75 25.75)"/>
+  <!-- Ink drop falling from nib -->
+  <ellipse cx="25" cy="30.5" rx="0.6" ry="0.8" fill="#1a2288" opacity="0.5"/>
+  <!-- Ornamental details on shaft -->
+  <circle cx="16" cy="16" r="0.8" fill="#ddaa44" stroke="#aa7722" stroke-width="0.2" opacity="0.6"/>
+  <circle cx="18" cy="20" r="0.6" fill="#ddaa44" stroke="#aa7722" stroke-width="0.2" opacity="0.5"/>
+  <!-- Sparkle accents -->
+  <circle cx="12" cy="2" r="0.5" fill="white" opacity="0.4"/>
+  <circle cx="4" cy="5" r="0.4" fill="white" opacity="0.3"/>
+  <circle cx="26" cy="26" r="0.4" fill="#88aaff" opacity="0.4"/>
+</svg>

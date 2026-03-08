@@ -3,7 +3,7 @@ import type { GameState, CameraMode, Artifact, PermanentUpgrades, ShardUpgrades,
 import type { RelicCollection } from '../../relics';
 import type { Regalia, RegaliaSlot } from '../../regalias';
 import type { KeyBindings, ActionId } from '../../keybindings';
-import { VIEWPORT_W, VIEWPORT_H, DISPLAY_W, DISPLAY_H, COLORS } from '../../constants';
+import { VIEWPORT_W, VIEWPORT_H, DISPLAY_W, DISPLAY_H, COLORS, GROUND_Y } from '../../constants';
 import { drawEntities } from '../../canvasRenderer';
 import { TileCache } from '../../rendering/tileRenderer';
 import { getSkillDef } from '../../skills';
@@ -13,6 +13,10 @@ import { ArtifactPicker } from './ArtifactPicker';
 import { SkillPicker } from './SkillPicker';
 import { RelicPicker } from './RelicPicker';
 import { ShopPanel, ShopTabs } from './ShopPanel';
+import { BackpackPanel } from './BackpackPanel';
+import { AchievementPanel } from './AchievementPanel';
+import { RelicPanel } from './RelicPanel';
+import { TrackSelector } from './TrackSelector';
 
 interface GameViewProps {
   gameRef: React.MutableRefObject<GameState>;
@@ -24,6 +28,7 @@ interface GameViewProps {
   shopTick: number;
   cameraMode: CameraMode;
   onCycleCameraMode: () => void;
+  setCameraMode: React.Dispatch<React.SetStateAction<CameraMode>>;
   onOpenSettings: () => void;
   onOpenAchievements: () => void;
   onOpenRelics: () => void;
@@ -32,7 +37,6 @@ interface GameViewProps {
   onMusicNext: () => void;
   onMusicPrev: () => void;
   onMusicToggle: () => void;
-  onGameOver: () => void;
   shopTab: string;
   setShopTab: (tab: string) => void;
   upgrades: PermanentUpgrades;
@@ -65,12 +69,46 @@ interface GameViewProps {
   setGems: React.Dispatch<React.SetStateAction<number>>;
   shards: number;
   setShards: React.Dispatch<React.SetStateAction<number>>;
+  // In-game panels
+  showBackpack: boolean;
+  setShowBackpack: React.Dispatch<React.SetStateAction<boolean>>;
+  showAchievements: boolean;
+  setShowAchievements: React.Dispatch<React.SetStateAction<boolean>>;
+  showRelics: boolean;
+  setShowRelics: React.Dispatch<React.SetStateAction<boolean>>;
+  backpack: import('../../types').Backpack;
+  achievementProgress: import('../../achievements').AchievementProgress[];
+  onClaimAchievement: (id: string, tier: number) => void;
+  onUseConsumable: (id: import('../../types').ConsumableId) => void;
+  ancientFragments: number;
+  dungeonUnlocked: boolean;
+  // Music / track selector
+  musicClicks: number;
+  onMusicClick: () => void;
+  trackSelectorOpen: boolean;
+  setTrackSelectorOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  blockedTracks: string[];
+  setBlockedTracks: React.Dispatch<React.SetStateAction<string[]>>;
+  allTracks: { menu: string[]; death: string[]; boss: string[]; forest: string[]; cave: string[]; nordic: string[]; volcanic: string[] };
+  playTrack: (path: string) => void;
+  activeBiome?: string;
+  // FPS counter
+  showFps?: boolean;
+  setShowFps?: (v: boolean) => void;
+  fpsValue?: number;
+  // Dev spawn callbacks
+  devSpawnArtifact?: () => void;
+  devSpawnRegalia?: (rarity?: string) => void;
+  devSpawnRelic?: () => void;
+  devWarpZone?: (zone: number) => void;
+  devEnterWaveDungeon?: () => void;
+  devEnterTimedDungeon?: () => void;
 }
 
 export default function GameView({
   gameRef, frameRef, showHpNumbers, killParticles, heroClass, modalTick, shopTick,
-  cameraMode, onCycleCameraMode, onOpenSettings, onOpenAchievements, onOpenRelics,
-  musicTrack, musicPaused, onMusicNext, onMusicPrev, onMusicToggle, onGameOver,
+  cameraMode, onCycleCameraMode, setCameraMode, onOpenSettings, onOpenAchievements, onOpenRelics,
+  musicTrack, musicPaused, onMusicNext, onMusicPrev, onMusicToggle,
   shopTab, setShopTab, upgrades, shardUpgrades, challengeCompletions,
   relicCollection, ancientRelicsOwned, ancientRelicCopies, highestZone, highestFlags,
   buyRunUpgrade, buyRunUpgradeMulti, onRoll, movePortalForward, toggleAutoPortal, onReturnHome,
@@ -78,6 +116,14 @@ export default function GameView({
   settingsOpen, volume, setVolume, sfxVolume, setSfxVolume, setShowHpNumbers, setKillParticles,
   keybindings, setKeybindings, rebindingAction, setRebindingAction,
   gems, setGems, shards, setShards,
+  showBackpack, setShowBackpack, showAchievements, setShowAchievements, showRelics, setShowRelics,
+  backpack, achievementProgress, onClaimAchievement, onUseConsumable,
+  ancientFragments, dungeonUnlocked,
+  musicClicks, onMusicClick, trackSelectorOpen, setTrackSelectorOpen,
+  blockedTracks, setBlockedTracks, allTracks, playTrack, activeBiome,
+  showFps, setShowFps, fpsValue,
+  devSpawnArtifact, devSpawnRegalia, devSpawnRelic, devWarpZone,
+  devEnterWaveDungeon, devEnterTimedDungeon,
 }: GameViewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tileCacheRef = useRef(new TileCache());
@@ -148,11 +194,90 @@ export default function GameView({
     };
   }, [gameRef, showHpNumbers, heroClass, killParticles]);
 
+  // === Camera drag ===
+  const DRAG_THRESHOLD = 5;
+  const dragRef = useRef<{ startScreenX: number; startCamX: number; isDragging: boolean; pointerId: number } | null>(null);
+
+  const getMaxCam = useCallback(() => {
+    const g = gameRef.current;
+    if (!g) return 0;
+    if (g.inDungeon && g.dungeonType === 'timed') return Math.max(0, 1050 - VIEWPORT_W);
+    const flags = g.flags;
+    const lastFlag = flags[flags.length - 1];
+    const worldEnd = lastFlag ? lastFlag.x + 300 : 2000;
+    return Math.max(0, worldEnd - VIEWPORT_W);
+  }, [gameRef]);
+
+  const screenToGameX = useCallback((screenDeltaX: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return 0;
+    const rect = canvas.getBoundingClientRect();
+    return screenDeltaX * (VIEWPORT_W / rect.width);
+  }, []);
+
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    dragRef.current = {
+      startScreenX: e.clientX,
+      startCamX: gameRef.current?.cameraX || 0,
+      isDragging: false,
+      pointerId: e.pointerId,
+    };
+    (e.target as Element).setPointerCapture(e.pointerId);
+  }, [gameRef]);
+
+  const onPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!dragRef.current) return;
+    const dx = e.clientX - dragRef.current.startScreenX;
+    const dist = Math.abs(dx);
+
+    if (!dragRef.current.isDragging && dist > DRAG_THRESHOLD) {
+      dragRef.current.isDragging = true;
+      setCameraMode('manual');
+    }
+
+    if (dragRef.current.isDragging) {
+      const deltaScreen = dragRef.current.startScreenX - e.clientX;
+      const deltaGame = screenToGameX(deltaScreen);
+      const newCam = Math.max(0, Math.min(getMaxCam(), dragRef.current.startCamX + deltaGame));
+      const g = gameRef.current;
+      if (g) g.cameraX = newCam;
+    }
+  }, [screenToGameX, getMaxCam, gameRef, setCameraMode]);
+
+  const onPointerUp = useCallback((e: React.PointerEvent) => {
+    if (!dragRef.current) return;
+    const wasDragging = dragRef.current.isDragging;
+    dragRef.current = null;
+
+    // Click-to-collect: if it wasn't a drag, find nearest chest and teleport it to hero
+    if (!wasDragging) {
+      const g = gameRef.current;
+      if (!g || !g.chests?.length) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const clickX = (e.clientX - rect.left) * (VIEWPORT_W / rect.width) + (g.cameraX || 0);
+      const clickY = (e.clientY - rect.top) * (VIEWPORT_H / rect.height);
+      const CHEST_RADIUS = 35;
+      let closestIdx = -1;
+      let closestDist = CHEST_RADIUS;
+      for (let i = 0; i < g.chests.length; i++) {
+        const c = g.chests[i];
+        const d = Math.hypot(c.x + 10 - clickX, c.y + 10 - clickY);
+        if (d < closestDist) { closestDist = d; closestIdx = i; }
+      }
+      if (closestIdx >= 0) {
+        // Move chest to hero so processChestCollection picks it up next tick
+        g.chests[closestIdx].x = g.hero.x;
+      }
+    }
+  }, [gameRef]);
+
   // === Movement callbacks ===
   const onMovePrev = useCallback(() => {
     const game = gameRef.current;
     if (!game || game.gameOver) return;
-    game.hero.targetFlagIndex = Math.max(0, game.hero.targetFlagIndex - 1);
+    game.hero.targetFlagIndex = Math.max(-1, game.hero.targetFlagIndex - 1);
   }, [gameRef]);
 
   const onMoveNext = useCallback(() => {
@@ -165,12 +290,6 @@ export default function GameView({
     const game = gameRef.current;
     if (!game) return;
     game.armyHoldMode = !game.armyHoldMode;
-  }, [gameRef]);
-
-  const onTogglePlanted = useCallback(() => {
-    const game = gameRef.current;
-    if (!game) return;
-    game.hero.planted = !game.hero.planted;
   }, [gameRef]);
 
   // === Modal callbacks ===
@@ -203,31 +322,32 @@ export default function GameView({
   const showArtifactPicker = !!(game?.pendingArtifactChoice);
   const showSkillPicker = !!(game?.pendingSkillChoice);
   const showRelicPicker = !!(game?.pendingRelicChoice);
-  const showGameOver = !!(game?.gameOver);
 
-  const purchaseModeRef = useRef<'1x' | '10x' | 'MAX'>('1x');
+  const [purchaseMode, setPurchaseMode] = useState<'1x' | '10x' | 'MAX'>('1x');
   const cyclePurchaseMode = useCallback(() => {
-    purchaseModeRef.current = purchaseModeRef.current === '1x' ? '10x' : purchaseModeRef.current === '10x' ? 'MAX' : '1x';
+    setPurchaseMode(prev => prev === '1x' ? '10x' : prev === '10x' ? 'MAX' : '1x');
   }, []);
 
   const F = '"Press Start 2P", monospace';
 
   return (
-    <div style={{ width: DISPLAY_W + 4, margin: '0 auto', background: '#1a1a2e' }}>
+    <div style={{ width: '100%', background: '#1a1a2e' }}>
       {/* Game frame */}
       <div style={{
-        position: 'relative', width: DISPLAY_W, height: DISPLAY_H, overflow: 'hidden',
-        border: '2px solid #8a4adf',
-        borderRadius: 4,
+        position: 'relative', width: '100%', height: DISPLAY_H, overflow: 'hidden',
         isolation: 'isolate' as any,
       }}>
         <canvas
           ref={canvasRef}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
           style={{
             position: 'absolute', top: 0, left: 0,
             width: DISPLAY_W, height: DISPLAY_H,
             imageRendering: 'pixelated',
             zIndex: 0,
+            touchAction: 'none',
           }}
         />
 
@@ -241,16 +361,39 @@ export default function GameView({
           onMoveNext={onMoveNext}
           onToggleHold={onToggleHold}
           onOpenSettings={onOpenSettings}
-          onOpenShop={() => {}}
-          onOpenAchievements={onOpenAchievements}
-          onOpenRelics={onOpenRelics}
-          onTogglePlanted={onTogglePlanted}
+          onOpenShop={() => setShowBackpack(p => !p)}
+          onOpenAchievements={() => setShowAchievements(p => !p)}
+          onOpenRelics={() => setShowRelics(p => !p)}
           musicTrack={musicTrack}
           musicPaused={musicPaused}
           onMusicNext={onMusicNext}
           onMusicPrev={onMusicPrev}
           onMusicToggle={onMusicToggle}
+          onMusicClick={onMusicClick}
+          musicClicks={musicClicks}
+          onOpenTrackSelector={() => setTrackSelectorOpen(p => !p)}
         />
+
+        {/* Track selector overlay */}
+        {trackSelectorOpen && musicClicks >= 5 && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 27 }}>
+            <TrackSelector
+              highestZone={highestZone}
+              currentTrack={musicTrack}
+              allTracks={allTracks}
+              onSelectTrack={playTrack}
+              blockedTracks={blockedTracks}
+              onToggleBlock={(path) => setBlockedTracks(prev => prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path])}
+              onClose={() => setTrackSelectorOpen(false)}
+              activeBiome={activeBiome}
+              onToggleBiomeMute={(tracks) => setBlockedTracks(prev => {
+                const allMuted = tracks.every(t => prev.includes(t));
+                if (allMuted) return prev.filter(t => !tracks.includes(t));
+                return [...prev, ...tracks.filter(t => !prev.includes(t))];
+              })}
+            />
+          </div>
+        )}
 
         {/* Modal overlays */}
         {showArtifactPicker && game.pendingArtifactChoice && (
@@ -274,6 +417,53 @@ export default function GameView({
             relics={game.pendingRelicChoice}
             onSelect={onSelectRelic}
           />
+        )}
+
+        {/* Backpack panel overlay */}
+        {showBackpack && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 26, overflow: 'auto' }}>
+            <BackpackPanel
+              backpack={backpack}
+              gems={gems}
+              shards={shards}
+              onClose={() => setShowBackpack(false)}
+              onUseConsumable={onUseConsumable}
+              canUseMidRun={!game?.gameOver}
+              dungeonUnlocked={dungeonUnlocked}
+              inDungeon={game?.inDungeon}
+            />
+          </div>
+        )}
+
+        {/* Achievements panel overlay */}
+        {showAchievements && game && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 26, overflow: 'auto' }}>
+            <AchievementPanel
+              achievementProgress={achievementProgress}
+              stats={{
+                totalRuns: 0, totalFlagsCaptured: game.flagsCaptured || 0,
+                highestZone: (game.currentZone || 0) + 1, totalBossesDefeated: game.bossesDefeated || 0,
+                totalDistance: Math.floor((game.hero?.x || 0) / 50), totalPlayTime: 0,
+                totalRetreats: 0, musicClicks: 0,
+              }}
+              onClaim={onClaimAchievement}
+              onClose={() => setShowAchievements(false)}
+            />
+          </div>
+        )}
+
+        {/* Relics panel overlay */}
+        {showRelics && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 26, overflow: 'auto' }}>
+            <RelicPanel
+              relicCollection={relicCollection}
+              onClose={() => setShowRelics(false)}
+              ancientFragments={ancientFragments}
+              dungeonUnlocked={dungeonUnlocked}
+              ancientRelicsOwned={ancientRelicsOwned}
+              ancientRelicCopies={ancientRelicCopies}
+            />
+          </div>
         )}
 
         {/* Settings overlay */}
@@ -321,6 +511,13 @@ export default function GameView({
                 <input type="checkbox" checked={killParticles} onChange={e => setKillParticles(e.target.checked)} style={{ accentColor: COLORS.heroBlue, width: 14, height: 14 }} />
                 <span style={{ color: '#ccc', fontSize: 10 }}>Kill particles</span>
               </label>
+              {setShowFps && (
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginTop: 6 }}>
+                  <input type="checkbox" checked={!!showFps} onChange={e => setShowFps(e.target.checked)} style={{ accentColor: COLORS.heroBlue, width: 14, height: 14 }} />
+                  <span style={{ color: '#ccc', fontSize: 10 }}>Show FPS counter</span>
+                  {showFps && <span style={{ color: COLORS.gold, fontSize: 10, fontWeight: 'bold' }}>{fpsValue} FPS</span>}
+                </label>
+              )}
             </>)}
             {/* Controls tab */}
             {settingsTab === 'controls' && (
@@ -370,45 +567,54 @@ export default function GameView({
                   <button onClick={() => { const g = gameRef.current; if (g) g.devSpawnsDisabled = !g.devSpawnsDisabled; }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: game?.devSpawnsDisabled ? 'rgba(255,60,60,0.3)' : 'rgba(20,15,30,0.85)', color: game?.devSpawnsDisabled ? '#ff8888' : '#ccc', border: `1px solid ${game?.devSpawnsDisabled ? '#ff4444' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>{game?.devSpawnsDisabled ? 'Spawns OFF' : 'Spawns ON'}</button>
                   <button onClick={() => { const g = gameRef.current; if (g) g.devPaused = !g.devPaused; }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: game?.devPaused ? 'rgba(255,200,0,0.3)' : 'rgba(20,15,30,0.85)', color: game?.devPaused ? '#ffcc44' : '#ccc', border: `1px solid ${game?.devPaused ? '#ffcc00' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>{game?.devPaused ? '\u25B6 RESUME' : '\u23F8 PAUSE'}</button>
                   <button onClick={() => { const g = gameRef.current; if (g) { g.devGodMode = !g.devGodMode; if (g.devGodMode) g.hero.health = g.hero.maxHealth; } }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: game?.devGodMode ? 'rgba(0,255,100,0.3)' : 'rgba(20,15,30,0.85)', color: game?.devGodMode ? '#44ff88' : '#ccc', border: `1px solid ${game?.devGodMode ? '#00ff66' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>{game?.devGodMode ? '\u{1F49A} GOD MODE' : 'Stay Full HP'}</button>
+                  <button onClick={() => { const g = gameRef.current; if (g) { g.backpack.healingPotion += 5; g.backpack.rerollVoucher += 5; g.backpack.artifactKey += 5; g.backpack.regaliaKey += 5; g.backpack.challengeKey += 5; } }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: 'rgba(20,15,30,0.85)', color: '#ccc', border: '1px solid rgba(138,74,223,0.3)', borderRadius: 3, cursor: 'pointer' }}>+5 Items</button>
                 </div>
+                {/* Spawn row */}
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
+                  <span style={{ color: '#888', fontSize: 9, alignSelf: 'center' }}>Spawn:</span>
+                  {devSpawnArtifact && <button onClick={devSpawnArtifact} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: 'rgba(20,15,30,0.85)', color: '#ccc', border: '1px solid rgba(138,74,223,0.3)', borderRadius: 3, cursor: 'pointer' }}>Artifact</button>}
+                  {devSpawnRegalia && <button onClick={() => devSpawnRegalia()} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: 'rgba(20,15,30,0.85)', color: '#ccc', border: '1px solid rgba(138,74,223,0.3)', borderRadius: 3, cursor: 'pointer' }}>Regalia</button>}
+                  {devSpawnRegalia && <button onClick={() => devSpawnRegalia('legendary')} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: 'rgba(20,15,30,0.85)', color: '#ffcc44', border: '1px solid rgba(255,200,0,0.4)', borderRadius: 3, cursor: 'pointer' }}>Legendary Regalia</button>}
+                  {devSpawnRelic && <button onClick={devSpawnRelic} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: 'rgba(20,15,30,0.85)', color: '#ccc', border: '1px solid rgba(138,74,223,0.3)', borderRadius: 3, cursor: 'pointer' }}>Relic</button>}
+                  <button onClick={() => {
+                    const g = gameRef.current; if (!g || g.boss) return;
+                    const bossFlag = g.flags.find(f => f.isBossFlag && !f.captured);
+                    if (!bossFlag) return;
+                    const z = g.currentZone;
+                    const hp = Math.floor((300 + z * 250) * Math.pow(1.45, z * Math.pow(0.975, z)));
+                    const dmg = Math.floor(20 * Math.pow(1.4, z * Math.pow(0.975, z)));
+                    const bossType = z % 7;
+                    g.boss = { x: bossFlag.x, y: GROUND_Y - 70, health: hp, maxHealth: hp, damage: dmg, speed: 0, attackRate: 120, attackRange: 120, zone: z, bossType, frame: 0, attackCooldown: 60, isAttacking: false, laserWarning: 0 } as any;
+                  }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: game?.boss ? 'rgba(255,60,60,0.3)' : 'rgba(20,15,30,0.85)', color: game?.boss ? '#ff8888' : '#ccc', border: `1px solid ${game?.boss ? '#ff4444' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>{game?.boss ? 'Boss Active' : 'Spawn Boss'}</button>
+                </div>
+                {/* Zone warp row */}
+                {devWarpZone && (
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
+                    <span style={{ color: '#888', fontSize: 9, alignSelf: 'center' }}>Warp:</span>
+                    {[0, 1, 2, 3, 4, 5, 6, 7].map(z => (
+                      <button key={z} onClick={() => devWarpZone(z)} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: game?.currentZone === z ? 'rgba(74,159,255,0.3)' : 'rgba(20,15,30,0.85)', color: game?.currentZone === z ? '#7abfff' : '#ccc', border: `1px solid ${game?.currentZone === z ? '#4a9fff' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>Z{z}</button>
+                    ))}
+                  </div>
+                )}
+                {/* Dungeon warp row */}
+                {(devEnterWaveDungeon || devEnterTimedDungeon) && (
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
+                    <span style={{ color: '#888', fontSize: 9, alignSelf: 'center' }}>Dungeon:</span>
+                    {devEnterWaveDungeon && (
+                      <button onClick={devEnterWaveDungeon} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: game?.inDungeon && game?.dungeonType === 'wave' ? 'rgba(170,68,255,0.3)' : 'rgba(20,15,30,0.85)', color: game?.inDungeon && game?.dungeonType === 'wave' ? '#cc88ff' : '#ccc', border: `1px solid ${game?.inDungeon && game?.dungeonType === 'wave' ? '#aa44ff' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>Wave</button>
+                    )}
+                    {devEnterTimedDungeon && (
+                      <button onClick={devEnterTimedDungeon} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: game?.inDungeon && game?.dungeonType === 'timed' ? 'rgba(255,102,51,0.3)' : 'rgba(20,15,30,0.85)', color: game?.inDungeon && game?.dungeonType === 'timed' ? '#ff8844' : '#ccc', border: `1px solid ${game?.inDungeon && game?.dungeonType === 'timed' ? '#ff6633' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>Timed</button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
           );
         })()}
 
-        {showGameOver && !showArtifactPicker && !showSkillPicker && !showRelicPicker && (
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(135deg, rgba(30,12,50,0.98) 0%, rgba(15,8,25,0.98) 100%)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            zIndex: 30, fontFamily: F,
-          }}>
-            <div style={{ color: '#ff4444', fontSize: 18, marginBottom: 12 }}>GAME OVER</div>
-            <div style={{ color: '#aaccff', fontSize: 9, marginBottom: 5 }}>
-              Zone: {(game.currentZone || 0) + 1} | Flags: {game.flagsCaptured || 0}
-            </div>
-            <div style={{ color: '#ffd700', fontSize: 9, marginBottom: 5 }}>
-              Gold earned: {game.goldEarned || 0}
-            </div>
-            <div style={{ color: '#88ff88', fontSize: 9, marginBottom: 5 }}>
-              Gems: +{game.gemsThisRun || 0} | Shards: +{game.shardsThisRun || 0}
-            </div>
-            <div style={{ color: '#aaa', fontSize: 7, marginBottom: 16 }}>
-              {Math.floor((game.frame || 0) / 3600)}m {Math.floor(((game.frame || 0) % 3600) / 60)}s
-            </div>
-            <button
-              onClick={onGameOver}
-              style={{
-                padding: '8px 28px', fontSize: 11,
-                background: '#4a9fff', color: '#fff', border: 'none',
-                borderRadius: 4, cursor: 'pointer', fontFamily: F,
-              }}
-            >
-              CONTINUE
-            </button>
-          </div>
-        )}
+        {/* Game over popup removed — v2 auto-transitions to void screen like v1 */}
       </div>
 
       {/* Shop panel — always visible during gameplay (matches old project) */}
@@ -418,7 +624,7 @@ export default function GameView({
             game={game}
             shopTab={shopTab}
             setShopTab={setShopTab}
-            purchaseMode={purchaseModeRef.current}
+            purchaseMode={purchaseMode}
             cycleMode={cyclePurchaseMode}
           />
           <div className="hide-scrollbar" style={{ maxHeight: 400, overflowY: 'auto', overflowX: 'hidden' }}>
@@ -441,6 +647,7 @@ export default function GameView({
               highestZone={highestZone}
               highestFlags={highestFlags}
               equippedRegalias={regaliaEquipped}
+              purchaseMode={purchaseMode}
             />
           </div>
         </div>

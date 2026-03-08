@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Folded silk fabric with sheen -->
+  <!-- Main fabric body -->
+  <path d="M4,8 Q8,6 16,8 Q24,10 28,8 L28,24 Q24,26 16,24 Q8,22 4,24Z" fill="#6644aa"/>
+  <!-- Fabric folds highlight -->
+  <path d="M4,8 Q8,6 14,8 L14,22 Q8,20 4,22Z" fill="#8866cc" opacity="0.4"/>
+  <path d="M14,8 Q18,9 22,9 L22,23 Q18,23 14,22Z" fill="#7755bb" opacity="0.3"/>
+  <!-- Silk sheen lines -->
+  <path d="M6,10 Q10,9 14,10 Q18,11 22,10 Q26,9 28,10" fill="none" stroke="#aa88ee" stroke-width="0.5" opacity="0.3" stroke-linecap="round"/>
+  <path d="M6,14 Q10,13 14,14 Q18,15 22,14 Q26,13 28,14" fill="none" stroke="#aa88ee" stroke-width="0.4" opacity="0.25" stroke-linecap="round"/>
+  <path d="M6,18 Q10,17 14,18 Q18,19 22,18 Q26,17 28,18" fill="none" stroke="#aa88ee" stroke-width="0.4" opacity="0.2" stroke-linecap="round"/>
+  <!-- Fabric edge draped -->
+  <path d="M4,24 Q6,28 10,28 Q14,28 16,26" fill="none" stroke="#5533aa" stroke-width="0.8" opacity="0.4" stroke-linecap="round"/>
+  <path d="M28,24 Q26,28 22,28 Q18,28 16,26" fill="none" stroke="#5533aa" stroke-width="0.8" opacity="0.4" stroke-linecap="round"/>
+  <!-- Fabric drape shadow -->
+  <path d="M6,24 Q10,27 16,26 Q22,27 26,24" fill="#4422aa" opacity="0.2"/>
+  <!-- Thread pattern -->
+  <path d="M8,12 Q9,11 10,12" fill="none" stroke="#9977dd" stroke-width="0.3" opacity="0.3"/>
+  <path d="M20,16 Q21,15 22,16" fill="none" stroke="#9977dd" stroke-width="0.3" opacity="0.3"/>
+  <!-- Silk shimmer -->
+  <circle cx="10" cy="10" r="0.5" fill="#ddbbff" opacity="0.4"/>
+  <circle cx="22" cy="12" r="0.4" fill="#ddbbff" opacity="0.35"/>
+  <circle cx="14" cy="16" r="0.4" fill="#ddbbff" opacity="0.3"/>
+</svg>

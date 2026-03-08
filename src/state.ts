@@ -260,5 +260,6 @@ export function createInitialState(upgrades: PermanentUpgrades, heroClassId: Her
     lastEliteVariants: [],
     // Pet per-run state
     petCooldown: 0,
+    backpack: { healingPotion: 0, rerollVoucher: 0, artifactKey: 0, regaliaKey: 0, challengeKey: 0 },
   };
 }

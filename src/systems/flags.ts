@@ -250,7 +250,7 @@ export function processBossDefeat(ts: TickState): void {
         ? ['common', 'rare', 'rare', 'legendary']
         : ['rare', 'rare', 'legendary', 'legendary'];
     const rarity = rarityPool[Math.floor(Math.random() * rarityPool.length)];
-    const droppedRegalia = rollRegalia(slot, zone, rarity, buildUnlockFilter(ts.upgrades));
+    const droppedRegalia = rollRegalia(slot, zone + 1, rarity, buildUnlockFilter(ts.upgrades));
     const rColor = RARITY_COLORS[rarity];
     ts.chests.push({ id: uid(), x: boss.x, y: GROUND_Y - 22, type: 'regalia', value: 0, age: 0, regaliaData: droppedRegalia });
     ts.particles.push(makeParticle(boss.x, boss.y - 50, `\u{1F451} ${rarity.toUpperCase()} REGALIA!`, rColor));
@@ -668,7 +668,7 @@ export function processFlagBuildings(ts: TickState): void {
       });
       // Regalia chest (guaranteed Rare/Legendary)
       const surveyRarity = rollSurveyRegaliaRarity();
-      const surveyRegalia = rollRegalia(getRandomSlot(), ts.currentZone, surveyRarity, buildUnlockFilter(ts.upgrades));
+      const surveyRegalia = rollRegalia(getRandomSlot(), ts.currentZone + 1, surveyRarity, buildUnlockFilter(ts.upgrades));
       ts.chests.push({
         id: uid(), x: flag.x + 40, y: GROUND_Y - 22,
         type: 'regalia', value: 0, age: 0, regaliaData: surveyRegalia,

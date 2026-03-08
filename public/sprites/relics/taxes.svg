@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Coins with flying wings (money generation) -->
+  <!-- Stacked coins -->
+  <ellipse cx="16" cy="24" rx="7" ry="2" fill="#b8860b"/>
+  <rect x="9" y="22" width="14" height="2" fill="#daa520"/>
+  <ellipse cx="16" cy="22" rx="7" ry="2" fill="#daa520" stroke="#b8860b" stroke-width="0.3"/>
+  <ellipse cx="16" cy="22" rx="5" ry="1.3" fill="none" stroke="#b8860b" stroke-width="0.3"/>
+  <rect x="9" y="20" width="14" height="2" fill="#daa520"/>
+  <ellipse cx="16" cy="20" rx="7" ry="2" fill="#eebb33" stroke="#cc9922" stroke-width="0.3"/>
+  <ellipse cx="16" cy="20" rx="5" ry="1.3" fill="none" stroke="#cc9922" stroke-width="0.3"/>
+  <!-- Top coin -->
+  <ellipse cx="16" cy="18" rx="7" ry="2" fill="#eebb33" stroke="#cc9922" stroke-width="0.3"/>
+  <ellipse cx="16" cy="18" rx="5" ry="1.3" fill="none" stroke="#cc9922" stroke-width="0.3"/>
+  <!-- Coin face -->
+  <text x="16" y="19.5" text-anchor="middle" font-size="3" font-weight="bold" fill="#8B6914" opacity="0.5">TAX</text>
+  <!-- Flying coin (left) -->
+  <circle cx="6" cy="10" r="3" fill="#daa520" stroke="#b8860b" stroke-width="0.3"/>
+  <circle cx="6" cy="10" r="2" fill="none" stroke="#b8860b" stroke-width="0.3"/>
+  <!-- Wings on left coin -->
+  <path d="M4,8 Q2,6 1,4 Q3,6 4,7Z" fill="#e8dcc8" opacity="0.6"/>
+  <path d="M3,9 Q1,7 0,6 Q2,8 3,8.5Z" fill="#d8ccb8" opacity="0.5"/>
+  <!-- Flying coin (right) -->
+  <circle cx="26" cy="8" r="3" fill="#daa520" stroke="#b8860b" stroke-width="0.3"/>
+  <circle cx="26" cy="8" r="2" fill="none" stroke="#b8860b" stroke-width="0.3"/>
+  <!-- Wings on right coin -->
+  <path d="M28,6 Q30,4 31,2 Q29,4 28,5Z" fill="#e8dcc8" opacity="0.6"/>
+  <path d="M29,7 Q31,5 32,4 Q30,6 29,6.5Z" fill="#d8ccb8" opacity="0.5"/>
+  <!-- Trail sparkles -->
+  <circle cx="10" cy="14" r="0.4" fill="#ffdd44" opacity="0.3"/>
+  <circle cx="22" cy="12" r="0.3" fill="#ffdd44" opacity="0.25"/>
+</svg>

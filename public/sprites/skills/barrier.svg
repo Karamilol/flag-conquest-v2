@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Magic shield dome / barrier -->
+  <!-- Outer glow -->
+  <path d="M2,24 Q2,6 16,4 Q30,6 30,24" fill="#4466cc" opacity="0.08"/>
+  <!-- Barrier dome -->
+  <path d="M3,24 Q3,8 16,5 Q29,8 29,24" fill="#4466cc" opacity="0.15"/>
+  <path d="M3,24 Q3,8 16,5 Q29,8 29,24" fill="none" stroke="#6688ee" stroke-width="1" opacity="0.6"/>
+  <!-- Inner dome -->
+  <path d="M6,24 Q6,10 16,7 Q26,10 26,24" fill="#5577dd" opacity="0.1"/>
+  <path d="M6,24 Q6,10 16,7 Q26,10 26,24" fill="none" stroke="#88aaff" stroke-width="0.5" opacity="0.4"/>
+  <!-- Hex pattern on dome -->
+  <g stroke="#88aaff" stroke-width="0.4" opacity="0.3" fill="none">
+    <path d="M10,12 L14,10 L18,12 L18,16 L14,18 L10,16Z"/>
+    <path d="M18,12 L22,10 L26,12 L26,16 L22,18 L18,16"/>
+    <path d="M6,16 L10,14 L14,16 L14,20 L10,22 L6,20"/>
+    <path d="M14,18 L18,16 L22,18 L22,22 L18,24 L14,22Z"/>
+  </g>
+  <!-- Ground line -->
+  <line x1="2" y1="24" x2="30" y2="24" stroke="#4466cc" stroke-width="0.5" opacity="0.3"/>
+  <!-- Shield shimmer -->
+  <path d="M8,10 Q10,8 14,7" fill="none" stroke="#aaccff" stroke-width="0.6" opacity="0.4" stroke-linecap="round"/>
+  <!-- Rune marks at base -->
+  <circle cx="8" cy="24" r="1" fill="#6688ee" opacity="0.3"/>
+  <circle cx="16" cy="25" r="1" fill="#6688ee" opacity="0.3"/>
+  <circle cx="24" cy="24" r="1" fill="#6688ee" opacity="0.3"/>
+  <!-- Magic particles -->
+  <circle cx="12" cy="8" r="0.5" fill="#aaccff" opacity="0.5"/>
+  <circle cx="22" cy="9" r="0.4" fill="#aaccff" opacity="0.4"/>
+  <circle cx="16" cy="6" r="0.6" fill="#bbddff" opacity="0.5"/>
+</svg>

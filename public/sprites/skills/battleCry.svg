@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- War horn / bugle -->
+  <!-- Horn body -->
+  <path d="M4,14 Q4,12 6,11 L20,8 Q26,7 28,10 Q30,13 28,16 Q26,19 20,18 L6,15 Q4,16 4,14Z" fill="#c4984a"/>
+  <!-- Horn shading -->
+  <path d="M4,14 Q4,12.5 6,11.5 L20,8.5 Q25,7.5 27,10 L20,9 L6,12 Q4.5,13 4,14Z" fill="#d4a85a" opacity="0.5"/>
+  <path d="M6,14.8 L20,17.5 Q25,18 27,15.5 L20,17 L6,14.5Z" fill="#8a6a30" opacity="0.4"/>
+  <!-- Horn bell (opening) -->
+  <ellipse cx="27" cy="13" rx="3.5" ry="5" fill="#b08838"/>
+  <ellipse cx="27" cy="13" rx="2.5" ry="3.8" fill="#1a1a2e"/>
+  <ellipse cx="26.5" cy="12" rx="1" ry="1.5" fill="#2a2a3e" opacity="0.5"/>
+  <!-- Horn rings -->
+  <ellipse cx="10" cy="13" rx="1" ry="2.2" fill="none" stroke="#8a6a30" stroke-width="0.6"/>
+  <ellipse cx="17" cy="12.5" rx="1" ry="2.5" fill="none" stroke="#8a6a30" stroke-width="0.6"/>
+  <!-- Mouthpiece -->
+  <circle cx="4.5" cy="14" r="1.5" fill="#d4a85a"/>
+  <circle cx="4.5" cy="14" r="0.7" fill="#1a1a2e"/>
+  <!-- Sound waves -->
+  <path d="M30,10 Q32,13 30,16" fill="none" stroke="#ffdd66" stroke-width="0.8" opacity="0.6" stroke-linecap="round"/>
+  <path d="M31,8 Q34,13 31,18" fill="none" stroke="#ffdd66" stroke-width="0.6" opacity="0.4" stroke-linecap="round"/>
+  <!-- Shine -->
+  <path d="M8,11.5 L14,10" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.3" stroke-linecap="round"/>
+</svg>

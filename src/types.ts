@@ -922,6 +922,7 @@ export interface GameState {
   devGodMode?: boolean;
   // ---- Pet state (per-run) ----
   petCooldown: number;
+  backpack: Backpack;
 }
 
 // ---- Shard Prestige Upgrades (persist across runs) ----

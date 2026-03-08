@@ -1,6 +1,7 @@
 import { COLORS } from '../../constants';
 import type { Artifact } from '../../types';
 import { ARTIFACT_PARTNER, ARTIFACT_BY_ID, PAIR_BY_ID, CATEGORY_COLORS, CATEGORY_LABELS } from '../../artifacts';
+import { SpriteIcon } from '../sprites/SpriteIcon';
 import type { ArtifactCategory } from '../../artifacts';
 
 const RARITY_COLORS: Record<string, string> = {
@@ -76,7 +77,7 @@ export function ArtifactPicker({ artifacts, ownedArtifactIds, onSelect, heroClas
                 {catLabel}
               </div>
 
-              <div style={{ fontSize: '22px', marginBottom: '4px' }}>{artifact.icon}</div>
+              <div style={{ marginBottom: '4px' }}><SpriteIcon path={`artifacts/${artifact.id}`} size={28} fallback={artifact.icon} /></div>
               <div style={{ color: COLORS.gold, fontSize: '10px', marginBottom: '2px' }}>{artifact.name}</div>
               <div style={{ color: rarityColor, fontSize: '8px', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '1px' }}>
                 {RARITY_LABELS[artifact.rarity] || 'Common'}

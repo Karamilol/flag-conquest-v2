@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Wooden cart/carriage -->
+  <!-- Cart body -->
+  <rect x="5" y="10" width="20" height="12" rx="1" fill="#8B6914"/>
+  <rect x="5" y="10" width="20" height="4" rx="0.5" fill="#a07a1e" opacity="0.4"/>
+  <!-- Planks -->
+  <line x1="5" y1="14" x2="25" y2="14" stroke="#6a4a10" stroke-width="0.4" opacity="0.4"/>
+  <line x1="5" y1="17" x2="25" y2="17" stroke="#6a4a10" stroke-width="0.4" opacity="0.4"/>
+  <line x1="5" y1="20" x2="25" y2="20" stroke="#6a4a10" stroke-width="0.4" opacity="0.4"/>
+  <!-- Handle -->
+  <line x1="25" y1="16" x2="30" y2="13" stroke="#6a4a10" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Left wheel -->
+  <circle cx="9" cy="24" r="4" fill="#6a4a10" stroke="#5a3a08" stroke-width="0.6"/>
+  <circle cx="9" cy="24" r="2" fill="none" stroke="#5a3a08" stroke-width="0.5"/>
+  <circle cx="9" cy="24" r="0.8" fill="#aabbcc"/>
+  <!-- Wheel spokes -->
+  <line x1="9" y1="20" x2="9" y2="28" stroke="#5a3a08" stroke-width="0.5"/>
+  <line x1="5" y1="24" x2="13" y2="24" stroke="#5a3a08" stroke-width="0.5"/>
+  <!-- Right wheel -->
+  <circle cx="21" cy="24" r="4" fill="#6a4a10" stroke="#5a3a08" stroke-width="0.6"/>
+  <circle cx="21" cy="24" r="2" fill="none" stroke="#5a3a08" stroke-width="0.5"/>
+  <circle cx="21" cy="24" r="0.8" fill="#aabbcc"/>
+  <!-- Wheel spokes -->
+  <line x1="21" y1="20" x2="21" y2="28" stroke="#5a3a08" stroke-width="0.5"/>
+  <line x1="17" y1="24" x2="25" y2="24" stroke="#5a3a08" stroke-width="0.5"/>
+  <!-- Cargo peek -->
+  <rect x="8" y="7" width="5" height="3" rx="0.5" fill="#c4984a" opacity="0.6"/>
+  <circle cx="19" cy="8" r="2" fill="#daa520" opacity="0.4"/>
+  <!-- Metal corners -->
+  <rect x="5" y="10" width="2" height="2" rx="0.3" fill="#aabbcc" opacity="0.4"/>
+  <rect x="23" y="10" width="2" height="2" rx="0.3" fill="#aabbcc" opacity="0.4"/>
+</svg>

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Soft warm glow -->
+  <ellipse cx="16" cy="16" rx="12" ry="12" fill="#daa520" opacity="0.06"/>
+  <!-- Lute body -->
+  <ellipse cx="14" cy="22" rx="7" ry="6" fill="#6a4a20"/>
+  <ellipse cx="14" cy="22" rx="6.5" ry="5.5" fill="#8B6914"/>
+  <ellipse cx="14" cy="22" rx="5.5" ry="4.5" fill="#a07a1e" opacity="0.5"/>
+  <!-- Lute body highlight -->
+  <ellipse cx="12" cy="20" rx="3" ry="2.5" fill="#b88a28" opacity="0.3" transform="rotate(-10,12,20)"/>
+  <!-- Sound hole -->
+  <circle cx="14" cy="22" r="2" fill="#3a2208"/>
+  <circle cx="14" cy="22" r="1.7" fill="#4a2a0c" opacity="0.7"/>
+  <!-- Sound hole rosette -->
+  <circle cx="14" cy="22" r="2.3" fill="none" stroke="#5a3a15" stroke-width="0.4" opacity="0.6"/>
+  <circle cx="14" cy="22" r="2.6" fill="none" stroke="#7a5a20" stroke-width="0.3" opacity="0.4"/>
+  <!-- Lute neck -->
+  <path d="M18,18 L24,6 L26,6 L20,18 Z" fill="#5a3a15"/>
+  <path d="M18.5,17.5 L24.5,6.5 L25.5,6.5 L19.5,17.5 Z" fill="#6a4a20" opacity="0.6"/>
+  <!-- Neck frets -->
+  <line x1="19" y1="16" x2="20" y2="16" stroke="#8a6a20" stroke-width="0.4" opacity="0.5"/>
+  <line x1="19.8" y1="14.5" x2="20.8" y2="14.5" stroke="#8a6a20" stroke-width="0.4" opacity="0.5"/>
+  <line x1="20.5" y1="13" x2="21.5" y2="13" stroke="#8a6a20" stroke-width="0.4" opacity="0.5"/>
+  <line x1="21.2" y1="11.5" x2="22.2" y2="11.5" stroke="#8a6a20" stroke-width="0.4" opacity="0.5"/>
+  <line x1="22" y1="10" x2="23" y2="10" stroke="#8a6a20" stroke-width="0.4" opacity="0.5"/>
+  <!-- Strings -->
+  <line x1="14" y1="22" x2="25" y2="6" stroke="#c8a830" stroke-width="0.3" opacity="0.6"/>
+  <line x1="14.5" y1="21.5" x2="25.2" y2="6.2" stroke="#c8a830" stroke-width="0.3" opacity="0.5"/>
+  <line x1="13.5" y1="21.8" x2="24.8" y2="6.3" stroke="#c8a830" stroke-width="0.3" opacity="0.5"/>
+  <!-- Pegbox -->
+  <path d="M24,6 Q24,4 25,3 L26,3 Q27,4 26,6 Z" fill="#5a3a15"/>
+  <path d="M24.3,5.5 Q24.5,4 25,3.5 L25.8,3.5 Q26.3,4.5 25.8,5.8 Z" fill="#6a4a20" opacity="0.5"/>
+  <!-- Tuning pegs -->
+  <circle cx="24.5" cy="4" r="0.5" fill="#8a6a20"/>
+  <circle cx="25.5" cy="3.5" r="0.5" fill="#8a6a20"/>
+  <circle cx="26" cy="4.5" r="0.5" fill="#8a6a20"/>
+  <!-- Musical notes floating -->
+  <!-- Note 1 -->
+  <ellipse cx="5" cy="8" rx="1.5" ry="1.1" fill="#e8b830" transform="rotate(-20,5,8)"/>
+  <line x1="6.3" y1="8" x2="6.3" y2="3.5" stroke="#e8b830" stroke-width="0.7" stroke-linecap="round"/>
+  <path d="M6.3,3.5 Q8,3 8,5" fill="none" stroke="#e8b830" stroke-width="0.7" stroke-linecap="round"/>
+  <!-- Note 2 -->
+  <ellipse cx="3" cy="14" rx="1.2" ry="0.9" fill="#daa520" opacity="0.7" transform="rotate(-20,3,14)"/>
+  <line x1="4" y1="14" x2="4" y2="10" stroke="#daa520" stroke-width="0.6" opacity="0.7" stroke-linecap="round"/>
+  <path d="M4,10 Q5.5,9.5 5.5,11.5" fill="none" stroke="#daa520" stroke-width="0.6" opacity="0.7" stroke-linecap="round"/>
+  <!-- Note 3 (eighth note) -->
+  <ellipse cx="8" cy="4" rx="1" ry="0.8" fill="#f0c838" opacity="0.6" transform="rotate(-15,8,4)"/>
+  <line x1="8.8" y1="4" x2="8.8" y2="1" stroke="#f0c838" stroke-width="0.5" opacity="0.6" stroke-linecap="round"/>
+  <path d="M8.8,1 Q10,0.5 10,2" fill="none" stroke="#f0c838" stroke-width="0.5" opacity="0.6" stroke-linecap="round"/>
+  <!-- Sound wave arcs -->
+  <path d="M4,18 Q2,16 4,14" fill="none" stroke="#daa520" stroke-width="0.5" opacity="0.3" stroke-linecap="round"/>
+  <path d="M2,19 Q-0.5,16 2,13" fill="none" stroke="#daa520" stroke-width="0.4" opacity="0.2" stroke-linecap="round"/>
+  <!-- Sparkles -->
+  <path d="M1,9 L1.3,8 L1.6,9 L1.3,10 Z" fill="#fff8c0" opacity="0.5"/>
+  <path d="M28,10 L28.3,9.2 L28.6,10 L28.3,10.8 Z" fill="#fff8c0" opacity="0.4"/>
+</svg>

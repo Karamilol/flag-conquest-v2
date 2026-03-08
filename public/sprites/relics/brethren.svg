@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Two clasped hands / brotherhood -->
+  <!-- Left arm -->
+  <path d="M2,18 L12,16" stroke="#c49460" stroke-width="3" stroke-linecap="round"/>
+  <!-- Right arm -->
+  <path d="M30,14 L20,16" stroke="#c49460" stroke-width="3" stroke-linecap="round"/>
+  <!-- Left hand -->
+  <path d="M12,14 Q14,12 16,14 L16,18 Q14,20 12,18Z" fill="#c49460"/>
+  <!-- Right hand (clasping) -->
+  <path d="M20,14 Q18,12 16,14 L16,18 Q18,20 20,18Z" fill="#b08450"/>
+  <!-- Finger details -->
+  <path d="M13,14 Q14,13 15,14" fill="none" stroke="#a07440" stroke-width="0.5" opacity="0.5"/>
+  <path d="M19,14 Q18,13 17,14" fill="none" stroke="#9a6e3a" stroke-width="0.5" opacity="0.5"/>
+  <!-- Thumb overlap -->
+  <path d="M14,18 Q15,19 16,18" fill="none" stroke="#b08450" stroke-width="1" stroke-linecap="round"/>
+  <path d="M18,18 Q17,19 16,18" fill="none" stroke="#a07440" stroke-width="1" stroke-linecap="round"/>
+  <!-- Wrist cuffs -->
+  <rect x="2" y="16" width="4" height="4" rx="0.5" fill="#6a4a20"/>
+  <rect x="26" y="12" width="4" height="4" rx="0.5" fill="#6a4a20"/>
+  <!-- Healing glow from clasp -->
+  <circle cx="16" cy="16" r="5" fill="#44cc66" opacity="0.08"/>
+  <!-- Heart above hands -->
+  <path d="M16,8 Q14,6 13,7 Q12,8.5 16,12 Q20,8.5 19,7 Q18,6 16,8Z" fill="#cc4455" opacity="0.4"/>
+  <!-- Unity sparkles -->
+  <circle cx="10" cy="10" r="0.5" fill="#ffdd88" opacity="0.4"/>
+  <circle cx="22" cy="10" r="0.4" fill="#ffdd88" opacity="0.35"/>
+  <circle cx="16" cy="6" r="0.4" fill="#ffdd88" opacity="0.3"/>
+</svg>

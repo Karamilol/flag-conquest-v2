@@ -3,6 +3,7 @@ import { COLORS } from '../../constants';
 import { CONSUMABLE_DEFS } from '../../consumables';
 import type { Backpack, ConsumableId } from '../../types';
 import { HealthPotionIconHTML } from '../sprites/HealthPotionIcon';
+import { SpriteIcon } from '../sprites/SpriteIcon';
 
 type SelectedItem = ConsumableId | 'gems' | 'shards';
 
@@ -108,7 +109,7 @@ export function BackpackPanel({ backpack, gems, shards, onClose, onUseConsumable
                   transition: 'border-color 0.15s, background 0.15s',
                 }}
               >
-                <span style={{ fontSize: '15px' }}>{item.key === 'healingPotion' ? <HealthPotionIconHTML size={18} /> : item.icon}</span>
+                <span style={{ fontSize: '15px' }}>{item.key === 'healingPotion' ? <HealthPotionIconHTML size={18} /> : <SpriteIcon path={`backpack/${item.key}`} size={18} fallback={item.icon} />}</span>
                 {item.qty > 0 && (
                   <span style={{
                     position: 'absolute', bottom: '0px', right: '2px',
@@ -128,7 +129,7 @@ export function BackpackPanel({ backpack, gems, shards, onClose, onUseConsumable
             maxWidth: `${gridW}px`,
           }}>
             <div style={{ fontSize: '10px', color: '#ddd', fontWeight: 'bold', marginBottom: '3px' }}>
-              {selected === 'healingPotion' ? <HealthPotionIconHTML size={12} /> : (selectedConsumableDef || selectedCurrencyDef)!.icon} {(selectedConsumableDef || selectedCurrencyDef)!.name}
+              {selected === 'healingPotion' ? <HealthPotionIconHTML size={12} /> : <SpriteIcon path={`backpack/${selected}`} size={14} fallback={(selectedConsumableDef || selectedCurrencyDef)!.icon} />} {(selectedConsumableDef || selectedCurrencyDef)!.name}
               <span style={{ color: selectedQty > 0 ? '#44ffaa' : '#666', marginLeft: '6px' }}>x{selectedQty}</span>
             </div>
             <div style={{ fontSize: '8px', color: '#999', marginBottom: '5px', lineHeight: 1.4 }}>
