@@ -5,7 +5,7 @@
 // ============================================================
 
 import { COLORS, VIEWPORT_W, VIEWPORT_H, GAME_HEIGHT, GROUND_Y, UNIT_STATS, DISPLAY_SCALE } from './constants';
-import { drawEnvironment } from './rendering/environment';
+import { drawEnvironment, drawEnvironmentOverlaysOnly } from './rendering/environment';
 import { drawWorldObjects } from './rendering/worldRenderer';
 import { TileCache } from './rendering/tileRenderer';
 import { perf } from './utils/perfProfiler';
@@ -946,16 +946,23 @@ export function drawEntities(
   ctx.imageSmoothingEnabled = false;
 
   // --- Environment (sky, mountains, treeline, ground) ---
-  perf.begin('render.environment');
-  if (tileCache) {
-    drawEnvironment(ctx, camX, frame, game.currentZone, game.inDungeon || false, (game as any).dungeonType, tileCache);
+  if (!skipEnvironment) {
+    perf.begin('render.environment');
+    if (tileCache) {
+      drawEnvironment(ctx, camX, frame, game.currentZone, game.inDungeon || false, (game as any).dungeonType, tileCache);
+    }
+    perf.end('render.environment');
+  } else if (tileCache) {
+    // Pixi handles static environment — Canvas2D draws only animated overlays (atmosphere, weather, campfire)
+    drawEnvironmentOverlaysOnly(ctx, camX, frame, game.currentZone, game.inDungeon || false, (game as any).dungeonType, tileCache);
   }
-  perf.end('render.environment');
 
   // --- World objects (flags, chests, boss, barricades, portals) ---
-  perf.begin('render.worldObjects');
-  drawWorldObjects(ctx, game, camX, frame);
-  perf.end('render.worldObjects');
+  if (!skipWorldObjects) {
+    perf.begin('render.worldObjects');
+    drawWorldObjects(ctx, game, camX, frame);
+    perf.end('render.worldObjects');
+  }
 
   // Detect deaths and spawn explosions BEFORE drawing alive units (throttled to every 2nd frame)
   if (killParticles && (frame & 1) === 0) detectDeaths(game, frame, heroClass);
@@ -972,10 +979,11 @@ export function drawEntities(
   perf.gauge('projectiles', (game.projectiles || []).length);
   perf.gauge('particles', (game.particles || []).length);
 
-  // --- Explosions (behind alive units) ---
+  // --- Explosions (behind alive units, always on Canvas2D for screen-space compositing) ---
   if (killParticles) updateAndDrawExplosions(ctx, camX);
 
   // --- Aura indicators (behind units, on ground plane) ---
+  if (!skipUnits) {
   perf.begin('render.auras');
   if (game.hero.health > 0) {
     const hx = game.hero.x + 16 - camX;
@@ -1198,20 +1206,25 @@ export function drawEntities(
     drawHero(ctx, game.hero, camX, frame, heroClass);
   }
   perf.end('render.hero');
+  } // end !skipUnits
 
   // --- Projectiles ---
-  perf.begin('render.projectiles');
-  drawProjectiles(ctx, game.projectiles || [], camX, cullLeft, cullRight);
-  drawCastingFireballs(ctx, game, camX, frame);
-  perf.end('render.projectiles');
+  if (!skipProjectiles) {
+    perf.begin('render.projectiles');
+    drawProjectiles(ctx, game.projectiles || [], camX, cullLeft, cullRight);
+    drawCastingFireballs(ctx, game, camX, frame);
+    perf.end('render.projectiles');
+  }
 
   // --- Particles ---
-  perf.begin('render.particles');
-  for (const p of game.particles || []) {
-    if (p.x < cullLeft || p.x > cullRight) continue;
-    drawParticle(ctx, p, camX);
+  if (!skipParticles) {
+    perf.begin('render.particles');
+    for (const p of game.particles || []) {
+      if (p.x < cullLeft || p.x > cullRight) continue;
+      drawParticle(ctx, p, camX);
+    }
+    perf.end('render.particles');
   }
-  perf.end('render.particles');
 
   ctx.restore();
   perf.end('render');

@@ -682,8 +682,7 @@ export function processFlagBuildings(ts: TickState): void {
   }
 }
 
-/** Age and cull particles — hard cap prevents performance degradation in heavy combat */
-const MAX_PARTICLES = 120;
+/** Age and cull expired particles */
 export function processParticles(ts: TickState): void {
   let write = 0;
   for (let i = 0; i < ts.particles.length; i++) {
@@ -692,8 +691,4 @@ export function processParticles(ts: TickState): void {
     if (p.age < 90) ts.particles[write++] = p;
   }
   ts.particles.length = write;
-  // Hard cap: drop oldest particles when over limit
-  if (ts.particles.length > MAX_PARTICLES) {
-    ts.particles.splice(0, ts.particles.length - MAX_PARTICLES);
-  }
 }

@@ -179,6 +179,14 @@ export default function GameView({
 
     // Init Pixi (async)
     const renderer = new PixiRenderer();
+    let pixiFrameCount = 0; // Track frames rendered by Pixi before handing off
+
+    // Loading overlay — covers black flash during Pixi init
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.style.cssText = `position:absolute;top:0;left:0;width:${DISPLAY_W}px;height:${DISPLAY_H}px;background:#111;z-index:5;display:flex;align-items:center;justify-content:center;color:#888;font:14px monospace;transition:opacity 0.3s;pointer-events:none;`;
+    loadingOverlay.textContent = 'Loading...';
+    container.appendChild(loadingOverlay);
+
     renderer.init(container).then(() => {
       pixi = renderer;
       pixiRef.current = renderer;
@@ -196,15 +204,23 @@ export default function GameView({
         const camX = game.cameraX || 0;
         const frame = game.frame || 0;
         const tc = tileCacheRef.current;
-        const pixiReady = pixi?.isReady;
 
-        // Pixi renders all game layers on the WebGL canvas
-        if (pixiReady) {
+        // Let Pixi render a few frames before Canvas2D yields, to avoid black flash
+        const pixiInited = pixi?.isReady;
+        if (pixiInited) {
           pixi!.render(game, camX, frame, { showHpNumbers, heroClass, killParticles, tileCache: tc });
+          pixiFrameCount++;
+        }
+        const pixiReady = pixiInited && pixiFrameCount > 3;
+
+        // Fade out loading overlay once Pixi is warmed up
+        if (pixiReady && loadingOverlay.parentNode) {
+          loadingOverlay.style.opacity = '0';
+          setTimeout(() => loadingOverlay.remove(), 350);
         }
 
         // Canvas2D draws screen-space post-effects (atmosphere, explosions)
-        // All skip flags true when Pixi is ready — only overlays + explosions remain
+        // All skip flags true when Pixi is warmed up — only overlays + explosions remain
         drawEntities(ctx, game, camX, frame, showHpNumbers, heroClass, killParticles, tc, pixiReady, pixiReady, pixiReady, pixiReady, pixiReady);
       }
 
@@ -218,6 +234,7 @@ export default function GameView({
       pixiRef.current = null;
       renderer.destroy();
       if (canvas2d.parentNode) canvas2d.parentNode.removeChild(canvas2d);
+      if (loadingOverlay.parentNode) loadingOverlay.remove();
     };
   }, [gameRef, showHpNumbers, heroClass, killParticles]);
 
