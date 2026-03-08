@@ -387,6 +387,11 @@ function getImage(url: string): HTMLImageElement | null {
 
 const IDLE_TICKS_PER_FRAME = 25;
 
+/** Returns true when all queued sprite images have finished loading */
+export function allSpritesLoaded(): boolean {
+  return pendingLoads.size === 0;
+}
+
 // --- Pre-load all cached sprite images ---
 export function preloadSprites(heroClass: string): void {
   const goblinCache = initGoblinSpriteCache();
@@ -924,6 +929,11 @@ export function drawEntities(
   heroClass: string,
   killParticles: boolean = true,
   tileCache?: TileCache,
+  skipEnvironment: boolean = false,
+  skipWorldObjects: boolean = false,
+  skipUnits: boolean = false,
+  skipProjectiles: boolean = false,
+  skipParticles: boolean = false,
 ): void {
   perf.begin('render');
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);

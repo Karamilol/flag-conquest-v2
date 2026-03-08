@@ -23,8 +23,12 @@ function sineHeight(x: number, seed: number, amp: number): number {
   );
 }
 
+// Rasterization scale: multiply SVG pixel dimensions by DPR so tiles stay crisp on high-res screens.
+// viewBox stays the same (logical coords), but width/height increase so the browser rasterizes at higher res.
+const RASTER_SCALE = Math.min(window.devicePixelRatio || 1, 3); // cap at 3x to avoid huge textures
+
 function wrap(content: string, tileX: number, tileW: number, vbY: number, vbH: number): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${tileW}" height="${vbH}" viewBox="${tileX} ${vbY} ${tileW} ${vbH}">${content}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${tileW * RASTER_SCALE}" height="${vbH * RASTER_SCALE}" viewBox="${tileX} ${vbY} ${tileW} ${vbH}">${content}</svg>`;
 }
 
 // Interpolate y on a piecewise-linear polygon for a given x
@@ -939,5 +943,5 @@ export function homeSanctuarySVG(): string {
   <rect x="6" y="${GY - 5}" width="3" height="2" fill="${STONE}" opacity="0.2" rx="0.3"/>
   `;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="${vbX} ${vbY} ${w} ${h}">${content}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w * RASTER_SCALE}" height="${h * RASTER_SCALE}" viewBox="${vbX} ${vbY} ${w} ${h}">${content}</svg>`;
 }

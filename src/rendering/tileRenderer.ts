@@ -9,7 +9,7 @@ import {
   mountainTileSVG, treelineTileSVG, groundTileSVG, homeSanctuarySVG,
 } from './environmentSVG';
 
-type LayerKey = 'mountain' | 'treeline' | 'ground';
+export type LayerKey = 'mountain' | 'treeline' | 'ground';
 
 interface TileEntry {
   img: HTMLImageElement;
@@ -59,11 +59,16 @@ export class TileCache {
   private maxTiles = 60;
 
   /** Get a cached tile image, or null if not ready */
-  private getTile(layer: LayerKey, biome: Biome, tileIdx: number): HTMLImageElement | null {
+  getTile(layer: LayerKey, biome: Biome, tileIdx: number): HTMLImageElement | null {
     const key = tileKey(layer, biome, tileIdx);
     const entry = this.tiles.get(key);
     if (entry && entry.ready) return entry.img;
     return null;
+  }
+
+  /** Get the sanctuary image, or null if not ready */
+  getSanctuaryImage(): HTMLImageElement | null {
+    return this.sanctuary?.ready ? this.sanctuary.img : null;
   }
 
   /** Start loading a tile if not already cached or loading */

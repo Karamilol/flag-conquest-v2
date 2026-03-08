@@ -660,6 +660,85 @@ export function drawEnvironment(
   // Cave torches removed — they were screen-space fixed and didn't scroll with the world
 }
 
+/**
+ * Draw only the animated overlays (atmosphere, weather, campfire, dungeon ground/arena).
+ * Called when Pixi handles the static environment (sky + tiles + sanctuary).
+ */
+export function drawEnvironmentOverlaysOnly(
+  ctx: CanvasRenderingContext2D,
+  camX: number,
+  frame: number,
+  currentZone: number,
+  inDungeon: boolean,
+  dungeonType: string | undefined,
+  tileCache: TileCache,
+): void {
+  const isDungeon = inDungeon;
+  const isTimedDung = isDungeon && dungeonType === 'timed';
+  const isWaveDung = isDungeon && dungeonType === 'wave';
+
+  // Resolve biome blend (needed for atmosphere/weather opacity)
+  let primaryBiome: Biome;
+  let secondaryBiome: Biome | null = null;
+  let blendPrimaryOp = 1;
+  let blendSecondaryOp = 0;
+
+  if (isDungeon) {
+    primaryBiome = 'cave';
+  } else {
+    const blend = computeBiomeBlend(camX, VIEWPORT_W);
+    primaryBiome = blend.primary;
+    secondaryBiome = blend.secondary;
+    const blendFactor = blend.blendFactor;
+    blendPrimaryOp = 1 - blendFactor;
+    blendSecondaryOp = blendFactor;
+    if (!secondaryBiome || blendFactor <= 0.01) {
+      secondaryBiome = null;
+    }
+  }
+
+  // Atmosphere overlays (animated, screen-space)
+  if (isWaveDung) {
+    drawWaveDungeonAtmosphere(ctx, frame);
+  } else if (!isDungeon) {
+    if (blendPrimaryOp > 0.01) {
+      ctx.save();
+      ctx.globalAlpha = blendPrimaryOp;
+      drawAtmosphere(ctx, primaryBiome, frame);
+      ctx.restore();
+    }
+    if (secondaryBiome && blendSecondaryOp > 0.01) {
+      ctx.save();
+      ctx.globalAlpha = blendSecondaryOp;
+      drawAtmosphere(ctx, secondaryBiome, frame);
+      ctx.restore();
+    }
+  }
+
+  // Weather particles
+  if (!isDungeon) {
+    const nordicOp = primaryBiome === 'nordic' ? blendPrimaryOp : secondaryBiome === 'nordic' ? blendSecondaryOp : 0;
+    drawNordicSnowflakes(ctx, camX, frame, nordicOp);
+    const volcanicOp = primaryBiome === 'volcanic' ? blendPrimaryOp : secondaryBiome === 'volcanic' ? blendSecondaryOp : 0;
+    drawVolcanicParticles(ctx, camX, frame, volcanicOp);
+  }
+
+  // Dungeon ground (procedural gradient — not tile-based)
+  if (isDungeon) {
+    drawDungeonGround(ctx, camX, isDungeon, dungeonType);
+  }
+
+  // Timed dungeon arena structure
+  if (isTimedDung) {
+    drawTimedDungeonArena(ctx, camX, frame);
+  }
+
+  // Animated campfire (home sanctuary)
+  if (!isDungeon) {
+    drawCampfire(ctx, camX, frame);
+  }
+}
+
 // ── Helpers ──────────────────────────────────────────────────────
 
 function drawAtmosphere(ctx: CanvasRenderingContext2D, biome: Biome, frame: number) {

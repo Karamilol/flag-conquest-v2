@@ -6,6 +6,7 @@ import type { KeyBindings, ActionId } from '../../keybindings';
 import { VIEWPORT_W, VIEWPORT_H, DISPLAY_W, DISPLAY_H, COLORS, GROUND_Y } from '../../constants';
 import { drawEntities } from '../../canvasRenderer';
 import { TileCache } from '../../rendering/tileRenderer';
+import { PixiRenderer } from '../../rendering/pixiRenderer';
 import { getSkillDef } from '../../skills';
 import { ACTION_ORDER, ACTION_LABELS, DEFAULT_KEYBINDINGS, displayKey } from '../../keybindings';
 import GameHUD from './GameHUD';
@@ -125,62 +126,86 @@ export default function GameView({
   devSpawnArtifact, devSpawnRegalia, devSpawnRelic, devWarpZone,
   devEnterWaveDungeon, devEnterTimedDungeon,
 }: GameViewProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
   const tileCacheRef = useRef(new TileCache());
+  const pixiRef = useRef<PixiRenderer | null>(null);
   const [settingsTab, setSettingsTab] = useState<'audio' | 'controls' | 'dev'>('audio');
 
-  // Refresh shop at 60fps so gold/costs stay current (cheap — only React reconciliation, no canvas work)
+  // Refresh shop at ~30fps so gold/costs stay current (throttled from 60fps to reduce React reconciliation)
   const [, setShopRefresh] = useState(0);
   useEffect(() => {
     let running = true;
     let rafId = 0;
+    let frameSkip = 0;
     const tick = () => {
       if (!running) return;
-      setShopRefresh(n => (n + 1) | 0);
+      if (++frameSkip >= 2) { // every 2nd rAF ≈ 30fps
+        frameSkip = 0;
+        setShopRefresh(n => (n + 1) | 0);
+      }
       rafId = requestAnimationFrame(tick);
     };
     rafId = requestAnimationFrame(tick);
     return () => { running = false; cancelAnimationFrame(rafId); };
   }, []);
 
-  // Canvas draw loop — canvasRenderer handles DISPLAY_SCALE internally
+  // Pixi WebGL + Canvas2D overlay draw loop
+  // Pixi handles all game rendering (environment, units, projectiles, world objects, particles).
+  // Canvas2D overlay handles screen-space post-effects (atmosphere, weather, explosions)
+  // that need to composite on top of everything with specific blend modes.
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Size buffer to device pixels for crisp rendering.
-    // Re-adapts on browser zoom via matchMedia DPR listener.
-    let currentDpr = window.devicePixelRatio || 1;
-    const resizeBuffer = () => {
-      currentDpr = window.devicePixelRatio || 1;
-      canvas.width = DISPLAY_W * currentDpr;
-      canvas.height = DISPLAY_H * currentDpr;
-    };
-    resizeBuffer();
-
-    // Listen for DPR changes (browser zoom)
-    let dprQuery = matchMedia(`(resolution: ${currentDpr}dppx)`);
-    const onDprChange = () => {
-      resizeBuffer();
-      // Re-attach listener for the new DPR value
-      dprQuery.removeEventListener('change', onDprChange);
-      dprQuery = matchMedia(`(resolution: ${currentDpr}dppx)`);
-      dprQuery.addEventListener('change', onDprChange);
-    };
-    dprQuery.addEventListener('change', onDprChange);
+    const container = canvasContainerRef.current;
+    if (!container) return;
 
     let rafId = 0;
     let running = true;
+    let pixi: PixiRenderer | null = null;
+
+    // Canvas2D overlay for screen-space post-effects (atmosphere, explosions)
+    const canvas2d = document.createElement('canvas');
+    canvas2d.style.position = 'absolute';
+    canvas2d.style.top = '0';
+    canvas2d.style.left = '0';
+    canvas2d.style.width = `${DISPLAY_W}px`;
+    canvas2d.style.height = `${DISPLAY_H}px`;
+    canvas2d.style.imageRendering = 'pixelated';
+    canvas2d.style.zIndex = '1';
+    canvas2d.style.pointerEvents = 'none';
+    const dpr = window.devicePixelRatio || 1;
+    canvas2d.width = DISPLAY_W * dpr;
+    canvas2d.height = DISPLAY_H * dpr;
+    container.appendChild(canvas2d);
+    const ctx = canvas2d.getContext('2d')!;
+
+    // Init Pixi (async)
+    const renderer = new PixiRenderer();
+    renderer.init(container).then(() => {
+      pixi = renderer;
+      pixiRef.current = renderer;
+      if (renderer.canvas) {
+        renderer.canvas.style.zIndex = '0';
+        renderer.canvas.style.touchAction = 'none';
+      }
+    });
 
     const draw = () => {
       if (!running) return;
 
       const game = gameRef.current;
       if (game) {
-        drawEntities(ctx, game, game.cameraX || 0, game.frame || 0, showHpNumbers, heroClass, killParticles, tileCacheRef.current);
+        const camX = game.cameraX || 0;
+        const frame = game.frame || 0;
+        const tc = tileCacheRef.current;
+        const pixiReady = pixi?.isReady;
+
+        // Pixi renders all game layers on the WebGL canvas
+        if (pixiReady) {
+          pixi!.render(game, camX, frame, { showHpNumbers, heroClass, killParticles, tileCache: tc });
+        }
+
+        // Canvas2D draws screen-space post-effects (atmosphere, explosions)
+        // All skip flags true when Pixi is ready — only overlays + explosions remain
+        drawEntities(ctx, game, camX, frame, showHpNumbers, heroClass, killParticles, tc, pixiReady, pixiReady, pixiReady, pixiReady, pixiReady);
       }
 
       rafId = requestAnimationFrame(draw);
@@ -190,7 +215,9 @@ export default function GameView({
     return () => {
       running = false;
       cancelAnimationFrame(rafId);
-      dprQuery.removeEventListener('change', onDprChange);
+      pixiRef.current = null;
+      renderer.destroy();
+      if (canvas2d.parentNode) canvas2d.parentNode.removeChild(canvas2d);
     };
   }, [gameRef, showHpNumbers, heroClass, killParticles]);
 
@@ -209,9 +236,9 @@ export default function GameView({
   }, [gameRef]);
 
   const screenToGameX = useCallback((screenDeltaX: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return 0;
-    const rect = canvas.getBoundingClientRect();
+    const container = canvasContainerRef.current;
+    if (!container) return 0;
+    const rect = container.getBoundingClientRect();
     return screenDeltaX * (VIEWPORT_W / rect.width);
   }, []);
 
@@ -253,9 +280,9 @@ export default function GameView({
     if (!wasDragging) {
       const g = gameRef.current;
       if (!g || !g.chests?.length) return;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
+      const container = canvasContainerRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
       const clickX = (e.clientX - rect.left) * (VIEWPORT_W / rect.width) + (g.cameraX || 0);
       const clickY = (e.clientY - rect.top) * (VIEWPORT_H / rect.height);
       const CHEST_RADIUS = 35;
@@ -337,15 +364,14 @@ export default function GameView({
         position: 'relative', width: '100%', height: DISPLAY_H, overflow: 'hidden',
         isolation: 'isolate' as any,
       }}>
-        <canvas
-          ref={canvasRef}
+        <div
+          ref={canvasContainerRef}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           style={{
             position: 'absolute', top: 0, left: 0,
             width: DISPLAY_W, height: DISPLAY_H,
-            imageRendering: 'pixelated',
             zIndex: 0,
             touchAction: 'none',
           }}
@@ -568,6 +594,7 @@ export default function GameView({
                   <button onClick={() => { const g = gameRef.current; if (g) g.devPaused = !g.devPaused; }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: game?.devPaused ? 'rgba(255,200,0,0.3)' : 'rgba(20,15,30,0.85)', color: game?.devPaused ? '#ffcc44' : '#ccc', border: `1px solid ${game?.devPaused ? '#ffcc00' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>{game?.devPaused ? '\u25B6 RESUME' : '\u23F8 PAUSE'}</button>
                   <button onClick={() => { const g = gameRef.current; if (g) { g.devGodMode = !g.devGodMode; if (g.devGodMode) g.hero.health = g.hero.maxHealth; } }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: game?.devGodMode ? 'rgba(0,255,100,0.3)' : 'rgba(20,15,30,0.85)', color: game?.devGodMode ? '#44ff88' : '#ccc', border: `1px solid ${game?.devGodMode ? '#00ff66' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>{game?.devGodMode ? '\u{1F49A} GOD MODE' : 'Stay Full HP'}</button>
                   <button onClick={() => { const g = gameRef.current; if (g) { g.backpack.healingPotion += 5; g.backpack.rerollVoucher += 5; g.backpack.artifactKey += 5; g.backpack.regaliaKey += 5; g.backpack.challengeKey += 5; } }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: 'rgba(20,15,30,0.85)', color: '#ccc', border: '1px solid rgba(138,74,223,0.3)', borderRadius: 3, cursor: 'pointer' }}>+5 Items</button>
+                  <button onClick={() => { const g = gameRef.current; if (g) g.devSpawnMult = g.devSpawnMult === 0.2 ? 1 : 0.2; }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: game?.devSpawnMult === 0.2 ? 'rgba(255,120,0,0.3)' : 'rgba(20,15,30,0.85)', color: game?.devSpawnMult === 0.2 ? '#ff8844' : '#ccc', border: `1px solid ${game?.devSpawnMult === 0.2 ? '#ff6600' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>{game?.devSpawnMult === 0.2 ? '5x Spawns ON' : '5x Spawns'}</button>
                 </div>
                 {/* Spawn row */}
                 <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>

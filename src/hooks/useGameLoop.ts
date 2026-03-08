@@ -180,6 +180,7 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
     ownedPets,
 
     devGodMode: prev.devGodMode || false,
+    devSpawnMult: prev.devSpawnMult,
 
     heroClass: prev.heroClass,
     artifacts: prev.artifacts || [],
@@ -778,6 +779,7 @@ export function useGameLoop(
   ownedPets: string[] = [],
   onCollectPet: (petId: string) => void = () => {},
   onDungeonExit: (info: DungeonExitInfo) => void = () => {},
+  onGameOver: () => void = () => {},
 ): { frameRef: React.MutableRefObject<number> } {
   const frameRef = useRef(0);
   const ancientRelicsRef = useRef(ancientRelicsOwned);
@@ -804,6 +806,8 @@ export function useGameLoop(
   onModalEventRef.current = onModalEvent;
   const dungeonExitRef = useRef(onDungeonExit);
   dungeonExitRef.current = onDungeonExit;
+  const gameOverRef = useRef(onGameOver);
+  gameOverRef.current = onGameOver;
 
   // Stable refs for values that change frequently but shouldn't restart the loop
   const upgradesRef = useRef(upgrades);
@@ -888,13 +892,15 @@ export function useGameLoop(
           }
         }
 
-        // Signal React ONLY for modal events that need overlay rendering
-        // gameOver only signals once (avoid hammering React every frame)
-        const needsModal = state.pendingArtifactChoice || state.pendingRelicChoice || state.pendingRoll || state.pendingSkillChoice || state.challengeLevelUpPending;
-        const needsGameOver = state.gameOver && !_gameOverSignaled;
-        if (needsGameOver) _gameOverSignaled = true;
+        // Game over: fire callback directly from RAF loop (bypass React useEffect)
+        if (state.gameOver && !_gameOverSignaled) {
+          _gameOverSignaled = true;
+          setTimeout(() => gameOverRef.current(), 150);
+        }
         if (!state.gameOver) _gameOverSignaled = false;
-        if (needsModal || needsGameOver) {
+
+        // Signal React ONLY for modal events that need overlay rendering
+        if (state.pendingArtifactChoice || state.pendingRelicChoice || state.pendingRoll || state.pendingSkillChoice || state.challengeLevelUpPending) {
           onModalEventRef.current();
         }
       }

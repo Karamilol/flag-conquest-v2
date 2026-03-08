@@ -163,6 +163,7 @@ export interface TickState {
 
   // Dev tools
   devGodMode?: boolean;
+  devSpawnMult?: number;
 
   // Read-only context (not mutated, but needed by systems)
   readonly artifacts: Artifact[];

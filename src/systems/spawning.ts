@@ -285,7 +285,8 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
   // Challenge mods: Colosseum = 85% slower spawn, Horde = 5x faster spawn
   const challengeSpawnMult = ts.challengeId === 'colosseum' ? 6.67 : ts.challengeId === 'hordeMode' ? 0.2 : 1;
   const dungeonSpawnMult = ts.dungeonType === 'timed' ? 1.0 : 1; // Timed dungeon: normal spawn rate
-  if (closestFlag.spawnTimer < closestFlag.spawnRate * spawnVariance * spawnMultiplier * challengeSpawnMult * dungeonSpawnMult) return;
+  const devMult = ts.devSpawnMult || 1;
+  if (closestFlag.spawnTimer < closestFlag.spawnRate * spawnVariance * spawnMultiplier * challengeSpawnMult * dungeonSpawnMult * devMult) return;
 
   // Burst spawn: only when very far below ideal and have captured some flags
   const burstCount = ts.flagsCaptured >= 3 && activeEnemies < idealMobs * 0.35 ? 2 : 1;

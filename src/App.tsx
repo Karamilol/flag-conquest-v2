@@ -8,7 +8,7 @@ import type { CosmeticCategory } from './cosmetics';
 import { createInitialState, generateZoneFlags, generateDungeonArena, generateTimedDungeonArena } from './state';
 import { useGameLoop, type DungeonExitInfo } from './hooks/useGameLoop';
 import { useMusicManager } from './hooks/useMusicManager';
-import { preloadSprites } from './canvasRenderer';
+import { preloadSprites, allSpritesLoaded } from './canvasRenderer';
 import { getClassDef } from './classes';
 import { heroTotalHp, heroTotalDmg, unitHpMult, unitDmgMult } from './utils/economy';
 import { rollUnitType, COLORS, GROUND_Y } from './constants';
@@ -360,6 +360,8 @@ export default function App() {
   }, []);
 
   // === Game loop ===
+  // Stable ref for game over callback (handleGameOver defined later, ref updated each render)
+  const handleGameOverRef = useRef<() => void>(() => {});
   const { frameRef } = useGameLoop(
     gameScreen, upgrades, shardUpgrades, relicCollection,
     gameRef, onModalEvent, cameraModeRef,
@@ -371,6 +373,7 @@ export default function App() {
     petState.equippedPet, petState.ownedPets,
     collectPet,
     onDungeonExit,
+    () => handleGameOverRef.current(),
   );
 
   // === Mid-run save (auto-save every 30s + beforeunload) ===
@@ -458,12 +461,28 @@ export default function App() {
       }
     }
     gameRef.current = newGame;
-    gameOverFiredRef.current = false;
     clearRunState();
     setSelectedChallenge(null);
     setShopTab(selectedChallenge === 'loneWolf' ? 'income' : 'units');
-    setGameScreen('playing');
+    setGameScreen('loading');
   }, [upgrades, selectedChallenge]);
+
+  // Loading screen: poll for sprites loaded, then transition to playing
+  useEffect(() => {
+    if (gameScreen !== 'loading') return;
+    const poll = setInterval(() => {
+      if (allSpritesLoaded()) {
+        clearInterval(poll);
+        setGameScreen('playing');
+      }
+    }, 50);
+    // Fallback: force transition after 3s even if some sprites still loading
+    const fallback = setTimeout(() => {
+      clearInterval(poll);
+      setGameScreen('playing');
+    }, 3000);
+    return () => { clearInterval(poll); clearTimeout(fallback); };
+  }, [gameScreen]);
 
   const cycleCameraMode = useCallback(() => {
     setCameraMode(m => m === 'hero' ? 'furthest' : m === 'furthest' ? 'manual' : 'hero');
@@ -934,23 +953,8 @@ export default function App() {
     setMercyReward(null);
   }, [mercyReward]);
 
-  // Auto-transition to void screen on death (like v1 — no popup, direct transition)
-  const gameOverFiredRef = useRef(false);
-  const handleGameOverRef = useRef(handleGameOver);
+  // Keep handleGameOverRef in sync (declared before useGameLoop, updated here)
   handleGameOverRef.current = handleGameOver;
-  useEffect(() => {
-    const g = gameRef.current;
-    if (g?.gameOver && gameScreen === 'playing' && !gameOverFiredRef.current) {
-      gameOverFiredRef.current = true;
-      // Brief delay before transitioning (lets death register visually)
-      const timer = setTimeout(() => {
-        handleGameOverRef.current();
-        // Note: gameOverFiredRef stays true until new game starts
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modalTick, gameScreen]);
 
   // === Save persistent state whenever it changes ===
   useEffect(() => {
@@ -1008,6 +1012,26 @@ export default function App() {
   const game = gameRef.current;
 
   // --- Playing ---
+  if (gameScreen === 'loading') {
+    return (
+      <div style={{
+        width: '100%', minHeight: '100vh',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        background: '#0a0a14', color: '#e0d8f0',
+        fontFamily: F, gap: 16,
+      }}>
+        <div style={{ fontSize: 14, letterSpacing: 2 }}>PREPARING BATTLE</div>
+        <div style={{ width: 200, height: 4, background: 'rgba(138,74,223,0.2)', borderRadius: 2, overflow: 'hidden' }}>
+          <div style={{
+            width: '60%', height: '100%', background: '#8a4adf', borderRadius: 2,
+            animation: 'loadPulse 1.2s ease-in-out infinite',
+          }} />
+        </div>
+        <style>{`@keyframes loadPulse { 0%,100% { width: 30%; opacity: 0.6; } 50% { width: 90%; opacity: 1; } }`}</style>
+      </div>
+    );
+  }
+
   if (gameScreen === 'playing') {
     return (
     <div style={{

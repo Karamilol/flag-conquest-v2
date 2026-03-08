@@ -920,6 +920,7 @@ export interface GameState {
   devSpawnsDisabled?: boolean;
   devPaused?: boolean;
   devGodMode?: boolean;
+  devSpawnMult?: number; // multiplier on spawn rate (0.2 = 5x faster)
   // ---- Pet state (per-run) ----
   petCooldown: number;
   backpack: Backpack;
@@ -995,7 +996,7 @@ export interface ShardUpgrades {
   [key: string]: number;
 }
 
-export type GameScreen = 'menu' | 'modeSelect' | 'classSelect' | 'challengeSelect' | 'playing' | 'gameover' | 'upgrade' | 'settings';
+export type GameScreen = 'menu' | 'modeSelect' | 'classSelect' | 'challengeSelect' | 'loading' | 'playing' | 'gameover' | 'upgrade' | 'settings';
 
 export type CameraMode = 'hero' | 'furthest' | 'manual';
 

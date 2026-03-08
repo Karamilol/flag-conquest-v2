@@ -17,9 +17,10 @@ interface Props {
   enrageTriggered?: boolean;
   pullTimer?: number;
   cleaveCooldown?: number;
+  bodyOnly?: boolean;
 }
 
-export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking, zone, bleedStacks, bossType, lastDamageTime = 0, showHpNumbers, summonCooldown = 0, howlCooldown = 0, enrageTriggered = false, pullTimer = 0, cleaveCooldown = 0 }: Props) {
+export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking, zone, bleedStacks, bossType, lastDamageTime = 0, showHpNumbers, summonCooldown = 0, howlCooldown = 0, enrageTriggered = false, pullTimer = 0, cleaveCooldown = 0, bodyOnly = false }: Props) {
   const bobOffset = Math.sin(frame * 0.1) * 3;
   const attackPulse = isAttacking ? Math.sin(frame * 0.5) * 2 : 0;
   // Damage flash
@@ -138,18 +139,20 @@ export default function PixelBoss({ x, y, health, maxHealth, frame, isAttacking,
         {/* Damage overlay */}
         {recentlyHit && hitFlash && <rect x={-18} y={-10} width={80} height={95} fill="#ff0000" opacity={0.12} rx={4} />}
 
-        {/* Health bar */}
-        <rect x={-10} y={-30} width={84} height={10} fill={COLORS.healthBg} rx={2} />
-        <rect x={-8} y={-28} width={Math.max(0, (health / maxHealth) * 80)} height={6}
-              fill="#44aa22" rx={1} />
-        <text x={32} y={-34} fill="#66cc44" fontSize="11" textAnchor="middle" fontWeight="bold">
-          🏹 WILD HUNTSMAN #{zone !== undefined ? zone + 1 : ''}
-        </text>
-        {showHpNumbers && (
-          <text x={32} y={-42} fontSize="10" textAnchor="middle" fill="#fff" fontWeight="bold">
-            {health}/{maxHealth}
+        {!bodyOnly && <>
+          {/* Health bar */}
+          <rect x={-10} y={-30} width={84} height={10} fill={COLORS.healthBg} rx={2} />
+          <rect x={-8} y={-28} width={Math.max(0, (health / maxHealth) * 80)} height={6}
+                fill="#44aa22" rx={1} />
+          <text x={32} y={-34} fill="#66cc44" fontSize="11" textAnchor="middle" fontWeight="bold">
+            🏹 WILD HUNTSMAN #{zone !== undefined ? zone + 1 : ''}
           </text>
-        )}
+          {showHpNumbers && (
+            <text x={32} y={-42} fontSize="10" textAnchor="middle" fill="#fff" fontWeight="bold">
+              {health}/{maxHealth}
+            </text>
+          )}
+        </>}
       </g>
     );
   }
