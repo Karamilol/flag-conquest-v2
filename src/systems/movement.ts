@@ -91,9 +91,14 @@ export function processHeroMovement(ts: TickState): void {
   const portalMinX = ts.portalFlagIndex >= 0 ? (flags[ts.portalFlagIndex]?.x || 40) : 40;
   const heroXBefore = hero.x;
 
+  // Clamp targetFlagIndex to valid range (can go stale if flags change mid-movement)
+  if (hero.targetFlagIndex >= validPositions.length - 1) {
+    hero.targetFlagIndex = validPositions.length - 2;
+  }
+
   if (hero.targetFlagIndex >= -1) {
     const targetX = hero.targetFlagIndex === -1 ? homePos :
-      (validPositions[hero.targetFlagIndex + 1] || hero.x);
+      (validPositions[hero.targetFlagIndex + 1] || validPositions[validPositions.length - 1] || hero.x);
     const dx = targetX - hero.x;
 
     if (Math.abs(dx) > effectiveSpeed) {

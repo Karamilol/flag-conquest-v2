@@ -71,19 +71,33 @@ function loadSettings() {
   } catch { return null; }
 }
 
-function loadRunState() {
+function loadRunState(): { game: GameState; gameScreen: string; timestamp: number } | null {
   try {
     const raw = localStorage.getItem('flag-conquest-run-state');
     if (!raw) return null;
-    return JSON.parse(raw);
+    const data = JSON.parse(raw);
+    if (!data.game || !data.gameScreen) return null;
+    // Discard dungeon saves — dungeon instances are ephemeral
+    if (data.game.inDungeon) return null;
+    return data;
   } catch { return null; }
+}
+
+function saveRunState(game: GameState, gameScreen: string) {
+  try {
+    localStorage.setItem('flag-conquest-run-state', JSON.stringify({ game, gameScreen, timestamp: Date.now() }));
+  } catch {}
+}
+
+function clearRunState() {
+  localStorage.removeItem('flag-conquest-run-state');
 }
 
 export default function App() {
   // Cache localStorage parsing — only parse once on mount
   const initRef = useRef<{ saved: any; settings: any; savedRun: any } | null>(null);
   if (!initRef.current) initRef.current = { saved: loadSave(), settings: loadSettings(), savedRun: loadRunState() };
-  const { saved, settings } = initRef.current;
+  const { saved, settings, savedRun } = initRef.current;
 
   // === Persistent state (cross-run) ===
   const [gems, setGems] = useState(saved?.gems || 0);
@@ -119,7 +133,7 @@ export default function App() {
   const [dungeonsEntered, setDungeonsEntered] = useState(saved?.dungeonsEntered || 0);
 
   // === UI state ===
-  const [gameScreen, setGameScreen] = useState<GameScreen>('menu');
+  const [gameScreen, setGameScreen] = useState<GameScreen>(savedRun?.gameScreen === 'playing' ? 'playing' : 'menu');
   const [cameraMode, setCameraMode] = useState<CameraMode>('hero');
   const cameraModeRef = useRef<CameraMode>(cameraMode);
   cameraModeRef.current = cameraMode;
@@ -255,7 +269,7 @@ export default function App() {
   }, [showFps]);
 
   // === GAME STATE — lives in useRef, NOT useState ===
-  const gameRef = useRef<GameState>(createInitialState(upgrades));
+  const gameRef = useRef<GameState>(savedRun?.game || createInitialState(upgrades));
 
   // Modal event counter — incremented by game loop when overlays are needed
   // This is the ONLY thing that triggers React re-renders during gameplay
@@ -358,6 +372,28 @@ export default function App() {
     onDungeonExit,
   );
 
+  // === Mid-run save (auto-save every 30s + beforeunload) ===
+  const gameScreenRef = useRef(gameScreen);
+  gameScreenRef.current = gameScreen;
+  useEffect(() => {
+    if (gameScreen !== 'playing' && gameScreen !== 'gameover') return;
+    if (gameRef.current?.inDungeon) return;
+    const interval = setInterval(() => saveRunState(gameRef.current, gameScreenRef.current), 30000);
+    return () => clearInterval(interval);
+  }, [gameScreen, gameRef]);
+
+  useEffect(() => {
+    const handler = () => {
+      const gs = gameScreenRef.current;
+      const g = gameRef.current;
+      if ((gs === 'playing' || gs === 'gameover') && !g?.inDungeon) {
+        saveRunState(g, gs);
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [gameRef]);
+
   // === Music ===
   const [musicGame, setMusicGame] = useState(() => gameRef.current);
   useEffect(() => {
@@ -421,6 +457,7 @@ export default function App() {
       }
     }
     gameRef.current = newGame;
+    clearRunState();
     setSelectedChallenge(null);
     setShopTab(selectedChallenge === 'loneWolf' ? 'income' : 'units');
     setGameScreen('playing');
@@ -871,6 +908,9 @@ export default function App() {
       setMercyReward(3);
     }
 
+    // Clear mid-run save
+    clearRunState();
+
     // Go to game over screen (death hub)
     setDeathTab('shop');
     setGameScreen('gameover');
@@ -892,18 +932,21 @@ export default function App() {
 
   // Auto-transition to void screen on death (like v1 — no popup, direct transition)
   const gameOverFiredRef = useRef(false);
+  const handleGameOverRef = useRef(handleGameOver);
+  handleGameOverRef.current = handleGameOver;
   useEffect(() => {
     const g = gameRef.current;
     if (g?.gameOver && gameScreen === 'playing' && !gameOverFiredRef.current) {
       gameOverFiredRef.current = true;
       // Brief delay before transitioning (lets death register visually)
       const timer = setTimeout(() => {
-        handleGameOver();
+        handleGameOverRef.current();
         gameOverFiredRef.current = false;
-      }, 1000);
+      }, 150);
       return () => { clearTimeout(timer); gameOverFiredRef.current = false; };
     }
-  }, [modalTick, gameScreen, handleGameOver]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalTick, gameScreen]);
 
   // === Save persistent state whenever it changes ===
   useEffect(() => {
