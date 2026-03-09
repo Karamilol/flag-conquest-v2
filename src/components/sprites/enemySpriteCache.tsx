@@ -70,11 +70,12 @@ export const HOUND_VB_Y = -2;
 export const HOUND_VB_W = 42;
 export const HOUND_VB_H = 28;
 
-// Lich: hand x=-3, staff x=32, crown y=-5, robe y=46
-export const LICH_VB_X = -5;
-export const LICH_VB_Y = -7;
-export const LICH_VB_W = 39;
-export const LICH_VB_H = 55;
+// Lich: casting hand extends to x=-12 (spell glow r=7 + translate), staff glow x=34.5
+// Crown peak y=-5.5, robe tatters y=46, rune circle ry extends to y=47
+export const LICH_VB_X = -14;
+export const LICH_VB_Y = -22;
+export const LICH_VB_W = 56;
+export const LICH_VB_H = 74;
 
 // Shadow Assassin: dagger x=-14, body x=22, hood y=0..27 (elite text at -18 excluded)
 export const SHADOW_VB_X = -16;

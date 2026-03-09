@@ -168,6 +168,7 @@ export default function App() {
   const [sfxVolume, setSfxVolume] = useState(settings?.sfxVolume ?? 0.5);
   const [showHpNumbers, setShowHpNumbers] = useState(settings?.showHpNumbers ?? true);
   const [killParticles, setKillParticles] = useState(settings?.killParticles ?? true);
+  const [hideNotifications, setHideNotifications] = useState(settings?.hideNotifications ?? false);
 
   // Music / track selector
   const [musicClicks, setMusicClicks] = useState<number>(saved?.musicClicks ?? (saved?.upgrades?.musicClicks as number) ?? 0);
@@ -210,8 +211,8 @@ export default function App() {
 
   // Persist settings to localStorage
   useEffect(() => {
-    try { localStorage.setItem('flag-conquest-settings', JSON.stringify({ volume, sfxVolume, showHpNumbers, killParticles, blockedTracks })); } catch {}
-  }, [volume, sfxVolume, showHpNumbers, killParticles, blockedTracks]);
+    try { localStorage.setItem('flag-conquest-settings', JSON.stringify({ volume, sfxVolume, showHpNumbers, killParticles, hideNotifications, blockedTracks })); } catch {}
+  }, [volume, sfxVolume, showHpNumbers, killParticles, hideNotifications, blockedTracks]);
 
   // Persist keybindings
   useEffect(() => {
@@ -1100,6 +1101,8 @@ export default function App() {
         setSfxVolume={setSfxVolume}
         setShowHpNumbers={setShowHpNumbers}
         setKillParticles={setKillParticles}
+        hideNotifications={hideNotifications}
+        setHideNotifications={setHideNotifications}
         showFps={showFps}
         setShowFps={setShowFps}
         fpsValue={fpsValue}
@@ -1261,7 +1264,7 @@ export default function App() {
         }}
       />
       {/* Regalia loot notification */}
-      {regaliaNotif && (
+      {regaliaNotif && !hideNotifications && (
         <div style={{
           position: 'fixed', top: '40px', left: '50%', transform: 'translateX(-50%)',
           background: 'rgba(10,5,20,0.95)', border: `2px solid ${REGALIA_RARITY_COLORS[regaliaNotif.rarity]}`,
@@ -1300,7 +1303,7 @@ export default function App() {
         </div>
       )}
       {/* Consumable loot notification */}
-      {consumableNotif && (
+      {consumableNotif && !hideNotifications && (
         <div style={{
           position: 'fixed', top: regaliaNotif ? '180px' : '40px', left: '50%', transform: 'translateX(-50%)',
           background: 'rgba(10,20,10,0.95)', border: '2px solid #44ffaa',

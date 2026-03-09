@@ -17,19 +17,28 @@ const TEXT_SCALE = (() => {
 })();
 const INV_TEXT_SCALE = 1 / TEXT_SCALE;
 
-const normalStyle = new TextStyle({
-  fontFamily: 'monospace',
-  fontSize: Math.round(12 * TEXT_SCALE),
-  fontWeight: 'bold',
-  fill: '#ffffff',
-});
-
 const critStyle = new TextStyle({
   fontFamily: 'monospace',
   fontSize: Math.round(16 * TEXT_SCALE),
   fontWeight: 'bold',
   fill: '#ffdd00',
 });
+
+// Cache a TextStyle per unique color so we never mutate a shared style
+const normalStyleCache = new Map<string, TextStyle>();
+function getNormalStyle(color: string): TextStyle {
+  let s = normalStyleCache.get(color);
+  if (!s) {
+    s = new TextStyle({
+      fontFamily: 'monospace',
+      fontSize: Math.round(12 * TEXT_SCALE),
+      fontWeight: 'bold',
+      fill: color,
+    });
+    normalStyleCache.set(color, s);
+  }
+  return s;
+}
 
 class TextParticlePool {
   private pool: Text[] = [];
@@ -88,10 +97,9 @@ export class PixiParticleRenderer {
       const dx = p.x + p.age * p.driftX - camX;
       const dy = p.y - p.age * 0.5 + WORLD_Y_OFFSET;
 
-      const style = p.isCrit ? critStyle : normalStyle;
+      const style = p.isCrit ? critStyle : getNormalStyle(p.color || '#ffffff');
       const t = this.textPool.get(style);
       t.text = p.text;
-      t.style.fill = p.isCrit ? '#ffdd00' : p.color;
       t.alpha = opacity;
       t.position.set(dx, dy);
     }

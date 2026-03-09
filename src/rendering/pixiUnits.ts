@@ -190,6 +190,9 @@ export class PixiUnitRenderer {
   private spritePool!: SpritePool;
   private textPool!: TextPool;
 
+  /** Expose the Y-sorted sprite container so projectiles can inject into it */
+  get depthContainer(): Container { return this.spriteContainer; }
+
   constructor() {
     this.container = new Container();
 
@@ -197,6 +200,7 @@ export class PixiUnitRenderer {
     this.auraGfx = new Graphics();
     this.effectGfx = new Graphics();
     this.spriteContainer = new Container();
+    this.spriteContainer.sortableChildren = true; // Y-sort for lane depth
     this.overlayGfx = new Graphics();
     this.healthBarGfx = new Graphics();
     this.textContainer = new Container();
@@ -257,14 +261,25 @@ export class PixiUnitRenderer {
       this.drawGoblinOrSkeleton(enemy, camX, frame, showHpNumbers, !!(enemy as any).isLichSkeleton, isColosseum);
     }
 
+    // Hoist cache inits outside loops — they're memoized but avoid per-unit map lookups
+    const archerCache = initArcherSpriteCache();
+    const wraithCache = initWraithSpriteCache();
+    const houndCache = initHoundSpriteCache();
+    const lichCache = initLichSpriteCache();
+    const shadowCache = initShadowAssassinSpriteCache();
+    const flameCache = initFlameCallerSpriteCache();
+    const sentinelCache = initCorruptedSentinelSpriteCache();
+    const ratCache = initDungeonRatSpriteCache();
+    const impCache = initFireImpSpriteCache();
+    const knightCache = initCursedKnightSpriteCache();
+
     // Archers
     for (const archer of (game as any).enemyArchers || []) {
       if (archer.health <= 0 || archer.x < cullLeft || archer.x > cullRight) continue;
-      const cache = initArcherSpriteCache();
       const isAtk = (archer.attackCooldown ?? 99) < 10;
       const url = isAtk
-        ? cache.attack[Math.min(9 - (archer.attackCooldown ?? 0), cache.attack.length - 1)]
-        : selectIdleFrame(cache, frame, archer.x);
+        ? archerCache.attack[Math.min(9 - (archer.attackCooldown ?? 0), archerCache.attack.length - 1)]
+        : selectIdleFrame(archerCache, frame, archer.x);
       this.drawCachedEnemy(archer, camX, frame, showHpNumbers, url,
         ARCHER_VB_X, ARCHER_VB_Y, ARCHER_VB_W, ARCHER_VB_H,
         '#ffaa00', -12, 24, isColosseum);
@@ -273,11 +288,10 @@ export class PixiUnitRenderer {
     // Wraiths
     for (const wraith of (game as any).enemyWraiths || []) {
       if (wraith.health <= 0 || wraith.x < cullLeft || wraith.x > cullRight) continue;
-      const cache = initWraithSpriteCache();
       const isAtk = (wraith.attackCooldown ?? 99) < 10;
       const url = isAtk
-        ? cache.attack[Math.min(9 - (wraith.attackCooldown ?? 0), cache.attack.length - 1)]
-        : selectIdleFrame(cache, frame, wraith.x);
+        ? wraithCache.attack[Math.min(9 - (wraith.attackCooldown ?? 0), wraithCache.attack.length - 1)]
+        : selectIdleFrame(wraithCache, frame, wraith.x);
       this.drawCachedEnemy(wraith, camX, frame, showHpNumbers, url,
         WRAITH_VB_X, WRAITH_VB_Y, WRAITH_VB_W, WRAITH_VB_H,
         '#8844aa', -14, 30, isColosseum);
@@ -286,12 +300,11 @@ export class PixiUnitRenderer {
     // Hounds
     for (const hound of (game as any).enemyHounds || []) {
       if (hound.health <= 0 || hound.x < cullLeft || hound.x > cullRight) continue;
-      const cache = initHoundSpriteCache();
       const isLunging = (hound.lungeTimer || 0) > 0;
       const isRecovering = (hound.recoveryTimer || 0) > 0;
-      const url = isLunging ? cache.lunge!
-        : isRecovering ? cache.recovery!
-        : selectIdleFrame(cache, frame, hound.x);
+      const url = isLunging ? houndCache.lunge!
+        : isRecovering ? houndCache.recovery!
+        : selectIdleFrame(houndCache, frame, hound.x);
       this.drawCachedEnemy(hound, camX, frame, showHpNumbers, url,
         HOUND_VB_X, HOUND_VB_Y, HOUND_VB_W, HOUND_VB_H,
         '#cc4400', -8, 24, isColosseum);
@@ -300,13 +313,12 @@ export class PixiUnitRenderer {
     // Lichs
     for (const lich of (game as any).enemyLichs || []) {
       if (lich.health <= 0 || lich.x < cullLeft || lich.x > cullRight) continue;
-      const cache = initLichSpriteCache();
       const isCastingIce = (lich.iceballCooldown ?? 0) >= 250;
       const isCastingHeal = !isCastingIce && (lich.healCooldown ?? 0) >= 200;
       const isCasting = isCastingIce || isCastingHeal;
-      const url = isCasting && cache.casting
-        ? cache.casting[Math.min(Math.floor((isCastingIce ? ((lich.iceballCooldown ?? 0) - 250) / 13 : ((lich.healCooldown ?? 0) - 200) / 10)), cache.casting.length - 1)]
-        : selectIdleFrame(cache, frame, lich.x);
+      const url = isCasting && lichCache.casting
+        ? lichCache.casting[Math.min(Math.floor((isCastingIce ? ((lich.iceballCooldown ?? 0) - 250) / 13 : ((lich.healCooldown ?? 0) - 200) / 10)), lichCache.casting.length - 1)]
+        : selectIdleFrame(lichCache, frame, lich.x);
       this.drawCachedEnemy(lich, camX, frame, showHpNumbers, url,
         LICH_VB_X, LICH_VB_Y, LICH_VB_W, LICH_VB_H,
         '#44cc44', -12, 30, isColosseum);
@@ -315,14 +327,13 @@ export class PixiUnitRenderer {
     // Shadow Assassins
     for (const sa of (game as any).enemyShadowAssassins || []) {
       if (sa.health <= 0 || sa.x < cullLeft || sa.x > cullRight) continue;
-      const cache = initShadowAssassinSpriteCache();
       const isCloaked = (sa.stealthTimer || 0) > 0;
       const isAtk = (sa.attackCooldown ?? 99) < 8;
       const url = isAtk
-        ? cache.attack[Math.min(7 - (sa.attackCooldown ?? 0), cache.attack.length - 1)]
-        : isCloaked && cache.cloakedIdle
-        ? cache.cloakedIdle[Math.floor((frame + Math.floor(Math.abs(sa.x) * 3)) / IDLE_TICKS_PER_FRAME) % ENEMY_IDLE_FRAME_COUNT]
-        : selectIdleFrame(cache, frame, sa.x);
+        ? shadowCache.attack[Math.min(7 - (sa.attackCooldown ?? 0), shadowCache.attack.length - 1)]
+        : isCloaked && shadowCache.cloakedIdle
+        ? shadowCache.cloakedIdle[Math.floor((frame + Math.floor(Math.abs(sa.x) * 3)) / IDLE_TICKS_PER_FRAME) % ENEMY_IDLE_FRAME_COUNT]
+        : selectIdleFrame(shadowCache, frame, sa.x);
       this.drawCachedEnemy(sa, camX, frame, showHpNumbers, url,
         SHADOW_VB_X, SHADOW_VB_Y, SHADOW_VB_W, SHADOW_VB_H,
         '#aa44ff', -8, 24, isColosseum);
@@ -331,10 +342,9 @@ export class PixiUnitRenderer {
     // Flame Callers
     for (const fc of (game as any).enemyFlameCallers || []) {
       if (fc.health <= 0 || (fc.x < cullLeft && !(fc.isCasting && fc.castTargetX >= cullLeft)) || fc.x > cullRight) continue;
-      const cache = initFlameCallerSpriteCache();
-      const url = fc.isCasting && cache.casting
-        ? cache.casting[Math.min(Math.floor((fc.castTimer ?? 0) / 68), cache.casting.length - 1)]
-        : selectIdleFrame(cache, frame, fc.x);
+      const url = fc.isCasting && flameCache.casting
+        ? flameCache.casting[Math.min(Math.floor((fc.castTimer ?? 0) / 68), flameCache.casting.length - 1)]
+        : selectIdleFrame(flameCache, frame, fc.x);
       this.drawCachedEnemy(fc, camX, frame, showHpNumbers, url,
         FLAME_VB_X, FLAME_VB_Y, FLAME_VB_W, FLAME_VB_H,
         COLORS.healthRed, -10, 24, isColosseum);
@@ -343,11 +353,10 @@ export class PixiUnitRenderer {
     // Corrupted Sentinels
     for (const cs of (game as any).enemyCorruptedSentinels || []) {
       if (cs.health <= 0 || cs.x < cullLeft || cs.x > cullRight) continue;
-      const cache = initCorruptedSentinelSpriteCache();
       const isAtk = (cs.attackCooldown ?? 99) < 12;
       const url = isAtk
-        ? cache.attack[Math.min(11 - (cs.attackCooldown ?? 0), cache.attack.length - 1)]
-        : selectIdleFrame(cache, frame, cs.x);
+        ? sentinelCache.attack[Math.min(11 - (cs.attackCooldown ?? 0), sentinelCache.attack.length - 1)]
+        : selectIdleFrame(sentinelCache, frame, cs.x);
       this.drawCachedEnemy(cs, camX, frame, showHpNumbers, url,
         SENTINEL_VB_X, SENTINEL_VB_Y, SENTINEL_VB_W, SENTINEL_VB_H,
         '#666699', -14, 32, isColosseum);
@@ -356,11 +365,10 @@ export class PixiUnitRenderer {
     // Dungeon Rats
     for (const dr of (game as any).enemyDungeonRats || []) {
       if (dr.health <= 0 || dr.x < cullLeft || dr.x > cullRight) continue;
-      const cache = initDungeonRatSpriteCache();
       const isAtk = (dr.attackCooldown ?? 99) < 10;
       const url = isAtk
-        ? cache.attack[Math.min(9 - (dr.attackCooldown ?? 0), cache.attack.length - 1)]
-        : selectIdleFrame(cache, frame, dr.x);
+        ? ratCache.attack[Math.min(9 - (dr.attackCooldown ?? 0), ratCache.attack.length - 1)]
+        : selectIdleFrame(ratCache, frame, dr.x);
       this.drawCachedEnemy(dr, camX, frame, showHpNumbers, url,
         RAT_VB_X, RAT_VB_Y, RAT_VB_W, RAT_VB_H,
         '#aa6633', -6, 16, isColosseum);
@@ -369,10 +377,9 @@ export class PixiUnitRenderer {
     // Fire Imps
     for (const fi of (game as any).enemyFireImps || []) {
       if (fi.health <= 0 || (fi.x < cullLeft && !(fi.isCasting && fi.castTargetX >= cullLeft)) || fi.x > cullRight) continue;
-      const cache = initFireImpSpriteCache();
-      const url = fi.isCasting && cache.casting
-        ? cache.casting[Math.min(Math.floor((fi.castTimer ?? 0) / 20), cache.casting.length - 1)]
-        : selectIdleFrame(cache, frame, fi.x);
+      const url = fi.isCasting && impCache.casting
+        ? impCache.casting[Math.min(Math.floor((fi.castTimer ?? 0) / 20), impCache.casting.length - 1)]
+        : selectIdleFrame(impCache, frame, fi.x);
       this.drawCachedEnemy(fi, camX, frame, showHpNumbers, url,
         IMP_VB_X, IMP_VB_Y, IMP_VB_W, IMP_VB_H,
         '#ff6633', -8, 20, isColosseum);
@@ -381,11 +388,10 @@ export class PixiUnitRenderer {
     // Cursed Knights
     for (const ck of (game as any).enemyCursedKnights || []) {
       if (ck.health <= 0 || ck.x < cullLeft || ck.x > cullRight) continue;
-      const cache = initCursedKnightSpriteCache();
       const isAtk = (ck.attackCooldown ?? 99) < 12;
       const url = isAtk
-        ? cache.attack[Math.min(11 - (ck.attackCooldown ?? 0), cache.attack.length - 1)]
-        : selectIdleFrame(cache, frame, ck.x);
+        ? knightCache.attack[Math.min(11 - (ck.attackCooldown ?? 0), knightCache.attack.length - 1)]
+        : selectIdleFrame(knightCache, frame, ck.x);
       this.drawCachedEnemy(ck, camX, frame, showHpNumbers, url,
         KNIGHT_VB_X, KNIGHT_VB_Y, KNIGHT_VB_W, KNIGHT_VB_H,
         '#6644aa', -14, 24, isColosseum);
@@ -416,6 +422,7 @@ export class PixiUnitRenderer {
     s.position.set(dx + vbX * scaleVal, dy + vbY * scaleVal);
     s.width = vbW * scaleVal;
     s.height = vbH * scaleVal;
+    s.zIndex = dy; // Y-sort: front-lane units render in front of back-lane
   }
 
   // ── Health bar ────────────────────────────────────────────────
@@ -452,10 +459,11 @@ export class PixiUnitRenderer {
   }
 
   // ── Drop shadow ───────────────────────────────────────────────
-  private drawShadow(cx: number, groundY: number, rx: number, ry: number, opacity: number): void {
-    this.shadowGfx.fill({ color: 0x000000, alpha: opacity });
-    this.shadowGfx.ellipse(cx, groundY, rx, ry);
-    this.shadowGfx.fill();
+  // Shadows are skipped entirely — each ellipse adds geometry overhead
+  // and the visual contribution is minimal. At 500+ units this saves
+  // ~500 ellipse draws per frame.
+  private drawShadow(_cx: number, _groundY: number, _rx: number, _ry: number, _opacity: number): void {
+    // no-op — disabled for performance
   }
 
   // ── Hit flash ─────────────────────────────────────────────────
@@ -709,8 +717,10 @@ export class PixiUnitRenderer {
       this.effectGfx.fill();
     }
 
-    // Debuffs (only when active)
-    this.drawDebuffs(enemy, dx, dy, frame);
+    // Debuffs — skip call entirely if unit has none active
+    if ((enemy.bleedStacks || 0) > 0 || (enemy.slowTimer || 0) > 0 || (enemy.burnTimer || 0) > 0) {
+      this.drawDebuffs(enemy, dx, dy, frame);
+    }
 
     // Health bar
     const hpColor = isSkeleton ? '#aaaaaa' : COLORS.healthRed;
@@ -745,8 +755,10 @@ export class PixiUnitRenderer {
       this.effectGfx.fill();
     }
 
-    // Debuffs (only when active)
-    this.drawDebuffs(enemy, dx, dy, frame);
+    // Debuffs — skip call entirely if unit has none active
+    if ((enemy.bleedStacks || 0) > 0 || (enemy.slowTimer || 0) > 0 || (enemy.burnTimer || 0) > 0) {
+      this.drawDebuffs(enemy, dx, dy, frame);
+    }
 
     // Health bar
     this.drawHealthBar(dx, dy + hpBarY, hpBarW * scale, 5, enemy.health, enemy.maxHealth, hpColor, showHpNumbers);

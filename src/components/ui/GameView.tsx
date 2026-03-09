@@ -62,6 +62,8 @@ interface GameViewProps {
   setSfxVolume: (v: number) => void;
   setShowHpNumbers: (v: boolean) => void;
   setKillParticles: (v: boolean) => void;
+  hideNotifications: boolean;
+  setHideNotifications: (v: boolean) => void;
   keybindings: KeyBindings;
   setKeybindings: React.Dispatch<React.SetStateAction<KeyBindings>>;
   rebindingAction: ActionId | null;
@@ -114,7 +116,7 @@ export default function GameView({
   relicCollection, ancientRelicsOwned, ancientRelicCopies, highestZone, highestFlags,
   buyRunUpgrade, buyRunUpgradeMulti, onRoll, movePortalForward, toggleAutoPortal, onReturnHome,
   regaliaEquipped,
-  settingsOpen, volume, setVolume, sfxVolume, setSfxVolume, setShowHpNumbers, setKillParticles,
+  settingsOpen, volume, setVolume, sfxVolume, setSfxVolume, setShowHpNumbers, setKillParticles, hideNotifications, setHideNotifications,
   keybindings, setKeybindings, rebindingAction, setRebindingAction,
   gems, setGems, shards, setShards,
   showBackpack, setShowBackpack, showAchievements, setShowAchievements, showRelics, setShowRelics,
@@ -179,17 +181,19 @@ export default function GameView({
 
     // Init Pixi (async)
     const renderer = new PixiRenderer();
-    let pixiFrameCount = 0; // Track frames rendered by Pixi before handing off
+    let pixiFrameCount = 0; // Track frames rendered by Pixi before Canvas2D yields
+    let pixiInitTime = 0;   // Timestamp when Pixi first became ready
 
     // Loading overlay — covers black flash during Pixi init
     const loadingOverlay = document.createElement('div');
-    loadingOverlay.style.cssText = `position:absolute;top:0;left:0;width:${DISPLAY_W}px;height:${DISPLAY_H}px;background:#111;z-index:5;display:flex;align-items:center;justify-content:center;color:#888;font:14px monospace;transition:opacity 0.3s;pointer-events:none;`;
+    loadingOverlay.style.cssText = `position:absolute;top:0;left:0;width:${DISPLAY_W}px;height:${DISPLAY_H}px;background:#111;z-index:5;display:flex;align-items:center;justify-content:center;color:#888;font:14px monospace;transition:opacity 0.35s;pointer-events:none;`;
     loadingOverlay.textContent = 'Loading...';
     container.appendChild(loadingOverlay);
 
     renderer.init(container).then(() => {
       pixi = renderer;
       pixiRef.current = renderer;
+      pixiInitTime = performance.now();
       if (renderer.canvas) {
         renderer.canvas.style.zIndex = '0';
         renderer.canvas.style.touchAction = 'none';
@@ -205,13 +209,15 @@ export default function GameView({
         const frame = game.frame || 0;
         const tc = tileCacheRef.current;
 
-        // Let Pixi render a few frames before Canvas2D yields, to avoid black flash
+        // Let Pixi render several frames before Canvas2D yields, to avoid black flash.
+        // Require both frame count (GPU has processed draws) AND wall-clock time
+        // (browser has composited at least a couple of paint cycles).
         const pixiInited = pixi?.isReady;
         if (pixiInited) {
-          pixi!.render(game, camX, frame, { showHpNumbers, heroClass, killParticles, tileCache: tc });
+          pixi!.render(game, camX, frame, { showHpNumbers, heroClass, killParticles, hideNotifications, tileCache: tc });
           pixiFrameCount++;
         }
-        const pixiReady = pixiInited && pixiFrameCount > 3;
+        const pixiReady = pixiInited && pixiFrameCount > 10 && (performance.now() - pixiInitTime) > 200;
 
         // Fade out loading overlay once Pixi is warmed up
         if (pixiReady && loadingOverlay.parentNode) {
@@ -221,7 +227,7 @@ export default function GameView({
 
         // Canvas2D draws screen-space post-effects (atmosphere, explosions)
         // All skip flags true when Pixi is warmed up — only overlays + explosions remain
-        drawEntities(ctx, game, camX, frame, showHpNumbers, heroClass, killParticles, tc, pixiReady, pixiReady, pixiReady, pixiReady, pixiReady);
+        drawEntities(ctx, game, camX, frame, showHpNumbers, heroClass, killParticles, tc, pixiReady, pixiReady, pixiReady, pixiReady, hideNotifications || pixiReady);
       }
 
       rafId = requestAnimationFrame(draw);
@@ -236,7 +242,7 @@ export default function GameView({
       if (canvas2d.parentNode) canvas2d.parentNode.removeChild(canvas2d);
       if (loadingOverlay.parentNode) loadingOverlay.remove();
     };
-  }, [gameRef, showHpNumbers, heroClass, killParticles]);
+  }, [gameRef, showHpNumbers, heroClass, killParticles, hideNotifications]);
 
   // === Camera drag ===
   const DRAG_THRESHOLD = 5;
@@ -553,6 +559,10 @@ export default function GameView({
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginTop: 6 }}>
                 <input type="checkbox" checked={killParticles} onChange={e => setKillParticles(e.target.checked)} style={{ accentColor: COLORS.heroBlue, width: 14, height: 14 }} />
                 <span style={{ color: '#ccc', fontSize: 10 }}>Kill particles</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginTop: 6 }}>
+                <input type="checkbox" checked={hideNotifications} onChange={e => setHideNotifications(e.target.checked)} style={{ accentColor: COLORS.heroBlue, width: 14, height: 14 }} />
+                <span style={{ color: '#ccc', fontSize: 10 }}>Hide floating text</span>
               </label>
               {setShowFps && (
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginTop: 6 }}>

@@ -984,6 +984,7 @@ export function drawEntities(
 
   // --- Aura indicators (behind units, on ground plane) ---
   if (!skipUnits) {
+  ctx.save();
   perf.begin('render.auras');
   if (game.hero.health > 0) {
     const hx = game.hero.x + 16 - camX;
@@ -1206,13 +1207,16 @@ export function drawEntities(
     drawHero(ctx, game.hero, camX, frame, heroClass);
   }
   perf.end('render.hero');
+  ctx.restore();
   } // end !skipUnits
 
   // --- Projectiles ---
   if (!skipProjectiles) {
     perf.begin('render.projectiles');
+    ctx.save();
     drawProjectiles(ctx, game.projectiles || [], camX, cullLeft, cullRight);
     drawCastingFireballs(ctx, game, camX, frame);
+    ctx.restore();
     perf.end('render.projectiles');
   }
 

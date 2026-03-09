@@ -1,8 +1,9 @@
 /**
  * PixiProjectiles — GPU-accelerated projectile rendering via PixiJS.
  *
- * Replaces Canvas2D drawProjectiles() + drawCastingFireballs()
- * with batched Pixi Graphics primitives.
+ * Each projectile gets its own pooled Graphics object with zIndex = y,
+ * injected into the shared depth-sorted container alongside unit sprites.
+ * This gives natural lane-based depth: projectiles interleave with units.
  */
 
 import { Container, Graphics } from 'pixi.js';
@@ -11,19 +12,53 @@ import type { GameState } from '../types';
 
 const WORLD_Y_OFFSET = VIEWPORT_H - GAME_HEIGHT;
 
-export class PixiProjectileRenderer {
-  readonly container: Container;
-  private gfx: Graphics;
+// ── Graphics Pool ──────────────────────────────────────────
+class GraphicsPool {
+  private pool: Graphics[] = [];
+  private active = 0;
+  private parent: Container;
 
-  constructor() {
-    this.container = new Container();
-    this.gfx = new Graphics();
-    this.container.addChild(this.gfx);
+  constructor(parent: Container) {
+    this.parent = parent;
+  }
+
+  get(): Graphics {
+    let g: Graphics;
+    if (this.active < this.pool.length) {
+      g = this.pool[this.active];
+      g.visible = true;
+      g.clear();
+    } else {
+      g = new Graphics();
+      this.pool.push(g);
+      this.parent.addChild(g);
+    }
+    this.active++;
+    return g;
+  }
+
+  reset(): void {
+    for (let i = this.active; i < this.pool.length; i++) {
+      this.pool[i].visible = false;
+    }
+    this.active = 0;
+  }
+}
+
+export class PixiProjectileRenderer {
+  // No own container — draws into the shared depth container
+  private depthParent: Container | null = null;
+  private pool!: GraphicsPool;
+
+  /** Call once after construction, passing the unit renderer's depthContainer */
+  attachTo(depthContainer: Container): void {
+    this.depthParent = depthContainer;
+    this.pool = new GraphicsPool(depthContainer);
   }
 
   render(game: GameState, camX: number, frame: number): void {
-    const g = this.gfx;
-    g.clear();
+    if (!this.pool) return;
+    this.pool.reset();
 
     const cullLeft = camX - 60;
     const cullRight = camX + VIEWPORT_W + 60;
@@ -40,77 +75,83 @@ export class PixiProjectileRenderer {
 
       switch (p.type) {
         case 'arrow':
-          this.drawArrow(g, sx, sy, false);
+          this.drawArrow(sx, sy, false);
           break;
         case 'allyArrow':
-          this.drawArrow(g, sx, sy, true);
+          this.drawArrow(sx, sy, true);
           break;
         case 'heroArrow':
-          this.drawHeroArrow(g, sx, sy);
+          this.drawHeroArrow(sx, sy);
           break;
         case 'fireball':
-          this.drawFireball(g, sx, sy);
+          this.drawFireball(sx, sy);
           break;
         case 'iceball':
-          this.drawIceball(g, sx, sy);
+          this.drawIceball(sx, sy);
           break;
         case 'wizardBeam':
-          this.drawWizardBeam(g, sx, sy);
+          this.drawWizardBeam(sx, sy);
           break;
         case 'boss':
-          this.drawBossProjectile(g, sx, sy);
+          this.drawBossProjectile(sx, sy);
           break;
         case 'heroRanged':
-          this.drawHeroRanged(g, sx, sy);
+          this.drawHeroRanged(sx, sy);
           break;
         case 'clericBolt':
-          this.drawClericBolt(g, sx, sy);
+          this.drawClericBolt(sx, sy);
           break;
         case 'clericChain':
-          this.drawClericChain(g, sx, sy);
+          this.drawClericChain(sx, sy);
           break;
         case 'crystalBolt':
-          this.drawCrystalBolt(g, sx, sy);
+          this.drawCrystalBolt(sx, sy);
           break;
         case 'bombardShot':
-          this.drawBombardShot(g, sx, sy);
+          this.drawBombardShot(sx, sy);
           break;
         case 'laser':
-          this.drawLaser(g, (p.targetX ?? px) - camX, p.radius || 50, p.duration ?? 30, 0x44aa22, 0x66cc44);
+          this.drawLaser((p.targetX ?? px) - camX, sy, p.radius || 50, p.duration ?? 30, 0x44aa22, 0x66cc44);
           break;
         case 'spectralBlast':
-          this.drawLaser(g, (p.targetX ?? px) - camX, p.radius || 60, p.duration ?? 30, 0x6622aa, 0x8844cc);
+          this.drawLaser((p.targetX ?? px) - camX, sy, p.radius || 60, p.duration ?? 30, 0x6622aa, 0x8844cc);
           break;
         case 'meteorStrike':
-          this.drawLaser(g, (p.targetX ?? px) - camX, p.radius || 120, p.duration ?? 60, 0xff4400, 0xff6600);
+          this.drawLaser((p.targetX ?? px) - camX, sy, p.radius || 120, p.duration ?? 60, 0xff4400, 0xff6600);
           break;
         case 'healBeam':
-          this.drawVerticalBeam(g, sx, sy, p.duration ?? 30, 0x4aff4a, 0xaaffaa);
+          this.drawVerticalBeam(sx, sy, p.duration ?? 30, 0x4aff4a, 0xaaffaa);
           break;
         case 'darkHeal':
-          this.drawVerticalBeam(g, sx, sy, p.duration ?? 30, 0x6622aa, 0xaa55ff);
+          this.drawVerticalBeam(sx, sy, p.duration ?? 30, 0x6622aa, 0xaa55ff);
           break;
         case 'chainLightning':
-          this.drawChainLightning(g, p.chainTargets, camX, p.duration ?? 30);
+          this.drawChainLightning(p.chainTargets, camX, sy, p.duration ?? 30);
           break;
       }
     }
 
     // Casting fireballs (flame callers + fire imps)
-    this.drawCastingFireballs(g, game, camX, frame);
+    this.drawCastingFireballs(game, camX, frame);
+  }
+
+  /** Get a fresh Graphics from the pool, positioned at the given Y depth */
+  private getGfx(y: number): Graphics {
+    const g = this.pool.get();
+    g.zIndex = y;
+    return g;
   }
 
   // ── Arrow ──────────────────────────────────────────────────────
-  private drawArrow(g: Graphics, x: number, y: number, isAlly: boolean): void {
+  private drawArrow(x: number, y: number, isAlly: boolean): void {
+    const g = this.getGfx(y);
     const dir = isAlly ? 1 : -1;
     const shaftColor = isAlly ? 0x5a8b5a : 0x8b5a2a;
     const headColor = isAlly ? 0x77ff77 : 0x666666;
-    // Shaft (trails behind the tip)
     g.stroke({ color: shaftColor, width: 2 });
     g.moveTo(x, y);
     g.lineTo(x - 15 * dir, y);
     g.stroke();
-    // Arrowhead (points in direction of travel)
     g.fill({ color: headColor });
     g.moveTo(x + 6 * dir, y);
     g.lineTo(x, y - 3);
@@ -120,20 +161,18 @@ export class PixiProjectileRenderer {
   }
 
   // ── Hero Arrow ─────────────────────────────────────────────────
-  private drawHeroArrow(g: Graphics, x: number, y: number): void {
-    // Shaft
+  private drawHeroArrow(x: number, y: number): void {
+    const g = this.getGfx(y);
     g.stroke({ color: 0x6b4226, width: 2 });
     g.moveTo(x, y);
     g.lineTo(x + 18, y);
     g.stroke();
-    // Arrowhead
     g.fill({ color: 0xaaaaaa });
     g.moveTo(x + 18, y - 3);
     g.lineTo(x + 24, y);
     g.lineTo(x + 18, y + 3);
     g.closePath();
     g.fill();
-    // Fletching
     g.stroke({ color: 0x4a8f3f, width: 1.5 });
     g.moveTo(x, y);
     g.lineTo(x - 4, y - 4);
@@ -143,7 +182,8 @@ export class PixiProjectileRenderer {
   }
 
   // ── Fireball ───────────────────────────────────────────────────
-  private drawFireball(g: Graphics, x: number, y: number): void {
+  private drawFireball(x: number, y: number): void {
+    const g = this.getGfx(y);
     g.fill({ color: 0xff4400, alpha: 0.8 });
     g.circle(x, y, 12);
     g.fill();
@@ -159,7 +199,8 @@ export class PixiProjectileRenderer {
   }
 
   // ── Iceball ────────────────────────────────────────────────────
-  private drawIceball(g: Graphics, x: number, y: number): void {
+  private drawIceball(x: number, y: number): void {
+    const g = this.getGfx(y);
     g.fill({ color: 0x4488cc, alpha: 0.3 });
     g.circle(x, y, 10);
     g.fill();
@@ -175,7 +216,8 @@ export class PixiProjectileRenderer {
   }
 
   // ── Wizard Beam ────────────────────────────────────────────────
-  private drawWizardBeam(g: Graphics, x: number, y: number): void {
+  private drawWizardBeam(x: number, y: number): void {
+    const g = this.getGfx(y);
     g.stroke({ color: 0xaa55ff, width: 4, alpha: 0.8 });
     g.moveTo(x, y);
     g.lineTo(x + 60, y);
@@ -193,7 +235,8 @@ export class PixiProjectileRenderer {
   }
 
   // ── Boss Projectile ────────────────────────────────────────────
-  private drawBossProjectile(g: Graphics, x: number, y: number): void {
+  private drawBossProjectile(x: number, y: number): void {
+    const g = this.getGfx(y);
     g.fill({ color: 0xff3333, alpha: 0.8 });
     g.circle(x, y, 8);
     g.fill();
@@ -206,7 +249,8 @@ export class PixiProjectileRenderer {
   }
 
   // ── Hero Ranged ────────────────────────────────────────────────
-  private drawHeroRanged(g: Graphics, x: number, y: number): void {
+  private drawHeroRanged(x: number, y: number): void {
+    const g = this.getGfx(y);
     g.fill({ color: 0x4a9fff, alpha: 0.7 });
     g.circle(x, y, 6);
     g.fill();
@@ -223,7 +267,8 @@ export class PixiProjectileRenderer {
   }
 
   // ── Cleric Bolt ────────────────────────────────────────────────
-  private drawClericBolt(g: Graphics, x: number, y: number): void {
+  private drawClericBolt(x: number, y: number): void {
+    const g = this.getGfx(y);
     g.fill({ color: 0x4aff4a, alpha: 0.7 });
     g.circle(x, y, 6);
     g.fill();
@@ -236,7 +281,8 @@ export class PixiProjectileRenderer {
   }
 
   // ── Cleric Chain ───────────────────────────────────────────────
-  private drawClericChain(g: Graphics, x: number, y: number): void {
+  private drawClericChain(x: number, y: number): void {
+    const g = this.getGfx(y);
     g.fill({ color: 0x44ff88, alpha: 0.6 });
     g.circle(x, y, 5);
     g.fill();
@@ -255,8 +301,8 @@ export class PixiProjectileRenderer {
   }
 
   // ── Crystal Bolt ───────────────────────────────────────────────
-  private drawCrystalBolt(g: Graphics, x: number, y: number): void {
-    // Diamond shape
+  private drawCrystalBolt(x: number, y: number): void {
+    const g = this.getGfx(y);
     g.fill({ color: 0x55ddcc, alpha: 0.9 });
     g.moveTo(x, y - 5);
     g.lineTo(x - 3, y);
@@ -277,8 +323,8 @@ export class PixiProjectileRenderer {
   }
 
   // ── Bombard Shot ───────────────────────────────────────────────
-  private drawBombardShot(g: Graphics, x: number, y: number): void {
-    // Smoke trail
+  private drawBombardShot(x: number, y: number): void {
+    const g = this.getGfx(y);
     g.fill({ color: 0x777777, alpha: 0.3 });
     g.circle(x - 8, y + 3, 4);
     g.fill();
@@ -288,14 +334,12 @@ export class PixiProjectileRenderer {
     g.fill({ color: 0x555555, alpha: 0.12 });
     g.circle(x - 20, y + 6, 2.5);
     g.fill();
-    // Cannonball
     g.fill({ color: 0x555555 });
     g.circle(x, y, 7);
     g.fill();
     g.fill({ color: 0x888888, alpha: 0.6 });
     g.circle(x - 2, y - 2, 3);
     g.fill();
-    // Fuse spark
     g.fill({ color: 0xff6600 });
     g.circle(x + 4, y - 5, 2.5);
     g.fill();
@@ -306,17 +350,17 @@ export class PixiProjectileRenderer {
 
   // ── Laser (used for laser, spectralBlast, meteorStrike) ────────
   private drawLaser(
-    g: Graphics,
     targetX: number,
+    y: number,
     radius: number,
     duration: number,
     color1: number,
     color2: number,
   ): void {
+    const g = this.getGfx(y);
     const opacity = Math.min(1, duration / 15);
     const groundY = GROUND_Y + WORLD_Y_OFFSET;
 
-    // Vertical beams
     g.stroke({ color: color1, width: 2, alpha: opacity * 0.3 });
     g.moveTo(targetX - 8, 0);
     g.lineTo(targetX - 8, groundY);
@@ -338,7 +382,6 @@ export class PixiProjectileRenderer {
     g.lineTo(targetX, groundY);
     g.stroke();
 
-    // Impact zone
     g.fill({ color: color1, alpha: opacity * 0.25 });
     g.circle(targetX, groundY - 10, radius);
     g.fill();
@@ -346,7 +389,6 @@ export class PixiProjectileRenderer {
     g.circle(targetX, groundY - 10, radius * 0.6);
     g.fill();
 
-    // Top glow
     g.fill({ color: color1, alpha: opacity * 0.4 });
     g.circle(targetX, 20, 12);
     g.fill();
@@ -354,13 +396,13 @@ export class PixiProjectileRenderer {
 
   // ── Vertical Beam (healBeam, darkHeal) ─────────────────────────
   private drawVerticalBeam(
-    g: Graphics,
     x: number,
     y: number,
     duration: number,
     color1: number,
     color2: number,
   ): void {
+    const g = this.getGfx(y);
     const opacity = Math.min(1, duration / 10);
     const top = y - 80;
     const bot = y + 10;
@@ -391,12 +433,13 @@ export class PixiProjectileRenderer {
 
   // ── Chain Lightning ────────────────────────────────────────────
   private drawChainLightning(
-    g: Graphics,
     chainTargets: Array<{ x: number; y: number }> | undefined,
     camX: number,
+    baseY: number,
     duration: number,
   ): void {
     if (!chainTargets || chainTargets.length < 2) return;
+    const g = this.getGfx(baseY);
     const opacity = Math.min(1, duration / 10);
 
     for (let i = 1; i < chainTargets.length; i++) {
@@ -410,25 +453,21 @@ export class PixiProjectileRenderer {
       const midX = (px + cx) / 2 + seed;
       const midY = (py + cy) / 2 + seed * 0.5;
 
-      // Outer glow
       g.stroke({ color: 0x4488ff, width: 4, alpha: opacity * 0.3 });
       g.moveTo(px, py);
       g.lineTo(midX, midY);
       g.lineTo(cx, cy);
       g.stroke();
-      // Core bolt
       g.stroke({ color: 0x88ccff, width: 2, alpha: opacity });
       g.moveTo(px, py);
       g.lineTo(midX, midY);
       g.lineTo(cx, cy);
       g.stroke();
-      // Bright center
       g.stroke({ color: 0xffffff, width: 1, alpha: opacity * 0.8 });
       g.moveTo(px, py);
       g.lineTo(midX, midY);
       g.lineTo(cx, cy);
       g.stroke();
-      // Hit spark
       g.fill({ color: 0x88ccff, alpha: opacity * 0.5 });
       g.circle(cx, cy, 4);
       g.fill();
@@ -439,7 +478,7 @@ export class PixiProjectileRenderer {
   }
 
   // ── Casting Fireballs (in-flight from flame callers / fire imps) ──
-  private drawCastingFireballs(g: Graphics, game: GameState, camX: number, frame: number): void {
+  private drawCastingFireballs(game: GameState, camX: number, frame: number): void {
     const gameAny = game as any;
     const casters = [
       ...((gameAny.enemyFlameCallers || []).map((fc: any) => ({ ...fc, castMax: 310, color: 0xff4400, glowColor: 0xff8800, size: 7 }))),
@@ -456,6 +495,8 @@ export class PixiProjectileRenderer {
       const fx = startX + (endX - startX) * t;
       const arcH = -60 * 4 * t * (t - 1);
       const fy = startY + (endY - startY) * t - arcH;
+
+      const g = this.getGfx(fy);
 
       // Glow
       g.fill({ color: c.glowColor, alpha: 0.3 });

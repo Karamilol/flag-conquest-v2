@@ -895,7 +895,7 @@ export function useGameLoop(
         // Game over: fire callback directly from RAF loop (bypass React useEffect)
         if (state.gameOver && !_gameOverSignaled) {
           _gameOverSignaled = true;
-          setTimeout(() => gameOverRef.current(), 150);
+          gameOverRef.current();
         }
         if (!state.gameOver) _gameOverSignaled = false;
 

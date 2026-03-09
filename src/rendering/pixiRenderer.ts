@@ -34,6 +34,7 @@ export interface PixiRenderOptions {
   showHpNumbers: boolean;
   heroClass: string;
   killParticles: boolean;
+  hideNotifications: boolean;
   tileCache: TileCache;
 }
 
@@ -112,11 +113,14 @@ export class PixiRenderer {
     this.projectileRenderer = new PixiProjectileRenderer();
     this.particleRenderer = new PixiParticleRenderer();
 
+    // Projectiles inject into the unit renderer's depth-sorted sprite container
+    // so they interleave with units by Y position (lane depth)
+    this.projectileRenderer.attachTo(this.unitRenderer.depthContainer);
+
     stage.addChild(
       this.environmentLayer,
       this.worldObjectRenderer.container,
-      this.unitRenderer.container,   // includes auras, sprites, health bars
-      this.projectileRenderer.container,
+      this.unitRenderer.container,        // units + projectiles Y-sorted for lane depth
       this.particleRenderer.container,
     );
 
@@ -171,9 +175,13 @@ export class PixiRenderer {
     perf.end('pixi.projectiles');
 
     // Phase 5: Particles (damage numbers)
-    perf.begin('pixi.particles');
-    this.particleRenderer.render(game, camX);
-    perf.end('pixi.particles');
+    if (!options.hideNotifications) {
+      perf.begin('pixi.particles');
+      this.particleRenderer.render(game, camX);
+      perf.end('pixi.particles');
+    } else {
+      this.particleRenderer.render({ ...game, particles: [] } as any, camX);
+    }
 
     perf.end('pixi.render');
   }
