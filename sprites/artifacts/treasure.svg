@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <radialGradient id="tr_glow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#ffdd44" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ffdd44" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="tr_wood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8B6914"/>
+      <stop offset="100%" stop-color="#5a4008"/>
+    </linearGradient>
+    <linearGradient id="tr_lid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7a5a10"/>
+      <stop offset="100%" stop-color="#5a4008"/>
+    </linearGradient>
+    <linearGradient id="tr_gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffee66"/>
+      <stop offset="100%" stop-color="#ddaa22"/>
+    </linearGradient>
+    <radialGradient id="tr_gem" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#ff4466"/>
+      <stop offset="100%" stop-color="#aa1133"/>
+    </radialGradient>
+  </defs>
+  <!-- Background glow -->
+  <circle cx="16" cy="16" r="15" fill="url(#tr_glow)"/>
+  <!-- Gold rays -->
+  <line x1="16" y1="2" x2="16" y2="6" stroke="#ffdd44" stroke-width="0.5" opacity="0.3"/>
+  <line x1="8" y1="5" x2="10" y2="8" stroke="#ffdd44" stroke-width="0.5" opacity="0.25"/>
+  <line x1="24" y1="5" x2="22" y2="8" stroke="#ffdd44" stroke-width="0.5" opacity="0.25"/>
+  <line x1="4" y1="12" x2="7" y2="13" stroke="#ffdd44" stroke-width="0.5" opacity="0.2"/>
+  <line x1="28" y1="12" x2="25" y2="13" stroke="#ffdd44" stroke-width="0.5" opacity="0.2"/>
+  <!-- Chest body -->
+  <rect x="4" y="17" width="24" height="11" rx="1" fill="url(#tr_wood)" stroke="#3a2a06" stroke-width="0.5"/>
+  <!-- Wood grain -->
+  <line x1="5" y1="20" x2="27" y2="20" stroke="#6a5010" stroke-width="0.3" opacity="0.4"/>
+  <line x1="5" y1="24" x2="27" y2="24" stroke="#6a5010" stroke-width="0.3" opacity="0.4"/>
+  <!-- Chest body highlight -->
+  <rect x="5" y="17.5" width="10" height="2" rx="0.5" fill="white" opacity="0.08"/>
+  <!-- Metal bands -->
+  <rect x="3.5" y="17" width="1.5" height="11" rx="0.3" fill="#887744" stroke="#665522" stroke-width="0.3"/>
+  <rect x="15.25" y="17" width="1.5" height="11" rx="0.3" fill="#887744" stroke="#665522" stroke-width="0.3"/>
+  <rect x="27" y="17" width="1.5" height="11" rx="0.3" fill="#887744" stroke="#665522" stroke-width="0.3"/>
+  <!-- Metal band highlights -->
+  <rect x="3.7" y="17.3" width="0.4" height="4" rx="0.2" fill="white" opacity="0.12"/>
+  <rect x="15.5" y="17.3" width="0.4" height="4" rx="0.2" fill="white" opacity="0.12"/>
+  <!-- Lid (open, tilted back) -->
+  <path d="M4 17 L4 12 Q4 9 8 8 L24 8 Q28 9 28 12 L28 17" fill="url(#tr_lid)" stroke="#3a2a06" stroke-width="0.5"/>
+  <!-- Lid arch highlight -->
+  <path d="M6 16 L6 12 Q6 10 10 9.5" stroke="white" stroke-width="0.6" fill="none" opacity="0.1"/>
+  <!-- Lid metal band -->
+  <path d="M4 12 L28 12" stroke="#887744" stroke-width="1.2"/>
+  <!-- Lock plate -->
+  <rect x="14" y="18.5" width="4" height="3" rx="0.5" fill="#ddaa44" stroke="#aa8822" stroke-width="0.4"/>
+  <circle cx="16" cy="20" r="0.7" fill="#3a2a06"/>
+  <rect x="14.3" y="18.8" width="1.5" height="0.7" rx="0.2" fill="white" opacity="0.2"/>
+  <!-- Gold coins piling out -->
+  <circle cx="10" cy="15" r="2" fill="url(#tr_gold)" stroke="#bb8811" stroke-width="0.3"/>
+  <circle cx="10" cy="14.5" r="0.5" fill="white" opacity="0.3"/>
+  <circle cx="14" cy="14" r="2" fill="url(#tr_gold)" stroke="#bb8811" stroke-width="0.3"/>
+  <circle cx="13.5" cy="13.5" r="0.5" fill="white" opacity="0.3"/>
+  <circle cx="18" cy="14.5" r="2" fill="url(#tr_gold)" stroke="#bb8811" stroke-width="0.3"/>
+  <circle cx="22" cy="15" r="2" fill="url(#tr_gold)" stroke="#bb8811" stroke-width="0.3"/>
+  <circle cx="12" cy="12.5" r="1.8" fill="url(#tr_gold)" stroke="#bb8811" stroke-width="0.3"/>
+  <circle cx="16" cy="12" r="1.8" fill="url(#tr_gold)" stroke="#bb8811" stroke-width="0.3"/>
+  <circle cx="20" cy="13" r="1.8" fill="url(#tr_gold)" stroke="#bb8811" stroke-width="0.3"/>
+  <!-- Gem on top -->
+  <path d="M16 10 L14.5 11.5 L15.5 13 L16.5 13 L17.5 11.5 Z" fill="url(#tr_gem)" stroke="#881133" stroke-width="0.3"/>
+  <path d="M16 10.3 L15.2 11.3 L15.8 12.2" stroke="white" stroke-width="0.3" fill="none" opacity="0.4"/>
+  <!-- Gold sparkles -->
+  <circle cx="9" cy="11" r="0.5" fill="#ffee88" opacity="0.6"/>
+  <circle cx="22" cy="10" r="0.4" fill="#ffee88" opacity="0.5"/>
+  <circle cx="16" cy="8" r="0.6" fill="#ffee88" opacity="0.4"/>
+</svg>

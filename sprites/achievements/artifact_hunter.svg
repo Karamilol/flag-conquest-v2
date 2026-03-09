@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Soft golden glow -->
+  <ellipse cx="16" cy="16" rx="11" ry="12" fill="#daa520" opacity="0.08"/>
+  <!-- Urn body -->
+  <path d="M10,12 Q8,14 8,18 Q8,22 9,25 Q10,28 12,29 L20,29 Q22,28 23,25 Q24,22 24,18 Q24,14 22,12 Z" fill="#8B6914"/>
+  <path d="M11,13 Q9,15 9,18 Q9,22 10,25 Q11,27 13,28 L19,28 Q21,27 22,25 Q23,22 23,18 Q23,15 21,13 Z" fill="#a07a1e"/>
+  <!-- Urn body highlight -->
+  <path d="M11,14 Q10,16 10,19 Q10,22 11,25 Q11,26 12,27" fill="none" stroke="#c09830" stroke-width="1" opacity="0.4" stroke-linecap="round"/>
+  <path d="M12,14 Q11,17 11,20 Q11,22 11.5,24" fill="none" stroke="#d0a838" stroke-width="0.5" opacity="0.3" stroke-linecap="round"/>
+  <!-- Urn neck -->
+  <path d="M12,8 Q12,12 10,12 L22,12 Q20,12 20,8 Z" fill="#7a5a10"/>
+  <path d="M13,9 Q13,11.5 11,12 L21,12 Q19,11.5 19,9 Z" fill="#8B6914" opacity="0.7"/>
+  <!-- Urn lip/rim -->
+  <ellipse cx="16" cy="8" rx="5" ry="2" fill="#9a7018"/>
+  <ellipse cx="16" cy="8" rx="4.5" ry="1.5" fill="#aa8020"/>
+  <ellipse cx="16" cy="8" rx="3.5" ry="1" fill="#7a5010" opacity="0.5"/>
+  <!-- Rim highlight -->
+  <ellipse cx="14" cy="7.5" rx="2" ry="0.5" fill="#c8a040" opacity="0.4"/>
+  <!-- Handles -->
+  <path d="M10,14 Q6,14 5,17 Q4,20 7,21 Q8,21 9,19" fill="none" stroke="#7a5a10" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M10,14 Q6.5,14.5 5.5,17 Q5,19 7,20" fill="none" stroke="#a07a20" stroke-width="0.6" opacity="0.4" stroke-linecap="round"/>
+  <path d="M22,14 Q26,14 27,17 Q28,20 25,21 Q24,21 23,19" fill="none" stroke="#7a5a10" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M22,14 Q25.5,14.5 26.5,17 Q27,19 25,20" fill="none" stroke="#a07a20" stroke-width="0.6" opacity="0.4" stroke-linecap="round"/>
+  <!-- Decorative band pattern -->
+  <rect x="9" y="16" width="14" height="1.5" rx="0.3" fill="#6a4a0e" opacity="0.5"/>
+  <rect x="9" y="22" width="14" height="1.5" rx="0.3" fill="#6a4a0e" opacity="0.5"/>
+  <!-- Greek key / meander pattern on bands -->
+  <path d="M10,16.3 L11,16.3 L11,17 L12,17 L12,16.3 L13,16.3 L13,17 L14,17 L14,16.3 L15,16.3" fill="none" stroke="#c09830" stroke-width="0.4" opacity="0.6"/>
+  <path d="M17,16.3 L18,16.3 L18,17 L19,17 L19,16.3 L20,16.3 L20,17 L21,17 L21,16.3 L22,16.3" fill="none" stroke="#c09830" stroke-width="0.4" opacity="0.6"/>
+  <!-- Central medallion -->
+  <circle cx="16" cy="20" r="2.5" fill="#6a4a0e" opacity="0.5"/>
+  <circle cx="16" cy="20" r="2" fill="#8a6a18"/>
+  <circle cx="16" cy="20" r="1.5" fill="#aa8020" opacity="0.6"/>
+  <!-- Eye of artifact -->
+  <ellipse cx="16" cy="20" rx="1" ry="0.6" fill="#e8c040"/>
+  <circle cx="16" cy="20" r="0.4" fill="#4a2a08"/>
+  <!-- Bottom base -->
+  <ellipse cx="16" cy="29" rx="5" ry="1.5" fill="#6a4a0e"/>
+  <ellipse cx="16" cy="29" rx="4.5" ry="1" fill="#7a5a14" opacity="0.5"/>
+  <!-- Mystical glow from opening -->
+  <ellipse cx="16" cy="7" rx="3" ry="1.5" fill="#f0d860" opacity="0.2"/>
+  <ellipse cx="16" cy="6" rx="2" ry="2" fill="#ffe880" opacity="0.12"/>
+  <!-- Sparkle -->
+  <path d="M16,3 L16.3,1.5 L16.6,3 L16.3,4.5 Z" fill="#fff8c0" opacity="0.6"/>
+  <path d="M15.6,3 L16.3,2.5 L17,3 L16.3,3.5 Z" fill="#fff8c0" opacity="0.4"/>
+</svg>

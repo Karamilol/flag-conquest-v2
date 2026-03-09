@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Ink bottle with green magical ink -->
+  <!-- Bottle body -->
+  <rect x="8" y="14" width="16" height="12" rx="2" fill="#88bbdd" opacity="0.3"/>
+  <rect x="8" y="14" width="16" height="12" rx="2" fill="none" stroke="#5588aa" stroke-width="0.5" opacity="0.5"/>
+  <!-- Bottle neck -->
+  <rect x="12" y="8" width="8" height="6" fill="#88bbdd" opacity="0.25"/>
+  <!-- Cork -->
+  <rect x="13" y="5" width="6" height="4" rx="0.8" fill="#c4984a"/>
+  <rect x="13" y="5" width="6" height="1.5" rx="0.5" fill="#d4a85a" opacity="0.4"/>
+  <!-- Green ink inside -->
+  <rect x="9" y="16" width="14" height="9" rx="1.5" fill="#22aa44"/>
+  <rect x="9.5" y="16" width="6" height="8" rx="1" fill="#33cc55" opacity="0.3"/>
+  <!-- Ink surface -->
+  <path d="M9,16 Q16,14.5 23,16" fill="none" stroke="#44dd66" stroke-width="0.5" opacity="0.4"/>
+  <!-- Glass shine -->
+  <path d="M10,16 L10,24" fill="none" stroke="#ffffff" stroke-width="0.6" opacity="0.2" stroke-linecap="round"/>
+  <circle cx="10.5" cy="15" r="0.6" fill="#ffffff" opacity="0.3"/>
+  <!-- Label -->
+  <rect x="11" y="18" width="10" height="5" rx="0.5" fill="#e8dcc8" opacity="0.4"/>
+  <!-- Magic sparkles from ink -->
+  <circle cx="14" cy="12" r="0.5" fill="#44ff66" opacity="0.5"/>
+  <circle cx="18" cy="10" r="0.4" fill="#44ff66" opacity="0.4"/>
+  <circle cx="20" cy="13" r="0.3" fill="#66ff88" opacity="0.35"/>
+  <!-- Ink drip on bottle -->
+  <path d="M20,14 Q20.5,15 20,16" fill="none" stroke="#22aa44" stroke-width="0.6" opacity="0.5" stroke-linecap="round"/>
+  <!-- Bottom shadow -->
+  <ellipse cx="16" cy="27" rx="8" ry="1.5" fill="#225533" opacity="0.15"/>
+</svg>

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Ground glow -->
+  <ellipse cx="16" cy="28" rx="12" ry="3" fill="#3a8aff" opacity="0.1"/>
+  <ellipse cx="16" cy="28" rx="8" ry="2" fill="#5aa0ff" opacity="0.08"/>
+  <!-- Shield glow behind -->
+  <ellipse cx="16" cy="14" rx="9" ry="10" fill="#4080cc" opacity="0.1"/>
+  <ellipse cx="16" cy="14" rx="6" ry="7" fill="#60a0ee" opacity="0.08"/>
+  <!-- Shield body -->
+  <path d="M8 6 L8 18 Q8 24 16 27 Q24 24 24 18 L24 6Z" fill="#3a6a9e"/>
+  <path d="M8 6 L8 18 Q8 24 16 27 Q24 24 24 18 L24 6Z" fill="url(#sf1)"/>
+  <path d="M8 6 L8 18 Q8 24 16 27 Q24 24 24 18 L24 6Z" fill="none" stroke="#2a4a6e" stroke-width="0.8"/>
+  <!-- Shield rim -->
+  <path d="M8 6 L24 6" stroke="#5a8aba" stroke-width="1.2"/>
+  <path d="M8.5 6.5 L23.5 6.5" stroke="#8ab4da" stroke-width="0.4" opacity="0.5"/>
+  <!-- Shield face gradient overlay -->
+  <path d="M9 7 L9 18 Q9 23 16 26 Q23 23 23 18 L23 7Z" fill="url(#sf2)" opacity="0.5"/>
+  <!-- Shield cross/emblem -->
+  <rect x="15" y="8" width="2" height="16" rx="0.5" fill="#4a7aaa" stroke="#2a5a8a" stroke-width="0.3"/>
+  <rect x="10" y="14" width="12" height="2" rx="0.5" fill="#4a7aaa" stroke="#2a5a8a" stroke-width="0.3"/>
+  <!-- Cross highlight -->
+  <rect x="15.3" y="8.5" width="0.8" height="15" rx="0.3" fill="#7ab0e0" opacity="0.3"/>
+  <rect x="10.5" y="14.3" width="11" height="0.8" rx="0.3" fill="#7ab0e0" opacity="0.3"/>
+  <!-- Shield rivets -->
+  <circle cx="10" cy="8" r="0.7" fill="#6a9ac8" stroke="#3a5a7a" stroke-width="0.3"/>
+  <circle cx="22" cy="8" r="0.7" fill="#6a9ac8" stroke="#3a5a7a" stroke-width="0.3"/>
+  <circle cx="10" cy="8" r="0.3" fill="#9ac0e8" opacity="0.6"/>
+  <circle cx="22" cy="8" r="0.3" fill="#9ac0e8" opacity="0.6"/>
+  <!-- Planted feet beneath shield -->
+  <path d="M11 27 L9 29 L13 29 L13 27" fill="#5a4a3a" stroke="#3a2a1a" stroke-width="0.3"/>
+  <path d="M19 27 L19 29 L23 29 L21 27" fill="#5a4a3a" stroke="#3a2a1a" stroke-width="0.3"/>
+  <!-- Boot details -->
+  <line x1="10" y1="28" x2="12.5" y2="28" stroke="#7a6a5a" stroke-width="0.3" opacity="0.5"/>
+  <line x1="19.5" y1="28" x2="22.5" y2="28" stroke="#7a6a5a" stroke-width="0.3" opacity="0.5"/>
+  <!-- Ground crack lines (planted stance) -->
+  <line x1="8" y1="29.5" x2="6" y2="30" stroke="#555" stroke-width="0.3" opacity="0.3"/>
+  <line x1="13" y1="29.5" x2="14" y2="30.5" stroke="#555" stroke-width="0.3" opacity="0.3"/>
+  <line x1="19" y1="29.5" x2="18" y2="30.5" stroke="#555" stroke-width="0.3" opacity="0.3"/>
+  <line x1="24" y1="29.5" x2="26" y2="30" stroke="#555" stroke-width="0.3" opacity="0.3"/>
+  <!-- Shield glow edge -->
+  <path d="M8 18 Q8 24 16 27 Q24 24 24 18" fill="none" stroke="#80c0ff" stroke-width="0.5" opacity="0.35"/>
+  <path d="M9 18 Q9 23 16 26 Q23 23 23 18" fill="none" stroke="#a0d8ff" stroke-width="0.3" opacity="0.2"/>
+  <!-- Top shine -->
+  <path d="M10 7 L14 7 L12 10Z" fill="white" opacity="0.12"/>
+  <path d="M10 7 Q12 7 13 8" fill="none" stroke="white" stroke-width="0.4" opacity="0.25"/>
+  <defs>
+    <linearGradient id="sf1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6aa0d0" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#1a3a5e" stop-opacity="0.5"/>
+    </linearGradient>
+    <linearGradient id="sf2" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#a0d0ff" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#4080b0" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#1a3050" stop-opacity="0.3"/>
+    </linearGradient>
+  </defs>
+</svg>

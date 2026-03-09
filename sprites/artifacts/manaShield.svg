@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Outer ward glow -->
+  <circle cx="16" cy="16" r="14" fill="#6a40cc" opacity="0.06"/>
+  <circle cx="16" cy="16" r="11" fill="#8a60ee" opacity="0.08"/>
+  <!-- Amulet chain -->
+  <path d="M10 2 Q8 4 9 6 Q10 8 12 9" fill="none" stroke="#c8a030" stroke-width="0.6"/>
+  <path d="M22 2 Q24 4 23 6 Q22 8 20 9" fill="none" stroke="#c8a030" stroke-width="0.6"/>
+  <path d="M10 2 Q16 4 22 2" fill="none" stroke="#c8a030" stroke-width="0.5" opacity="0.7"/>
+  <!-- Chain highlights -->
+  <path d="M10.5 2.5 Q16 4 21.5 2.5" fill="none" stroke="#e8d070" stroke-width="0.2" opacity="0.4"/>
+  <!-- Amulet body — gem setting -->
+  <path d="M12 9 L10 16 L16 22 L22 16 L20 9Z" fill="#3a2060"/>
+  <path d="M12 9 L10 16 L16 22 L22 16 L20 9Z" fill="url(#ms1)" opacity="0.7"/>
+  <path d="M12 9 L10 16 L16 22 L22 16 L20 9Z" fill="none" stroke="#8a60cc" stroke-width="0.6"/>
+  <!-- Metal frame -->
+  <path d="M12 9 L10 16 L16 22 L22 16 L20 9Z" fill="none" stroke="#c8a030" stroke-width="0.8"/>
+  <path d="M12.2 9.3 L20 9.3" stroke="#e8c860" stroke-width="0.3" opacity="0.4"/>
+  <!-- Inner gem -->
+  <path d="M13.5 11 L11.5 16 L16 20.5 L20.5 16 L18.5 11Z" fill="#5030a0"/>
+  <path d="M13.5 11 L11.5 16 L16 20.5 L20.5 16 L18.5 11Z" fill="url(#ms2)" opacity="0.8"/>
+  <!-- Gem facets -->
+  <path d="M16 11 L11.5 16 L16 20.5" fill="#6a40cc" opacity="0.3"/>
+  <path d="M16 11 L20.5 16 L16 20.5" fill="#4020a0" opacity="0.2"/>
+  <line x1="16" y1="11" x2="16" y2="20.5" stroke="#7a50dd" stroke-width="0.3" opacity="0.4"/>
+  <line x1="11.5" y1="16" x2="20.5" y2="16" stroke="#7a50dd" stroke-width="0.3" opacity="0.3"/>
+  <!-- Gem highlight -->
+  <path d="M14 12 L13 14.5 L15.5 12.5Z" fill="white" opacity="0.2"/>
+  <path d="M14.5 12.5 L14 13.5" stroke="white" stroke-width="0.4" opacity="0.35"/>
+  <!-- Rune marks on frame -->
+  <path d="M11 12 L10.5 13 L11.5 13.5" fill="none" stroke="#b090ff" stroke-width="0.4" opacity="0.6"/>
+  <path d="M21 12 L21.5 13 L20.5 13.5" fill="none" stroke="#b090ff" stroke-width="0.4" opacity="0.6"/>
+  <path d="M12 18 L11.5 19 L12.5 19.5" fill="none" stroke="#b090ff" stroke-width="0.4" opacity="0.5"/>
+  <path d="M20 18 L20.5 19 L19.5 19.5" fill="none" stroke="#b090ff" stroke-width="0.4" opacity="0.5"/>
+  <!-- Center rune -->
+  <circle cx="16" cy="15.5" r="1.5" fill="none" stroke="#c0a0ff" stroke-width="0.4" opacity="0.5"/>
+  <path d="M15 15 L16 14 L17 15 L16 17Z" fill="#c0a0ff" opacity="0.3"/>
+  <!-- Ward barrier rings -->
+  <ellipse cx="16" cy="16" rx="13" ry="13" fill="none" stroke="#8a60cc" stroke-width="0.4" opacity="0.2" stroke-dasharray="2,2"/>
+  <ellipse cx="16" cy="16" rx="11.5" ry="11.5" fill="none" stroke="#a080dd" stroke-width="0.3" opacity="0.15" stroke-dasharray="1.5,2.5"/>
+  <!-- Floating ward particles -->
+  <circle cx="5" cy="10" r="0.5" fill="#b090ff" opacity="0.4"/>
+  <circle cx="27" cy="12" r="0.4" fill="#b090ff" opacity="0.35"/>
+  <circle cx="8" cy="24" r="0.5" fill="#9070dd" opacity="0.3"/>
+  <circle cx="24" cy="22" r="0.4" fill="#9070dd" opacity="0.35"/>
+  <circle cx="16" cy="26" r="0.3" fill="#b090ff" opacity="0.3"/>
+  <!-- Bottom setting detail -->
+  <circle cx="16" cy="22" r="0.8" fill="#c8a030" stroke="#a08020" stroke-width="0.3"/>
+  <circle cx="16" cy="22" r="0.3" fill="#e8d070" opacity="0.5"/>
+  <defs>
+    <linearGradient id="ms1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6040aa"/>
+      <stop offset="100%" stop-color="#2a1060"/>
+    </linearGradient>
+    <radialGradient id="ms2" cx="0.35" cy="0.35" r="0.7">
+      <stop offset="0%" stop-color="#9a70ff"/>
+      <stop offset="60%" stop-color="#5030a0"/>
+      <stop offset="100%" stop-color="#2a1060"/>
+    </radialGradient>
+  </defs>
+</svg>

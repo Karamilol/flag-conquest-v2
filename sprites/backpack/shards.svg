@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Glowing purple crystal shard -->
+  <!-- Glow -->
+  <ellipse cx="16" cy="16" rx="10" ry="12" fill="#8844cc" opacity="0.1"/>
+  <!-- Main crystal body -->
+  <path d="M14,28 L12,16 L14,3 L18,3 L20,16 L18,28Z" fill="#7733bb"/>
+  <!-- Left facet -->
+  <path d="M14,28 L12,16 L14,3 L16,4 L16,16 L15,28Z" fill="#9955dd" opacity="0.6"/>
+  <!-- Right facet (darker) -->
+  <path d="M18,28 L20,16 L18,3 L16,4 L16,16 L17,28Z" fill="#6622aa" opacity="0.6"/>
+  <!-- Crystal tip highlight -->
+  <path d="M15,4 L16,3 L17,4 L16,8Z" fill="#bb88ff" opacity="0.5"/>
+  <!-- Inner glow line -->
+  <path d="M16,6 L16,24" fill="none" stroke="#cc99ff" stroke-width="0.6" opacity="0.3"/>
+  <!-- Side crystal shard (left) -->
+  <path d="M8,20 L10,12 L12,11 L13,16 L10,22Z" fill="#8844cc" opacity="0.7"/>
+  <path d="M8,20 L10,12 L11,12 L10,20Z" fill="#aa66ee" opacity="0.4"/>
+  <!-- Side crystal shard (right) -->
+  <path d="M24,18 L22,10 L20,10 L19,15 L22,20Z" fill="#7733bb" opacity="0.7"/>
+  <path d="M24,18 L22,10 L21,11 L23,18Z" fill="#9955dd" opacity="0.3"/>
+  <!-- Surface shine -->
+  <path d="M14.5,6 L14,10" fill="none" stroke="#ddbbff" stroke-width="0.5" opacity="0.4" stroke-linecap="round"/>
+  <circle cx="14.5" cy="5.5" r="0.5" fill="#ffffff" opacity="0.4"/>
+  <!-- Floating particles -->
+  <circle cx="6" cy="14" r="0.6" fill="#bb88ff" opacity="0.4"/>
+  <circle cx="26" cy="12" r="0.5" fill="#bb88ff" opacity="0.35"/>
+  <circle cx="8" cy="8" r="0.4" fill="#cc99ff" opacity="0.3"/>
+  <circle cx="24" cy="22" r="0.5" fill="#cc99ff" opacity="0.3"/>
+</svg>

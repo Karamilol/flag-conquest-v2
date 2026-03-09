@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="hl_wood" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#8B6914"/>
+      <stop offset="50%" stop-color="#a07a22"/>
+      <stop offset="100%" stop-color="#7a5a0e"/>
+    </linearGradient>
+    <linearGradient id="hl_spike" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#aa8833"/>
+      <stop offset="100%" stop-color="#664411"/>
+    </linearGradient>
+    <radialGradient id="hl_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#aa8844" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#aa8844" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="16" cy="16" r="14" fill="url(#hl_glow)"/>
+  <!-- Ground -->
+  <path d="M0 28 Q16 26 32 28 L32 32 L0 32 Z" fill="#554433" opacity="0.3"/>
+  <!-- Back crossbrace -->
+  <rect x="3" y="10" width="26" height="2" rx="0.3" fill="#7a5a0e" stroke="#5a4008" stroke-width="0.3" transform="rotate(-5 16 11)"/>
+  <!-- Main vertical posts -->
+  <rect x="3" y="6" width="2.5" height="22" rx="0.3" fill="url(#hl_wood)" stroke="#5a4008" stroke-width="0.4"/>
+  <rect x="3.3" y="6.3" width="0.6" height="21" rx="0.2" fill="white" opacity="0.06"/>
+  <rect x="10" y="6" width="2.5" height="22" rx="0.3" fill="url(#hl_wood)" stroke="#5a4008" stroke-width="0.4"/>
+  <rect x="10.3" y="6.3" width="0.6" height="21" rx="0.2" fill="white" opacity="0.06"/>
+  <rect x="17" y="6" width="2.5" height="22" rx="0.3" fill="url(#hl_wood)" stroke="#5a4008" stroke-width="0.4"/>
+  <rect x="17.3" y="6.3" width="0.6" height="21" rx="0.2" fill="white" opacity="0.06"/>
+  <rect x="24" y="6" width="2.5" height="22" rx="0.3" fill="url(#hl_wood)" stroke="#5a4008" stroke-width="0.4"/>
+  <rect x="24.3" y="6.3" width="0.6" height="21" rx="0.2" fill="white" opacity="0.06"/>
+  <!-- Horizontal crossbeams -->
+  <rect x="2" y="14" width="28" height="2" rx="0.3" fill="#8a6a14" stroke="#5a4008" stroke-width="0.3"/>
+  <rect x="2.3" y="14.2" width="12" height="0.6" rx="0.2" fill="white" opacity="0.05"/>
+  <rect x="2" y="22" width="28" height="2" rx="0.3" fill="#8a6a14" stroke="#5a4008" stroke-width="0.3"/>
+  <!-- Sharpened spike tops -->
+  <path d="M3 6 L4.25 1 L5.5 6 Z" fill="url(#hl_spike)" stroke="#5a4008" stroke-width="0.3"/>
+  <path d="M3.5 5 L4.25 2" stroke="white" stroke-width="0.3" fill="none" opacity="0.15"/>
+  <path d="M10 6 L11.25 1 L12.5 6 Z" fill="url(#hl_spike)" stroke="#5a4008" stroke-width="0.3"/>
+  <path d="M10.5 5 L11.25 2" stroke="white" stroke-width="0.3" fill="none" opacity="0.15"/>
+  <path d="M17 6 L18.25 1 L19.5 6 Z" fill="url(#hl_spike)" stroke="#5a4008" stroke-width="0.3"/>
+  <path d="M17.5 5 L18.25 2" stroke="white" stroke-width="0.3" fill="none" opacity="0.15"/>
+  <path d="M24 6 L25.25 1 L26.5 6 Z" fill="url(#hl_spike)" stroke="#5a4008" stroke-width="0.3"/>
+  <path d="M24.5 5 L25.25 2" stroke="white" stroke-width="0.3" fill="none" opacity="0.15"/>
+  <!-- Rope/binding details -->
+  <path d="M3.5 14 L5 15.5 L3.5 15.5 L5 14" stroke="#998866" stroke-width="0.4" fill="none" opacity="0.5"/>
+  <path d="M10.5 14 L12 15.5 L10.5 15.5 L12 14" stroke="#998866" stroke-width="0.4" fill="none" opacity="0.5"/>
+  <path d="M17.5 14 L19 15.5 L17.5 15.5 L19 14" stroke="#998866" stroke-width="0.4" fill="none" opacity="0.5"/>
+  <path d="M24.5 14 L26 15.5 L24.5 15.5 L26 14" stroke="#998866" stroke-width="0.4" fill="none" opacity="0.5"/>
+  <!-- Wood grain texture -->
+  <line x1="4" y1="8" x2="4.2" y2="12" stroke="#6a5010" stroke-width="0.2" opacity="0.3"/>
+  <line x1="11" y1="8" x2="11.3" y2="13" stroke="#6a5010" stroke-width="0.2" opacity="0.3"/>
+  <line x1="18" y1="9" x2="18.2" y2="13" stroke="#6a5010" stroke-width="0.2" opacity="0.3"/>
+  <line x1="25" y1="7" x2="25.3" y2="12" stroke="#6a5010" stroke-width="0.2" opacity="0.3"/>
+  <!-- Nail/bolt accents -->
+  <circle cx="4.25" cy="15" r="0.5" fill="#888" stroke="#555" stroke-width="0.2"/>
+  <circle cx="11.25" cy="15" r="0.5" fill="#888" stroke="#555" stroke-width="0.2"/>
+  <circle cx="18.25" cy="15" r="0.5" fill="#888" stroke="#555" stroke-width="0.2"/>
+  <circle cx="25.25" cy="15" r="0.5" fill="#888" stroke="#555" stroke-width="0.2"/>
+</svg>

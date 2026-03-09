@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Leather leg gaiters/wraps -->
+  <!-- Left gaiter -->
+  <path d="M6,8 L6,24 Q6,26 8,26 L12,26 Q14,26 14,24 L14,8Z" fill="#8B6914"/>
+  <path d="M7,8 L7,24 Q7,25 8.5,25 L10,25 L10,8Z" fill="#a07a1e" opacity="0.4"/>
+  <!-- Left straps -->
+  <rect x="5" y="11" width="10" height="1.5" rx="0.3" fill="#6a4a10"/>
+  <rect x="5" y="16" width="10" height="1.5" rx="0.3" fill="#6a4a10"/>
+  <rect x="5" y="21" width="10" height="1.5" rx="0.3" fill="#6a4a10"/>
+  <!-- Left buckles -->
+  <rect x="5" y="11" width="2" height="1.5" rx="0.3" fill="#c4984a"/>
+  <rect x="5" y="16" width="2" height="1.5" rx="0.3" fill="#c4984a"/>
+  <rect x="5" y="21" width="2" height="1.5" rx="0.3" fill="#c4984a"/>
+  <!-- Right gaiter -->
+  <path d="M18,8 L18,24 Q18,26 20,26 L24,26 Q26,26 26,24 L26,8Z" fill="#8B6914"/>
+  <path d="M19,8 L19,24 Q19,25 20.5,25 L22,25 L22,8Z" fill="#a07a1e" opacity="0.4"/>
+  <!-- Right straps -->
+  <rect x="17" y="11" width="10" height="1.5" rx="0.3" fill="#6a4a10"/>
+  <rect x="17" y="16" width="10" height="1.5" rx="0.3" fill="#6a4a10"/>
+  <rect x="17" y="21" width="10" height="1.5" rx="0.3" fill="#6a4a10"/>
+  <!-- Right buckles -->
+  <rect x="25" y="11" width="2" height="1.5" rx="0.3" fill="#c4984a"/>
+  <rect x="25" y="16" width="2" height="1.5" rx="0.3" fill="#c4984a"/>
+  <rect x="25" y="21" width="2" height="1.5" rx="0.3" fill="#c4984a"/>
+  <!-- Speed lines -->
+  <line x1="14" y1="14" x2="18" y2="14" stroke="#66ccff" stroke-width="0.5" opacity="0.3" stroke-linecap="round"/>
+  <line x1="14" y1="19" x2="18" y2="19" stroke="#66ccff" stroke-width="0.4" opacity="0.25" stroke-linecap="round"/>
+</svg>

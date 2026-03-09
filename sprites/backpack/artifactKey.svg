@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Ornate golden artifact key -->
+  <!-- Key glow -->
+  <ellipse cx="12" cy="10" rx="8" ry="8" fill="#ffaa22" opacity="0.06"/>
+  <!-- Key bow (head) - ornate ring -->
+  <circle cx="12" cy="10" r="6" fill="#daa520" stroke="#b8860b" stroke-width="0.8"/>
+  <circle cx="12" cy="10" r="4" fill="#1a0a2e" stroke="#c4984a" stroke-width="0.5"/>
+  <!-- Bow ornament dots -->
+  <circle cx="12" cy="5" r="1" fill="#eebb33"/>
+  <circle cx="7" cy="10" r="1" fill="#eebb33"/>
+  <circle cx="12" cy="15" r="1" fill="#eebb33"/>
+  <!-- Inner bow highlight -->
+  <path d="M10,7 Q9,8 9,10" fill="none" stroke="#eebb33" stroke-width="0.5" opacity="0.4" stroke-linecap="round"/>
+  <!-- Key shaft -->
+  <rect x="17" y="9" width="12" height="2.5" rx="0.3" fill="#daa520"/>
+  <rect x="17" y="9" width="12" height="1" rx="0.2" fill="#eebb33" opacity="0.4"/>
+  <!-- Key teeth -->
+  <rect x="26" y="11.5" width="2" height="3" rx="0.3" fill="#daa520"/>
+  <rect x="23" y="11.5" width="1.5" height="4" rx="0.3" fill="#daa520"/>
+  <rect x="20" y="11.5" width="1.5" height="2.5" rx="0.3" fill="#daa520"/>
+  <!-- Teeth shading -->
+  <rect x="23" y="13" width="1.5" height="2.5" rx="0.2" fill="#b8860b" opacity="0.3"/>
+  <!-- Artifact magic glow -->
+  <circle cx="12" cy="10" r="4" fill="#ffaa22" opacity="0.1"/>
+  <!-- Sparkle on bow -->
+  <circle cx="10" cy="8" r="0.6" fill="#ffffff" opacity="0.4"/>
+  <!-- Magic particles -->
+  <circle cx="6" cy="4" r="0.5" fill="#ffcc44" opacity="0.4"/>
+  <circle cx="18" cy="5" r="0.4" fill="#ffcc44" opacity="0.3"/>
+  <circle cx="28" cy="7" r="0.4" fill="#ffcc44" opacity="0.35"/>
+  <!-- Ancient rune on bow -->
+  <path d="M12,8 L11,10 L12,12 L13,10Z" fill="#ffcc44" opacity="0.3"/>
+</svg>

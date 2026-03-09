@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Outer flame glow -->
+  <ellipse cx="16" cy="18" rx="12" ry="10" fill="#ff4400" opacity="0.08"/>
+  <ellipse cx="16" cy="16" rx="8" ry="8" fill="#ff6600" opacity="0.06"/>
+
+  <!-- Main flame body - outer layer -->
+  <path d="M8,28 Q6,22 7,18 Q8,14 10,12 Q12,8 11,4 Q14,8 14,12 Q16,6 16,2 Q18,6 18,10 Q20,6 21,4 Q20,8 20,12 Q22,14 24,18 Q25,22 24,28 Z" fill="#cc3300" stroke="#991a00" stroke-width="0.4" opacity="0.9"/>
+
+  <!-- Flame body - middle layer -->
+  <path d="M10,28 Q9,24 10,20 Q11,16 12,14 Q13,10 12,7 Q14,10 15,14 Q16,8 16,5 Q17,8 17,12 Q18,9 19,7 Q18.5,11 19,14 Q20,16 21,20 Q22,24 21,28 Z" fill="#e64d00" opacity="0.8"/>
+
+  <!-- Flame body - inner layer -->
+  <path d="M12,28 Q11,24 12,20 Q13,17 14,15 Q15,12 14,9 Q15,12 16,15 Q16,10 16,7 Q17,10 16.5,14 Q17,12 18,10 Q17.5,14 18,16 Q19,18 20,22 Q20,25 19,28 Z" fill="#ff8800" opacity="0.8"/>
+
+  <!-- Hottest inner core -->
+  <path d="M13,28 Q13,24 14,22 Q15,18 15,16 Q16,14 16,11 Q17,14 16.5,17 Q17,15 17.5,13 Q17,16 17.5,18 Q18,20 18,24 Q18,26 18,28 Z" fill="#ffaa00" opacity="0.7"/>
+
+  <!-- White-hot center -->
+  <path d="M14.5,28 Q14.5,25 15,22 Q16,19 16,16 Q16.5,19 17,22 Q17,25 17,28 Z" fill="#ffcc44" opacity="0.6"/>
+  <path d="M15,28 Q15.5,25 16,22 Q16,20 16,18 Q16.5,20 16.5,22 Q16.5,25 16.5,28 Z" fill="#ffee88" opacity="0.4"/>
+
+  <!-- Flame tips/tongues -->
+  <path d="M11,4 Q10,6 11,8" fill="none" stroke="#ff4400" stroke-width="0.6" opacity="0.5" stroke-linecap="round"/>
+  <path d="M21,4 Q22,6 21,8" fill="none" stroke="#ff4400" stroke-width="0.6" opacity="0.5" stroke-linecap="round"/>
+
+  <!-- Sparks -->
+  <circle cx="8" cy="10" r="0.5" fill="#ffaa00" opacity="0.6"/>
+  <circle cx="6" cy="14" r="0.4" fill="#ff8800" opacity="0.5"/>
+  <circle cx="24" cy="8" r="0.5" fill="#ffaa00" opacity="0.6"/>
+  <circle cx="26" cy="12" r="0.3" fill="#ff8800" opacity="0.5"/>
+  <circle cx="10" cy="6" r="0.3" fill="#ffcc44" opacity="0.5"/>
+  <circle cx="22" cy="6" r="0.4" fill="#ffcc44" opacity="0.5"/>
+  <circle cx="5" cy="18" r="0.3" fill="#ff6600" opacity="0.4"/>
+  <circle cx="27" cy="16" r="0.3" fill="#ff6600" opacity="0.4"/>
+
+  <!-- Magical swirl element -->
+  <path d="M13,18 Q14,16 16,17 Q18,18 17,20" fill="none" stroke="#ffee88" stroke-width="0.4" opacity="0.3"/>
+  <path d="M14,22 Q15,20 16,21 Q17,22 16,24" fill="none" stroke="#ffcc44" stroke-width="0.3" opacity="0.3"/>
+
+  <!-- Base embers -->
+  <path d="M6,28 Q10,26 16,27 Q22,26 26,28" fill="none" stroke="#991a00" stroke-width="0.8" opacity="0.5"/>
+  <circle cx="10" cy="28" r="0.8" fill="#cc3300" opacity="0.4"/>
+  <circle cx="16" cy="28.5" r="1" fill="#cc3300" opacity="0.3"/>
+  <circle cx="22" cy="28" r="0.7" fill="#cc3300" opacity="0.4"/>
+</svg>

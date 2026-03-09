@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Pole -->
+  <rect x="8" y="2" width="2" height="28" fill="#8B7355" />
+  <rect x="8" y="2" width="1" height="28" fill="#A0896C" opacity="0.5" />
+  <rect x="9.5" y="2" width="0.5" height="28" fill="#5C4A32" opacity="0.6" />
+  <!-- Pole tip -->
+  <polygon points="9,2 6,0.5 12,0.5" fill="#C9A84C" />
+  <polygon points="9,2 7,1 11,1" fill="#E8CC6E" opacity="0.6" />
+  <!-- Banner fabric -->
+  <path d="M10,4 Q18,3 26,5 Q24,9 26,13 Q18,11 10,13 Z" fill="#8B1A1A" />
+  <path d="M10,4 Q18,3 26,5 Q24,7 25,9 Q17,7 10,8 Z" fill="#A52020" opacity="0.7" />
+  <path d="M10,11 Q18,10 26,12 L26,13 Q18,11 10,13 Z" fill="#5C0E0E" opacity="0.6" />
+  <!-- Banner wave highlight -->
+  <path d="M12,5 Q18,4.5 24,6 Q22,7 24,8 Q18,7 12,8 Z" fill="#C93030" opacity="0.35" />
+  <!-- Banner edge fringe -->
+  <path d="M26,5 L28,5.5 L26,6.5 L28,7.5 L26,8.5 L28,9.5 L26,10.5 L28,11.5 L26,13" fill="none" stroke="#C9A84C" stroke-width="0.6" />
+  <!-- Banner emblem - crossed swords -->
+  <line x1="15" y1="6" x2="21" y2="11" stroke="#C9A84C" stroke-width="0.7" />
+  <line x1="21" y1="6" x2="15" y2="11" stroke="#C9A84C" stroke-width="0.7" />
+  <circle cx="18" cy="8.5" r="1.2" fill="none" stroke="#C9A84C" stroke-width="0.5" opacity="0.7" />
+  <!-- Soldier silhouettes at base -->
+  <!-- Soldier 1 -->
+  <circle cx="12" cy="22" r="1.5" fill="#1A1A2E" opacity="0.85" />
+  <rect x="11" y="23.5" width="2" height="3.5" rx="0.5" fill="#1A1A2E" opacity="0.85" />
+  <line x1="12" y1="24" x2="10.5" y2="26" stroke="#1A1A2E" stroke-width="0.8" opacity="0.85" />
+  <line x1="12" y1="24" x2="13.5" y2="25.5" stroke="#1A1A2E" stroke-width="0.8" opacity="0.85" />
+  <!-- Soldier 1 spear -->
+  <line x1="13.5" y1="25.5" x2="14" y2="19" stroke="#1A1A2E" stroke-width="0.5" opacity="0.85" />
+  <!-- Soldier 2 -->
+  <circle cx="18" cy="23" r="1.5" fill="#1A1A2E" opacity="0.75" />
+  <rect x="17" y="24.5" width="2" height="3.5" rx="0.5" fill="#1A1A2E" opacity="0.75" />
+  <line x1="18" y1="25" x2="16.5" y2="27" stroke="#1A1A2E" stroke-width="0.8" opacity="0.75" />
+  <line x1="18" y1="25" x2="19.5" y2="26.5" stroke="#1A1A2E" stroke-width="0.8" opacity="0.75" />
+  <!-- Soldier 2 shield -->
+  <ellipse cx="16.5" cy="25.5" rx="1" ry="1.3" fill="#1A1A2E" opacity="0.75" />
+  <!-- Soldier 3 -->
+  <circle cx="24" cy="22.5" r="1.5" fill="#1A1A2E" opacity="0.65" />
+  <rect x="23" y="24" width="2" height="3.5" rx="0.5" fill="#1A1A2E" opacity="0.65" />
+  <line x1="24" y1="24.5" x2="22.5" y2="26.5" stroke="#1A1A2E" stroke-width="0.8" opacity="0.65" />
+  <line x1="24" y1="24.5" x2="25.5" y2="26" stroke="#1A1A2E" stroke-width="0.8" opacity="0.65" />
+  <!-- Soldier 3 sword -->
+  <line x1="25.5" y1="26" x2="26.5" y2="22" stroke="#1A1A2E" stroke-width="0.5" opacity="0.65" />
+  <!-- Ground shadow -->
+  <ellipse cx="18" cy="29" rx="10" ry="1.5" fill="#1A1A2E" opacity="0.2" />
+  <!-- Banner glow -->
+  <path d="M10,4 Q18,3 26,5 Q24,9 26,13 Q18,11 10,13 Z" fill="#FF4444" opacity="0.12" />
+  <!-- Pole shine -->
+  <line x1="8.3" y1="3" x2="8.3" y2="29" stroke="white" stroke-width="0.3" opacity="0.25" />
+</svg>

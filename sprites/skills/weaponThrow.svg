@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Throwing axe mid-flight -->
+  <!-- Axe handle -->
+  <rect x="10" y="10" width="16" height="3" rx="0.5" fill="#8B6914" transform="rotate(-35 18 12)"/>
+  <rect x="10" y="10" width="16" height="1.2" rx="0.5" fill="#a07a1e" opacity="0.5" transform="rotate(-35 18 12)"/>
+  <!-- Axe head -->
+  <path d="M6,6 Q3,9 4,13 L8,11 Q6,8 6,6Z" fill="#8899aa" stroke="#667788" stroke-width="0.5"/>
+  <path d="M6,6 Q5,9 5.5,11 L7,10 Q6.5,8 6,6Z" fill="#aabbcc" opacity="0.4"/>
+  <!-- Edge gleam -->
+  <path d="M4,12.5 Q3.5,10 5.5,7" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.5" stroke-linecap="round"/>
+  <!-- Motion lines -->
+  <line x1="20" y1="18" x2="27" y2="24" stroke="#ffaa44" stroke-width="0.8" opacity="0.5" stroke-linecap="round"/>
+  <line x1="22" y1="16" x2="28" y2="21" stroke="#ffaa44" stroke-width="0.6" opacity="0.4" stroke-linecap="round"/>
+  <line x1="19" y1="20" x2="25" y2="27" stroke="#ffaa44" stroke-width="0.6" opacity="0.3" stroke-linecap="round"/>
+  <!-- Spin trail -->
+  <path d="M8,16 Q12,20 10,24" fill="none" stroke="#ffcc66" stroke-width="0.7" opacity="0.3" stroke-linecap="round"/>
+</svg>

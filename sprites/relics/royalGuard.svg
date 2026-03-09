@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Royal crown over shield -->
+  <!-- Shield -->
+  <path d="M16,10 Q6,12 6,18 Q6,26 16,30 Q26,26 26,18 Q26,12 16,10Z" fill="#4455aa"/>
+  <path d="M16,12 Q8,14 8,18 Q8,24 16,28 Q24,24 24,18 Q24,14 16,12Z" fill="#5566bb" opacity="0.5"/>
+  <!-- Shield emblem - lion/royal mark -->
+  <path d="M16,16 L13,20 L16,24 L19,20Z" fill="#daa520" opacity="0.6"/>
+  <circle cx="16" cy="18" r="1.5" fill="#daa520" opacity="0.5"/>
+  <!-- Shield rim -->
+  <path d="M16,10 Q6,12 6,18 Q6,26 16,30 Q26,26 26,18 Q26,12 16,10Z" fill="none" stroke="#334488" stroke-width="0.8"/>
+  <!-- Crown on top -->
+  <path d="M10,10 L10,6 L13,8 L16,4 L19,8 L22,6 L22,10Z" fill="#daa520"/>
+  <path d="M11,9 L11,7 L13,8.5Z" fill="#eebb33" opacity="0.4"/>
+  <!-- Crown jewels -->
+  <circle cx="13" cy="9" r="0.8" fill="#cc2233"/>
+  <circle cx="16" cy="7" r="1" fill="#2244cc"/>
+  <circle cx="19" cy="9" r="0.8" fill="#cc2233"/>
+  <!-- Crown tips -->
+  <circle cx="10" cy="6" r="0.7" fill="#eebb33"/>
+  <circle cx="16" cy="4" r="0.8" fill="#eebb33"/>
+  <circle cx="22" cy="6" r="0.7" fill="#eebb33"/>
+  <!-- Shine -->
+  <circle cx="9" cy="14" r="0.5" fill="#ffffff" opacity="0.2"/>
+  <!-- Royal glow -->
+  <circle cx="16" cy="16" r="10" fill="#daa520" opacity="0.04"/>
+</svg>

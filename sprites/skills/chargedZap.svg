@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Chain lightning bolt with bounce sparks -->
+  <!-- Electric aura -->
+  <circle cx="16" cy="16" r="13" fill="#ffee44" opacity="0.06"/>
+  <!-- Main bolt -->
+  <path d="M6,6 L12,12 L8,14 L16,20 L12,22 L20,28" fill="none" stroke="#ffdd22" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Bolt bright core -->
+  <path d="M6,6 L12,12 L8,14 L16,20 L12,22 L20,28" fill="none" stroke="#ffffff" stroke-width="0.8" opacity="0.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Branch bolt 1 -->
+  <path d="M12,12 L18,10 L22,6" fill="none" stroke="#ffcc22" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12,12 L18,10 L22,6" fill="none" stroke="#ffffff" stroke-width="0.4" opacity="0.4" stroke-linecap="round"/>
+  <!-- Branch bolt 2 -->
+  <path d="M16,20 L22,18 L28,16" fill="none" stroke="#ffcc22" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M16,20 L22,18 L28,16" fill="none" stroke="#ffffff" stroke-width="0.4" opacity="0.4" stroke-linecap="round"/>
+  <!-- Bounce spark points -->
+  <g fill="#ffee44">
+    <circle cx="12" cy="12" r="1.5" opacity="0.6"/>
+    <circle cx="16" cy="20" r="1.5" opacity="0.6"/>
+    <circle cx="22" cy="6" r="1.2" opacity="0.5"/>
+    <circle cx="28" cy="16" r="1.2" opacity="0.5"/>
+  </g>
+  <!-- Spark particles -->
+  <circle cx="4" cy="8" r="0.5" fill="#ffdd44" opacity="0.4"/>
+  <circle cx="24" cy="24" r="0.4" fill="#ffdd44" opacity="0.35"/>
+  <circle cx="10" cy="26" r="0.5" fill="#ffdd44" opacity="0.3"/>
+  <circle cx="26" cy="10" r="0.4" fill="#ffdd44" opacity="0.35"/>
+  <!-- Critical indicator -->
+  <text x="26" y="28" font-size="6" font-weight="bold" fill="#ff4444" opacity="0.6">!</text>
+</svg>

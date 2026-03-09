@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Crossed swords - forged quality -->
+  <!-- Left sword blade -->
+  <path d="M6,4 L8,4 L12,22 L10,24 L8,22Z" fill="#a0aab8"/>
+  <path d="M6.5,5 L7.5,5 L7.5,22 L6.5,21Z" fill="#c0ccd8" opacity="0.5"/>
+  <!-- Left guard -->
+  <rect x="5" y="22" width="8" height="1.8" rx="0.4" fill="#c4984a"/>
+  <!-- Left grip -->
+  <rect x="8" y="24" width="2.5" height="3.5" rx="0.4" fill="#4a3010"/>
+  <circle cx="9.3" cy="28.5" r="1" fill="#c4984a"/>
+  <!-- Right sword blade -->
+  <path d="M24,4 L26,4 L22,22 L20,24 L22,22Z" fill="#a0aab8"/>
+  <path d="M24.5,5 L25.5,5 L24.5,22 L25.5,21Z" fill="#c0ccd8" opacity="0.5"/>
+  <!-- Right guard -->
+  <rect x="19" y="22" width="8" height="1.8" rx="0.4" fill="#c4984a"/>
+  <!-- Right grip -->
+  <rect x="21.5" y="24" width="2.5" height="3.5" rx="0.4" fill="#4a3010"/>
+  <circle cx="22.8" cy="28.5" r="1" fill="#c4984a"/>
+  <!-- Forge glow between swords -->
+  <ellipse cx="16" cy="14" rx="4" ry="6" fill="#ff6600" opacity="0.1"/>
+  <!-- Forge spark -->
+  <circle cx="16" cy="10" r="1" fill="#ffaa33" opacity="0.5"/>
+  <circle cx="14" cy="12" r="0.5" fill="#ffcc44" opacity="0.4"/>
+  <circle cx="18" cy="8" r="0.4" fill="#ffcc44" opacity="0.35"/>
+  <!-- Blade shines -->
+  <circle cx="7" cy="8" r="0.5" fill="#ffffff" opacity="0.3"/>
+  <circle cx="25" cy="8" r="0.5" fill="#ffffff" opacity="0.3"/>
+</svg>

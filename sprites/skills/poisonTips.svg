@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Poison-dipped arrowhead with dripping venom -->
+  <!-- Arrow shaft -->
+  <line x1="16" y1="14" x2="16" y2="30" stroke="#8B6914" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Arrowhead -->
+  <path d="M16,2 L12,14 L16,12 L20,14Z" fill="#8899aa"/>
+  <path d="M16,2 L14,10 L16,12Z" fill="#aabbcc" opacity="0.4"/>
+  <!-- Poison coating on arrowhead -->
+  <path d="M13,10 Q12,12 13,14 L15,12Z" fill="#33cc44" opacity="0.7"/>
+  <path d="M19,10 Q20,12 19,14 L17,12Z" fill="#33cc44" opacity="0.6"/>
+  <path d="M16,3 Q14,7 15,10 L16,8Z" fill="#44dd55" opacity="0.4"/>
+  <!-- Poison drips -->
+  <path d="M13,14 Q12.5,16 13,18" fill="none" stroke="#33cc44" stroke-width="0.8" opacity="0.7" stroke-linecap="round"/>
+  <ellipse cx="13" cy="18.5" rx="0.7" ry="1" fill="#33cc44" opacity="0.6"/>
+  <path d="M19,14 Q19.5,17 19,20" fill="none" stroke="#33cc44" stroke-width="0.7" opacity="0.6" stroke-linecap="round"/>
+  <ellipse cx="19" cy="20.5" rx="0.6" ry="0.9" fill="#33cc44" opacity="0.5"/>
+  <!-- Poison bubbles -->
+  <circle cx="11" cy="16" r="0.6" fill="#44ee55" opacity="0.4"/>
+  <circle cx="21" cy="18" r="0.5" fill="#44ee55" opacity="0.35"/>
+  <circle cx="14" cy="19" r="0.4" fill="#44ee55" opacity="0.3"/>
+  <!-- Fletching -->
+  <path d="M15" y1="28" x2="13" y2="30" fill="#cc4444" opacity="0.6"/>
+  <path d="M15,28 L13,30 L15,29Z" fill="#cc4444" opacity="0.6"/>
+  <path d="M17,28 L19,30 L17,29Z" fill="#aa3333" opacity="0.6"/>
+  <!-- Toxic glow -->
+  <ellipse cx="16" cy="10" rx="5" ry="6" fill="#33cc44" opacity="0.08"/>
+</svg>

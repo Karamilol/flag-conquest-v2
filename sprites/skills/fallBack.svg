@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Running figure with retreat arrow -->
+  <!-- Motion blur background -->
+  <line x1="22" y1="10" x2="30" y2="10" stroke="#4488ff" stroke-width="0.6" opacity="0.3" stroke-linecap="round"/>
+  <line x1="24" y1="14" x2="30" y2="14" stroke="#4488ff" stroke-width="0.5" opacity="0.25" stroke-linecap="round"/>
+  <line x1="22" y1="18" x2="29" y2="18" stroke="#4488ff" stroke-width="0.6" opacity="0.3" stroke-linecap="round"/>
+  <!-- Figure - head -->
+  <circle cx="14" cy="7" r="3" fill="#c49460"/>
+  <circle cx="13" cy="6.5" r="0.8" fill="#d4a470" opacity="0.4"/>
+  <!-- Body -->
+  <path d="M14,10 L13,18" stroke="#556688" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Arms (running pose) -->
+  <path d="M14,12 L9,9" stroke="#c49460" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M14,12 L18,15" stroke="#c49460" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Legs (running) -->
+  <path d="M13,18 L8,24" stroke="#556688" stroke-width="2" stroke-linecap="round"/>
+  <path d="M13,18 L17,23" stroke="#556688" stroke-width="2" stroke-linecap="round"/>
+  <!-- Boots -->
+  <path d="M8,24 L6,25" stroke="#6a4a20" stroke-width="2" stroke-linecap="round"/>
+  <path d="M17,23 L18,24.5" stroke="#6a4a20" stroke-width="2" stroke-linecap="round"/>
+  <!-- Retreat arrow -->
+  <path d="M6,14 L2,14" stroke="#4488ff" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M4,11.5 L2,14 L4,16.5" fill="none" stroke="#4488ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Speed lines -->
+  <line x1="20" y1="7" x2="26" y2="7" stroke="#88aacc" stroke-width="0.5" opacity="0.4" stroke-linecap="round"/>
+  <line x1="19" y1="22" x2="24" y2="22" stroke="#88aacc" stroke-width="0.5" opacity="0.3" stroke-linecap="round"/>
+</svg>

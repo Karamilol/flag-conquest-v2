@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <radialGradient id="eg_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#aa66ff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#aa66ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="eg_scroll" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5e6c8"/>
+      <stop offset="50%" stop-color="#e8d4a8"/>
+      <stop offset="100%" stop-color="#d4bc88"/>
+    </linearGradient>
+    <linearGradient id="eg_roll" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8d4a8"/>
+      <stop offset="100%" stop-color="#c4a878"/>
+    </linearGradient>
+    <radialGradient id="eg_rune" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#dd88ff"/>
+      <stop offset="100%" stop-color="#8833cc"/>
+    </radialGradient>
+  </defs>
+  <circle cx="16" cy="16" r="14" fill="url(#eg_glow)"/>
+  <!-- Scroll body (unrolled) -->
+  <rect x="6" y="6" width="20" height="20" rx="0.5" fill="url(#eg_scroll)" stroke="#b89a60" stroke-width="0.4"/>
+  <!-- Scroll highlight -->
+  <rect x="7" y="6.5" width="8" height="1.5" rx="0.3" fill="white" opacity="0.1"/>
+  <!-- Aged staining -->
+  <ellipse cx="20" cy="20" rx="4" ry="3" fill="#c4a878" opacity="0.2"/>
+  <ellipse cx="10" cy="12" rx="3" ry="2" fill="#c4a878" opacity="0.15"/>
+  <!-- Top roll -->
+  <ellipse cx="16" cy="5.5" rx="11" ry="2" fill="url(#eg_roll)" stroke="#a08850" stroke-width="0.4"/>
+  <ellipse cx="14" cy="5" rx="4" ry="0.8" fill="white" opacity="0.1"/>
+  <!-- Bottom roll -->
+  <ellipse cx="16" cy="26.5" rx="11" ry="2" fill="url(#eg_roll)" stroke="#a08850" stroke-width="0.4"/>
+  <ellipse cx="14" cy="26" rx="4" ry="0.8" fill="white" opacity="0.08"/>
+  <!-- Roll end caps -->
+  <circle cx="5" cy="5.5" r="2.2" fill="#c4a878" stroke="#a08850" stroke-width="0.3"/>
+  <circle cx="5" cy="5.2" r="0.7" fill="white" opacity="0.12"/>
+  <circle cx="27" cy="5.5" r="2.2" fill="#c4a878" stroke="#a08850" stroke-width="0.3"/>
+  <circle cx="5" cy="26.5" r="2.2" fill="#c4a878" stroke="#a08850" stroke-width="0.3"/>
+  <circle cx="27" cy="26.5" r="2.2" fill="#c4a878" stroke="#a08850" stroke-width="0.3"/>
+  <!-- Rune 1 (top-left) — angular glyph -->
+  <path d="M10 10 L12 8.5 L14 10 L13 12 L11 12 Z" stroke="#9944dd" stroke-width="0.7" fill="#aa55ee" fill-opacity="0.2"/>
+  <circle cx="12" cy="10.5" r="0.5" fill="#cc88ff" opacity="0.6"/>
+  <!-- Rune 2 (center) — complex symbol -->
+  <path d="M15 14 L17 12 L19 14 L17 16 Z" stroke="#8833cc" stroke-width="0.8" fill="#9944dd" fill-opacity="0.15"/>
+  <line x1="17" y1="12" x2="17" y2="16" stroke="#aa55ee" stroke-width="0.5" opacity="0.6"/>
+  <line x1="15" y1="14" x2="19" y2="14" stroke="#aa55ee" stroke-width="0.5" opacity="0.6"/>
+  <circle cx="17" cy="14" r="0.8" fill="#dd88ff" opacity="0.4"/>
+  <!-- Rune 3 (bottom-right) — triangle -->
+  <path d="M20 19 L23 22 L17 22 Z" stroke="#9944dd" stroke-width="0.7" fill="#aa55ee" fill-opacity="0.15"/>
+  <circle cx="20" cy="21" r="0.4" fill="#cc88ff" opacity="0.5"/>
+  <!-- Rune 4 (left) — vertical line symbol -->
+  <path d="M9 16 L9 20 M8 17 L10 17 M8 19 L10 19" stroke="#8833cc" stroke-width="0.6" fill="none" opacity="0.5"/>
+  <!-- Connecting energy lines between runes -->
+  <path d="M12 12 Q14 13 15 14" stroke="#aa66ff" stroke-width="0.4" fill="none" opacity="0.3" stroke-dasharray="1,1"/>
+  <path d="M19 14 Q19.5 17 20 19" stroke="#aa66ff" stroke-width="0.4" fill="none" opacity="0.3" stroke-dasharray="1,1"/>
+  <path d="M10 18 Q12 16 15 14" stroke="#aa66ff" stroke-width="0.4" fill="none" opacity="0.25" stroke-dasharray="1,1"/>
+  <!-- Glow particles -->
+  <circle cx="22" cy="10" r="0.6" fill="#cc88ff" opacity="0.35"/>
+  <circle cx="8" cy="22" r="0.5" fill="#cc88ff" opacity="0.3"/>
+  <circle cx="14" cy="18" r="0.4" fill="#dd99ff" opacity="0.3"/>
+  <circle cx="22" cy="16" r="0.5" fill="#bb77ee" opacity="0.25"/>
+  <!-- Overall magic shimmer -->
+  <rect x="6" y="6" width="20" height="20" rx="0.5" fill="#aa55ee" opacity="0.04"/>
+</svg>

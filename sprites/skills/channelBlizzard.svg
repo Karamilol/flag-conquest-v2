@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Ice crystal snowflake with frost -->
+  <!-- Frost background -->
+  <circle cx="16" cy="16" r="14" fill="#88ccff" opacity="0.08"/>
+  <!-- Main crystal arms -->
+  <g stroke="#88ccee" stroke-width="1.5" stroke-linecap="round">
+    <line x1="16" y1="2" x2="16" y2="30"/>
+    <line x1="4" y1="9" x2="28" y2="23"/>
+    <line x1="4" y1="23" x2="28" y2="9"/>
+  </g>
+  <!-- Crystal branches -->
+  <g stroke="#aaddff" stroke-width="0.8" stroke-linecap="round">
+    <!-- Top arm branches -->
+    <line x1="16" y1="6" x2="13" y2="4"/>
+    <line x1="16" y1="6" x2="19" y2="4"/>
+    <!-- Bottom branches -->
+    <line x1="16" y1="26" x2="13" y2="28"/>
+    <line x1="16" y1="26" x2="19" y2="28"/>
+    <!-- Upper-left branches -->
+    <line x1="8" y1="13" x2="6" y2="11"/>
+    <line x1="8" y1="13" x2="7" y2="15"/>
+    <!-- Upper-right branches -->
+    <line x1="24" y1="13" x2="26" y2="11"/>
+    <line x1="24" y1="13" x2="25" y2="15"/>
+    <!-- Lower-left branches -->
+    <line x1="8" y1="19" x2="6" y2="21"/>
+    <line x1="8" y1="19" x2="7" y2="17"/>
+    <!-- Lower-right branches -->
+    <line x1="24" y1="19" x2="26" y2="21"/>
+    <line x1="24" y1="19" x2="25" y2="17"/>
+  </g>
+  <!-- Center crystal -->
+  <circle cx="16" cy="16" r="3" fill="#bbddff" opacity="0.5"/>
+  <circle cx="16" cy="16" r="1.5" fill="#ddeeff" opacity="0.7"/>
+  <circle cx="15" cy="15" r="0.5" fill="#ffffff" opacity="0.6"/>
+  <!-- Frost particles -->
+  <circle cx="6" cy="6" r="0.8" fill="#ccddff" opacity="0.4"/>
+  <circle cx="26" cy="6" r="0.6" fill="#ccddff" opacity="0.35"/>
+  <circle cx="4" cy="16" r="0.5" fill="#ccddff" opacity="0.3"/>
+  <circle cx="28" cy="16" r="0.7" fill="#ccddff" opacity="0.35"/>
+  <circle cx="6" cy="26" r="0.6" fill="#ccddff" opacity="0.3"/>
+  <circle cx="26" cy="26" r="0.5" fill="#ccddff" opacity="0.35"/>
+  <!-- Small snowflakes -->
+  <text x="4" y="4" font-size="3" fill="#bbddff" opacity="0.3">*</text>
+  <text x="27" y="28" font-size="3" fill="#bbddff" opacity="0.3">*</text>
+</svg>

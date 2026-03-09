@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <radialGradient id="h_glow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#ff6644" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#ff6644" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="h_skin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8c49a"/>
+      <stop offset="100%" stop-color="#c49a6a"/>
+    </linearGradient>
+    <linearGradient id="h_flag" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#dd3322"/>
+      <stop offset="100%" stop-color="#991100"/>
+    </linearGradient>
+    <linearGradient id="h_pole" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#aa8844"/>
+      <stop offset="50%" stop-color="#ccaa66"/>
+      <stop offset="100%" stop-color="#886622"/>
+    </linearGradient>
+  </defs>
+  <!-- Background glow -->
+  <circle cx="16" cy="14" r="14" fill="url(#h_glow)"/>
+  <!-- Fist - wrist/arm -->
+  <rect x="11" y="22" width="10" height="6" rx="2" fill="url(#h_skin)" stroke="#a07848" stroke-width="0.5"/>
+  <rect x="11.5" y="22.5" width="3" height="5" rx="1" fill="white" opacity="0.08"/>
+  <!-- Gauntlet band -->
+  <rect x="10.5" y="21.5" width="11" height="2" rx="0.5" fill="#888" stroke="#666" stroke-width="0.4"/>
+  <rect x="11" y="21.7" width="4" height="0.8" rx="0.3" fill="white" opacity="0.15"/>
+  <!-- Fist body -->
+  <path d="M10 14 Q9 12 10 11 L11 10 Q12 9 14 9 L18 9 Q20 9 21 10 L22 11 Q23 12 22 14 L22 22 L10 22 Z" fill="url(#h_skin)" stroke="#a07848" stroke-width="0.5"/>
+  <!-- Finger folds -->
+  <path d="M12 11 L12 15" stroke="#b08858" stroke-width="0.4" opacity="0.6"/>
+  <path d="M14.5 10 L14.5 14.5" stroke="#b08858" stroke-width="0.4" opacity="0.6"/>
+  <path d="M17 10 L17 14.5" stroke="#b08858" stroke-width="0.4" opacity="0.6"/>
+  <path d="M19.5 11 L19.5 15" stroke="#b08858" stroke-width="0.4" opacity="0.6"/>
+  <!-- Knuckle highlights -->
+  <ellipse cx="12" cy="11.5" rx="1" ry="0.8" fill="white" opacity="0.12"/>
+  <ellipse cx="14.5" cy="10.8" rx="1" ry="0.8" fill="white" opacity="0.12"/>
+  <ellipse cx="17" cy="10.8" rx="1" ry="0.8" fill="white" opacity="0.12"/>
+  <ellipse cx="19.5" cy="11.5" rx="1" ry="0.8" fill="white" opacity="0.12"/>
+  <!-- Thumb -->
+  <path d="M22 16 Q23.5 15 24 14 Q24.5 13 24 12 L22 13 L22 16 Z" fill="url(#h_skin)" stroke="#a07848" stroke-width="0.4"/>
+  <!-- Flag pole -->
+  <rect x="15" y="1" width="1.5" height="21" fill="url(#h_pole)" stroke="#664400" stroke-width="0.3"/>
+  <rect x="15.3" y="1" width="0.4" height="21" fill="white" opacity="0.1"/>
+  <!-- Pole top ornament -->
+  <circle cx="15.75" cy="1.5" r="1.2" fill="#ddaa44" stroke="#aa7722" stroke-width="0.3"/>
+  <circle cx="15.4" cy="1.2" r="0.4" fill="white" opacity="0.3"/>
+  <!-- Flag banner -->
+  <path d="M17 2 Q22 3.5 20 5.5 Q24 6 22 8 L17 8 Z" fill="url(#h_flag)" stroke="#880000" stroke-width="0.4"/>
+  <!-- Flag shading -->
+  <path d="M17 2 Q20 3 19 4.5 L17 5 Z" fill="white" opacity="0.1"/>
+  <!-- Flag emblem (small cross) -->
+  <line x1="19" y1="4" x2="19" y2="6.5" stroke="#ffcc44" stroke-width="0.5" opacity="0.7"/>
+  <line x1="18" y1="5.2" x2="20" y2="5.2" stroke="#ffcc44" stroke-width="0.5" opacity="0.7"/>
+  <!-- Rally energy lines -->
+  <line x1="6" y1="8" x2="8" y2="10" stroke="#ff8844" stroke-width="0.4" opacity="0.4"/>
+  <line x1="5" y1="14" x2="8" y2="14" stroke="#ff8844" stroke-width="0.4" opacity="0.3"/>
+  <line x1="24" y1="10" x2="26" y2="8" stroke="#ff8844" stroke-width="0.4" opacity="0.4"/>
+  <line x1="24" y1="14" x2="27" y2="14" stroke="#ff8844" stroke-width="0.4" opacity="0.3"/>
+</svg>

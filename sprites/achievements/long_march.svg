@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Left boot - worn and weathered -->
+  <path d="M3,6 Q4,3 7,3 Q10,3 11,6 L12,18 Q12,22 11,24 L3,25 Q1,25 1,22 L2,18 Z" fill="#5a3018" stroke="#3a1e0a" stroke-width="0.5"/>
+  <!-- Left boot leather texture -->
+  <path d="M4,7 Q5,4 7,4 Q9,4 10,7 L11,17" fill="none" stroke="#7a4a28" stroke-width="0.7" opacity="0.5"/>
+  <!-- Left boot scuffs/wear marks -->
+  <path d="M3,20 Q5,19 7,20" stroke="#4a2810" stroke-width="0.6" opacity="0.5"/>
+  <path d="M4,16 Q6,15 8,16" stroke="#4a2810" stroke-width="0.4" opacity="0.4"/>
+  <circle cx="5" cy="12" r="0.8" fill="#4a2810" opacity="0.3"/>
+  <circle cx="9" cy="14" r="0.6" fill="#4a2810" opacity="0.25"/>
+  <!-- Left boot sole - thick and worn -->
+  <path d="M1,22 L0,25 Q-1,28 2,28 L11,28 Q13,28 13,25 L12,22" fill="#2a1005" stroke="#1a0800" stroke-width="0.4"/>
+  <path d="M2,25 L10,25" stroke="#4a2810" stroke-width="0.4" opacity="0.3"/>
+  <path d="M1,27 L11,27" stroke="#3a1e0a" stroke-width="0.3" opacity="0.3"/>
+  <!-- Left boot buckle -->
+  <rect x="5" y="8" width="3" height="1.5" rx="0.3" fill="#8B6914" stroke="#6a4a10" stroke-width="0.3"/>
+  <rect x="5.5" y="8.3" width="2" height="0.9" rx="0.2" fill="#c9a020" opacity="0.5"/>
+  <!-- Left boot stitching -->
+  <path d="M4,10 L4,20" stroke="#3a1e0a" stroke-width="0.3" stroke-dasharray="0.8,1" opacity="0.5"/>
+
+  <!-- Right boot -->
+  <path d="M17,6 Q18,3 21,3 Q24,3 25,6 L26,18 Q26,22 25,24 L17,25 Q15,25 15,22 L16,18 Z" fill="#5a3018" stroke="#3a1e0a" stroke-width="0.5"/>
+  <path d="M18,7 Q19,4 21,4 Q23,4 24,7 L25,17" fill="none" stroke="#7a4a28" stroke-width="0.7" opacity="0.5"/>
+  <!-- Right boot scuffs -->
+  <path d="M17,20 Q19,19 21,20" stroke="#4a2810" stroke-width="0.6" opacity="0.5"/>
+  <path d="M18,14 Q20,13 22,14" stroke="#4a2810" stroke-width="0.4" opacity="0.4"/>
+  <circle cx="23" cy="10" r="0.7" fill="#4a2810" opacity="0.3"/>
+  <!-- Patched area on right boot -->
+  <path d="M20,16 Q22,15 24,16 Q24,18 22,19 Q20,18 20,16" fill="#6a3a18" stroke="#4a2810" stroke-width="0.3" opacity="0.6"/>
+  <path d="M21,16.5 L23,17.5" stroke="#3a1e0a" stroke-width="0.3" stroke-dasharray="0.5,0.5" opacity="0.5"/>
+  <!-- Right boot sole -->
+  <path d="M15,22 L14,25 Q13,28 16,28 L25,28 Q27,28 27,25 L26,22" fill="#2a1005" stroke="#1a0800" stroke-width="0.4"/>
+  <path d="M16,25 L24,25" stroke="#4a2810" stroke-width="0.4" opacity="0.3"/>
+  <!-- Right boot buckle -->
+  <rect x="19" y="8" width="3" height="1.5" rx="0.3" fill="#8B6914" stroke="#6a4a10" stroke-width="0.3"/>
+  <rect x="19.5" y="8.3" width="2" height="0.9" rx="0.2" fill="#c9a020" opacity="0.5"/>
+  <!-- Mud splatter -->
+  <circle cx="2" cy="26" r="1" fill="#5a4a30" opacity="0.4"/>
+  <circle cx="13" cy="27" r="0.7" fill="#5a4a30" opacity="0.35"/>
+  <circle cx="26" cy="26" r="0.9" fill="#5a4a30" opacity="0.4"/>
+  <!-- Ground shadow -->
+  <ellipse cx="14" cy="30" rx="12" ry="1.2" fill="#000" opacity="0.12"/>
+</svg>

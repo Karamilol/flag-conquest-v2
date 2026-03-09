@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Single brilliant-cut blue gem -->
+  <!-- Soft glow underneath -->
+  <ellipse cx="16" cy="22" rx="8" ry="4" fill="#44aaff" opacity="0.1"/>
+
+  <!-- Full gem outline path (ensures connected shape) -->
+  <!-- Crown top point → crown sides → girdle corners → pavilion bottom point -->
+
+  <!-- Pavilion (bottom V) — a single solid triangle from girdle to point -->
+  <polygon points="7,15 16,29 25,15" fill="#1850a0"/>
+  <!-- Pavilion left facet -->
+  <polygon points="7,15 16,29 13,15" fill="#2065b8" opacity="0.8"/>
+  <!-- Pavilion center facet -->
+  <polygon points="13,15 16,29 19,15" fill="#2878cc"/>
+  <!-- Pavilion right facet -->
+  <polygon points="19,15 16,29 25,15" fill="#1548a0" opacity="0.85"/>
+
+  <!-- Crown (top) — trapezoid from top edges down to girdle -->
+  <polygon points="7,15 11,6 21,6 25,15" fill="#3399dd"/>
+  <!-- Table facet (flat top) -->
+  <polygon points="11,6 16,4 21,6" fill="#66bbff"/>
+  <polygon points="11,6 16,4 16,6" fill="#88ccff" opacity="0.4"/>
+  <!-- Upper crown facets -->
+  <polygon points="7,15 11,6 13,10 9,15" fill="#2888cc"/>
+  <polygon points="25,15 21,6 19,10 23,15" fill="#2270aa"/>
+  <!-- Inner crown table area -->
+  <polygon points="13,10 11,6 21,6 19,10" fill="#55aaee"/>
+  <polygon points="13,10 11,6 16,6" fill="#77ccff" opacity="0.35"/>
+
+  <!-- Girdle line (shared edge) -->
+  <line x1="7" y1="15" x2="25" y2="15" stroke="#133a70" stroke-width="0.8"/>
+
+  <!-- Pavilion facet lines -->
+  <line x1="13" y1="15" x2="16" y2="29" stroke="#133a70" stroke-width="0.4" opacity="0.4"/>
+  <line x1="19" y1="15" x2="16" y2="29" stroke="#133a70" stroke-width="0.4" opacity="0.4"/>
+
+  <!-- Crown facet lines -->
+  <line x1="13" y1="10" x2="9" y2="15" stroke="#1a5090" stroke-width="0.3" opacity="0.3"/>
+  <line x1="19" y1="10" x2="23" y2="15" stroke="#1a5090" stroke-width="0.3" opacity="0.3"/>
+
+  <!-- Glass highlight (upper left) -->
+  <polygon points="8,13 11,7 13,7 10,14" fill="#ffffff" opacity="0.18"/>
+  <ellipse cx="11" cy="10" rx="1.5" ry="0.9" fill="#ffffff" opacity="0.25" transform="rotate(-15,11,10)"/>
+
+  <!-- Sparkle top -->
+  <line x1="16" y1="1" x2="16" y2="3" stroke="#aaeeff" stroke-width="0.8" stroke-linecap="round" opacity="0.7"/>
+  <line x1="14.5" y1="2" x2="17.5" y2="2" stroke="#aaeeff" stroke-width="0.8" stroke-linecap="round" opacity="0.7"/>
+  <!-- Sparkle left -->
+  <line x1="3" y1="9" x2="3" y2="11" stroke="#aaeeff" stroke-width="0.5" stroke-linecap="round" opacity="0.45"/>
+  <line x1="2" y1="10" x2="4" y2="10" stroke="#aaeeff" stroke-width="0.5" stroke-linecap="round" opacity="0.45"/>
+  <!-- Sparkle right -->
+  <line x1="28" y1="7" x2="28" y2="9" stroke="#aaeeff" stroke-width="0.5" stroke-linecap="round" opacity="0.35"/>
+  <line x1="27" y1="8" x2="29" y2="8" stroke="#aaeeff" stroke-width="0.5" stroke-linecap="round" opacity="0.35"/>
+
+  <!-- Full outline for crisp edges -->
+  <polygon points="16,4 11,6 7,15 16,29 25,15 21,6" fill="none" stroke="#0e3060" stroke-width="0.6" opacity="0.5"/>
+</svg>

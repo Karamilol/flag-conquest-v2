@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="at_stone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#999"/>
+      <stop offset="100%" stop-color="#555"/>
+    </linearGradient>
+    <linearGradient id="at_stone2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#888"/>
+      <stop offset="100%" stop-color="#4a4a4a"/>
+    </linearGradient>
+    <radialGradient id="at_glow" cx="50%" cy="60%" r="50%">
+      <stop offset="0%" stop-color="#aabbcc" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#aabbcc" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Background glow -->
+  <circle cx="16" cy="18" r="14" fill="url(#at_glow)"/>
+  <!-- Ground -->
+  <ellipse cx="16" cy="29" rx="14" ry="2" fill="#554433" opacity="0.4"/>
+  <!-- Back wall row 3 (top) -->
+  <rect x="3" y="8" width="7" height="4.5" rx="0.3" fill="url(#at_stone)" stroke="#444" stroke-width="0.4"/>
+  <rect x="11" y="8" width="10" height="4.5" rx="0.3" fill="url(#at_stone2)" stroke="#444" stroke-width="0.4"/>
+  <rect x="22" y="8" width="7" height="4.5" rx="0.3" fill="url(#at_stone)" stroke="#444" stroke-width="0.4"/>
+  <!-- Highlight top row -->
+  <rect x="3.5" y="8.3" width="3" height="1" rx="0.2" fill="white" opacity="0.1"/>
+  <rect x="11.5" y="8.3" width="4" height="1" rx="0.2" fill="white" opacity="0.1"/>
+  <rect x="22.5" y="8.3" width="3" height="1" rx="0.2" fill="white" opacity="0.1"/>
+  <!-- Wall row 2 (middle, offset) -->
+  <rect x="1" y="13" width="9" height="4.5" rx="0.3" fill="url(#at_stone2)" stroke="#444" stroke-width="0.4"/>
+  <rect x="11" y="13" width="6" height="4.5" rx="0.3" fill="url(#at_stone)" stroke="#444" stroke-width="0.4"/>
+  <rect x="18" y="13" width="6" height="4.5" rx="0.3" fill="url(#at_stone2)" stroke="#444" stroke-width="0.4"/>
+  <rect x="25" y="13" width="6" height="4.5" rx="0.3" fill="url(#at_stone)" stroke="#444" stroke-width="0.4"/>
+  <!-- Highlight mid row -->
+  <rect x="1.5" y="13.3" width="4" height="1" rx="0.2" fill="white" opacity="0.1"/>
+  <rect x="18.5" y="13.3" width="3" height="1" rx="0.2" fill="white" opacity="0.1"/>
+  <!-- Wall row 1 (bottom) -->
+  <rect x="3" y="18" width="7" height="5" rx="0.3" fill="url(#at_stone)" stroke="#444" stroke-width="0.4"/>
+  <rect x="11" y="18" width="10" height="5" rx="0.3" fill="url(#at_stone2)" stroke="#444" stroke-width="0.4"/>
+  <rect x="22" y="18" width="7" height="5" rx="0.3" fill="url(#at_stone)" stroke="#444" stroke-width="0.4"/>
+  <!-- Highlight bottom row -->
+  <rect x="3.5" y="18.3" width="3" height="1" rx="0.2" fill="white" opacity="0.1"/>
+  <rect x="11.5" y="18.3" width="5" height="1" rx="0.2" fill="white" opacity="0.1"/>
+  <!-- Mortar lines (subtle) -->
+  <line x1="10" y1="8" x2="10" y2="23" stroke="#3a3a3a" stroke-width="0.3" opacity="0.5"/>
+  <line x1="21" y1="8" x2="21" y2="23" stroke="#3a3a3a" stroke-width="0.3" opacity="0.5"/>
+  <!-- Crenellations (battlements) -->
+  <rect x="3" y="4" width="4" height="4" rx="0.2" fill="url(#at_stone2)" stroke="#444" stroke-width="0.4"/>
+  <rect x="10" y="4" width="4" height="4" rx="0.2" fill="url(#at_stone)" stroke="#444" stroke-width="0.4"/>
+  <rect x="18" y="4" width="4" height="4" rx="0.2" fill="url(#at_stone2)" stroke="#444" stroke-width="0.4"/>
+  <rect x="25" y="4" width="4" height="4" rx="0.2" fill="url(#at_stone)" stroke="#444" stroke-width="0.4"/>
+  <!-- Battlement highlights -->
+  <rect x="3.3" y="4.3" width="1.5" height="0.8" rx="0.2" fill="white" opacity="0.12"/>
+  <rect x="10.3" y="4.3" width="1.5" height="0.8" rx="0.2" fill="white" opacity="0.12"/>
+  <rect x="18.3" y="4.3" width="1.5" height="0.8" rx="0.2" fill="white" opacity="0.12"/>
+  <rect x="25.3" y="4.3" width="1.5" height="0.8" rx="0.2" fill="white" opacity="0.12"/>
+  <!-- Shield emblem on center brick -->
+  <path d="M14 19.5 L16 18.5 L18 19.5 L18 22 Q16 23.5 14 22 Z" fill="#6688aa" stroke="#445566" stroke-width="0.4" opacity="0.7"/>
+  <path d="M15 20 L16 19.5 L16 21.5 L15 21.5 Z" fill="white" opacity="0.1"/>
+  <!-- Damage cracks for realism -->
+  <path d="M6 15 L7 16 L6.5 17.5" stroke="#333" stroke-width="0.3" fill="none" opacity="0.5"/>
+  <path d="M24 10 L25 11.5" stroke="#333" stroke-width="0.3" fill="none" opacity="0.4"/>
+</svg>

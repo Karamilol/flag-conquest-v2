@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Sharp eye with crosshair overlay -->
+  <!-- Eye shape -->
+  <path d="M2,16 Q8,8 16,8 Q24,8 30,16 Q24,24 16,24 Q8,24 2,16Z" fill="#aa7733"/>
+  <path d="M4,16 Q9,10 16,10 Q23,10 28,16 Q23,22 16,22 Q9,22 4,16Z" fill="#cc9944"/>
+  <!-- Iris -->
+  <circle cx="16" cy="16" r="5" fill="#dd8822"/>
+  <circle cx="16" cy="16" r="5" fill="none" stroke="#aa6611" stroke-width="0.5"/>
+  <!-- Iris fibers -->
+  <line x1="16" y1="11" x2="16" y2="13" stroke="#eea033" stroke-width="0.4" opacity="0.6"/>
+  <line x1="21" y1="16" x2="19" y2="16" stroke="#eea033" stroke-width="0.4" opacity="0.6"/>
+  <line x1="16" y1="21" x2="16" y2="19" stroke="#eea033" stroke-width="0.4" opacity="0.6"/>
+  <line x1="11" y1="16" x2="13" y2="16" stroke="#eea033" stroke-width="0.4" opacity="0.6"/>
+  <!-- Pupil -->
+  <circle cx="16" cy="16" r="2.5" fill="#1a1000"/>
+  <!-- Pupil slit (cat-like for keen vision) -->
+  <ellipse cx="16" cy="16" rx="0.8" ry="2.5" fill="#332200"/>
+  <!-- Highlight -->
+  <circle cx="14.5" cy="14.5" r="1" fill="#ffffff" opacity="0.6"/>
+  <circle cx="17.5" cy="17" r="0.4" fill="#ffffff" opacity="0.3"/>
+  <!-- Crosshair overlay -->
+  <line x1="16" y1="4" x2="16" y2="8" stroke="#ff3333" stroke-width="0.6" opacity="0.6"/>
+  <line x1="16" y1="24" x2="16" y2="28" stroke="#ff3333" stroke-width="0.6" opacity="0.6"/>
+  <line x1="1" y1="16" x2="5" y2="16" stroke="#ff3333" stroke-width="0.6" opacity="0.6"/>
+  <line x1="27" y1="16" x2="31" y2="16" stroke="#ff3333" stroke-width="0.6" opacity="0.6"/>
+  <!-- Eye outline -->
+  <path d="M2,16 Q8,8 16,8 Q24,8 30,16 Q24,24 16,24 Q8,24 2,16Z" fill="none" stroke="#885522" stroke-width="0.8"/>
+</svg>
