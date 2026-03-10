@@ -9,6 +9,7 @@ import { getRelicLevel } from '../relics';
 import { getAncientEffect, getAncientRelicLevel } from '../ancientRelics';
 import { isUnitInCategory } from '../regalias';
 import { getChallengeRewardMult } from '../challenges';
+import { modEnemySpawnRateMult, modEnemyHpMult, modEnemyDmgMult, modEnemySpeedMult, modBossHpMult, modRespawnTimeMult, modFlankersActive, modSharpshootersActive, modUnstablePortalActive, modAllyHpMult, modAllyDefenseBonus, modDuelistOathActive, modColosseumRewardActive } from './modifierEffects';
 
 /** Apply dungeon category boosts to an ally at spawn time */
 export function applyDungeonBoosts(ally: Ally, ts: TickState): void {
@@ -286,7 +287,7 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
   const challengeSpawnMult = ts.challengeId === 'colosseum' ? 6.67 : ts.challengeId === 'hordeMode' ? 0.2 : 1;
   const dungeonSpawnMult = ts.dungeonType === 'timed' ? 1.0 : 1; // Timed dungeon: normal spawn rate
   const devMult = ts.devSpawnMult || 1;
-  if (closestFlag.spawnTimer < closestFlag.spawnRate * spawnVariance * spawnMultiplier * challengeSpawnMult * dungeonSpawnMult * devMult) return;
+  if (closestFlag.spawnTimer < closestFlag.spawnRate * spawnVariance * spawnMultiplier * challengeSpawnMult * dungeonSpawnMult * devMult * modEnemySpawnRateMult(ts)) return;
 
   // Burst spawn: only when very far below ideal and have captured some flags
   const burstCount = ts.flagsCaptured >= 3 && activeEnemies < idealMobs * 0.35 ? 2 : 1;
@@ -425,40 +426,59 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
         activeSkeletons: 0, passiveSummonTimer: 0,
       });
     } else if (spawnHound) {
-      const hp = Math.floor((UNIT_STATS.enemyHound.health + flagsCaptured * 1) * zoneScale * flagScale);
+      const hp = Math.floor((UNIT_STATS.enemyHound.health + flagsCaptured * 1) * zoneScale * flagScale * modEnemyHpMult(ts));
       ts.enemyHounds.push({
         id: uid(), x: closestFlag.x + xOffset, y: GROUND_Y - 18, health: hp, maxHealth: hp,
-        damage: Math.floor(UNIT_STATS.enemyHound.damage * zoneScale * flagScale),
-        speed: UNIT_STATS.enemyHound.speed + Math.random() * 0.3, attackRate: UNIT_STATS.enemyHound.attackRate,
+        damage: Math.floor(UNIT_STATS.enemyHound.damage * zoneScale * flagScale * modEnemyDmgMult(ts)),
+        speed: (UNIT_STATS.enemyHound.speed + Math.random() * 0.3) * modEnemySpeedMult(ts), attackRate: UNIT_STATS.enemyHound.attackRate,
         attackRange: UNIT_STATS.enemyHound.attackRange + Math.floor(Math.random() * 7) - 3, frame: 0, attackCooldown: 15,
         lane: Math.floor(Math.random() * 10) - 5,
       });
+      // Flankers modifier: spawn 2 extra hounds
+      if (modFlankersActive(ts)) {
+        for (let fi = 0; fi < 2; fi++) {
+          const fhp = Math.floor((UNIT_STATS.enemyHound.health + flagsCaptured * 1) * zoneScale * flagScale * modEnemyHpMult(ts));
+          ts.enemyHounds.push({
+            id: uid(), x: closestFlag.x + xOffset + (fi + 1) * 15, y: GROUND_Y - 18, health: fhp, maxHealth: fhp,
+            damage: Math.floor(UNIT_STATS.enemyHound.damage * zoneScale * flagScale * modEnemyDmgMult(ts)),
+            speed: (UNIT_STATS.enemyHound.speed + Math.random() * 0.3) * modEnemySpeedMult(ts), attackRate: UNIT_STATS.enemyHound.attackRate,
+            attackRange: UNIT_STATS.enemyHound.attackRange + Math.floor(Math.random() * 7) - 3, frame: 0, attackCooldown: 15,
+            lane: Math.floor(Math.random() * 10) - 5,
+          });
+        }
+      }
     } else if (spawnArcher) {
-      const hp = Math.floor((UNIT_STATS.enemyArcher.health + flagsCaptured * 2) * zoneScale * flagScale);
+      const hp = Math.floor((UNIT_STATS.enemyArcher.health + flagsCaptured * 2) * zoneScale * flagScale * modEnemyHpMult(ts));
+      let archerDmg = Math.floor(UNIT_STATS.enemyArcher.damage * zoneScale * flagScale * modEnemyDmgMult(ts));
+      let archerRange = UNIT_STATS.enemyArcher.attackRange + Math.floor(Math.random() * 7) - 3;
+      if (modSharpshootersActive(ts)) {
+        archerDmg = Math.floor(archerDmg * 1.15);
+        archerRange = Math.floor(archerRange * 1.30);
+      }
       ts.enemyArchers.push({
         id: uid(), x: closestFlag.x + xOffset, y: GROUND_Y - 22, health: hp, maxHealth: hp,
-        damage: Math.floor(UNIT_STATS.enemyArcher.damage * zoneScale * flagScale),
-        speed: UNIT_STATS.enemyArcher.speed, attackRate: UNIT_STATS.enemyArcher.attackRate,
-        attackRange: UNIT_STATS.enemyArcher.attackRange + Math.floor(Math.random() * 7) - 3, frame: 0, attackCooldown: 15,
+        damage: archerDmg,
+        speed: UNIT_STATS.enemyArcher.speed * modEnemySpeedMult(ts), attackRate: UNIT_STATS.enemyArcher.attackRate,
+        attackRange: archerRange, frame: 0, attackCooldown: 15,
         lane: Math.floor(Math.random() * 10) - 5,
       });
     } else if (spawnWraith) {
-      const hp = Math.floor((UNIT_STATS.enemyWraith.health + flagsCaptured * 4) * zoneScale * flagScale);
+      const hp = Math.floor((UNIT_STATS.enemyWraith.health + flagsCaptured * 4) * zoneScale * flagScale * modEnemyHpMult(ts));
       ts.enemyWraiths.push({
         id: uid(), x: closestFlag.x + xOffset, y: GROUND_Y - 35, health: hp, maxHealth: hp,
-        damage: Math.floor(UNIT_STATS.enemyWraith.damage * zoneScale * flagScale),
+        damage: Math.floor(UNIT_STATS.enemyWraith.damage * zoneScale * flagScale * modEnemyDmgMult(ts)),
         defense: UNIT_STATS.enemyWraith.defense,
-        speed: UNIT_STATS.enemyWraith.speed, attackRate: UNIT_STATS.enemyWraith.attackRate,
+        speed: UNIT_STATS.enemyWraith.speed * modEnemySpeedMult(ts), attackRate: UNIT_STATS.enemyWraith.attackRate,
         attackRange: UNIT_STATS.enemyWraith.attackRange + Math.floor(Math.random() * 7) - 3, knockback: UNIT_STATS.enemyWraith.knockback,
         frame: 0, attackCooldown: 15,
         lane: Math.floor(Math.random() * 10) - 5,
       });
     } else {
-      const hp = Math.floor((UNIT_STATS.enemy.health + flagsCaptured * 3) * zoneScale * flagScale);
+      const hp = Math.floor((UNIT_STATS.enemy.health + flagsCaptured * 3) * zoneScale * flagScale * modEnemyHpMult(ts));
       ts.enemies.push({
         id: uid(), x: closestFlag.x + xOffset, y: GROUND_Y - ENEMY_SIZE, health: hp, maxHealth: hp,
-        damage: Math.floor((UNIT_STATS.enemy.damage + flagsCaptured) * zoneScale * flagScale),
-        speed: UNIT_STATS.enemy.speed + Math.random() * 0.3, attackRate: UNIT_STATS.enemy.attackRate,
+        damage: Math.floor((UNIT_STATS.enemy.damage + flagsCaptured) * zoneScale * flagScale * modEnemyDmgMult(ts)),
+        speed: (UNIT_STATS.enemy.speed + Math.random() * 0.3) * modEnemySpeedMult(ts), attackRate: UNIT_STATS.enemy.attackRate,
         attackRange: UNIT_STATS.enemy.attackRange + Math.floor(Math.random() * 7) - 3, frame: 0, attackCooldown: 15,
         lane: Math.floor(Math.random() * 10) - 5,
       });
@@ -482,6 +502,21 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
       if (ts.enemyShadowAssassins.length > shadowCountBefore) applyChallenge(ts.enemyShadowAssassins[ts.enemyShadowAssassins.length - 1]);
       if (ts.enemyFlameCallers.length > flameCountBefore) applyChallenge(ts.enemyFlameCallers[ts.enemyFlameCallers.length - 1]);
       if (ts.enemyCorruptedSentinels.length > sentinelCountBefore) applyChallenge(ts.enemyCorruptedSentinels[ts.enemyCorruptedSentinels.length - 1]);
+    }
+
+    // Colosseum reward: 1% chance to spawn a giant (3x HP, 1.5x DMG)
+    if (modColosseumRewardActive(ts) && Math.random() < 0.01) {
+      const makeGiant = (e: { health: number; maxHealth: number; damage: number }) => {
+        e.health *= 3; e.maxHealth *= 3; e.damage = Math.floor(e.damage * 1.5);
+      };
+      if (ts.enemies.length > enemyCountBefore) makeGiant(ts.enemies[ts.enemies.length - 1]);
+      if (ts.enemyArchers.length > archerCountBefore) makeGiant(ts.enemyArchers[ts.enemyArchers.length - 1]);
+      if (ts.enemyWraiths.length > wraithCountBefore) makeGiant(ts.enemyWraiths[ts.enemyWraiths.length - 1]);
+      if (ts.enemyHounds.length > houndCountBefore) makeGiant(ts.enemyHounds[ts.enemyHounds.length - 1]);
+      if (ts.enemyLichs.length > lichCountBefore) makeGiant(ts.enemyLichs[ts.enemyLichs.length - 1]);
+      if (ts.enemyShadowAssassins.length > shadowCountBefore) makeGiant(ts.enemyShadowAssassins[ts.enemyShadowAssassins.length - 1]);
+      if (ts.enemyFlameCallers.length > flameCountBefore) makeGiant(ts.enemyFlameCallers[ts.enemyFlameCallers.length - 1]);
+      if (ts.enemyCorruptedSentinels.length > sentinelCountBefore) makeGiant(ts.enemyCorruptedSentinels[ts.enemyCorruptedSentinels.length - 1]);
     }
 
     // Caltrops artifact: 20% chance newly spawned enemies start at 80% HP
@@ -521,6 +556,7 @@ export function processBossSpawning(ts: TickState): void {
   if (bossType === 6) bossHealth = Math.floor(bossHealth * 2.5); // Wendigo: 2.5x HP
   if (bossType === 7) bossHealth = Math.floor(bossHealth * 2.5); // Infernal General: 2.5x HP
   // Dungeon Lich: 1x HP (no multiplier)
+  bossHealth = Math.floor(bossHealth * modBossHpMult(ts));
   const baseDmg = bossType === 1 ? (UNIT_STATS.boss as any).aoeDamage
     : bossType === 2 ? 55  // Wraith King spectral blast base
     : bossType === 3 ? 30  // Broodmother melee bite
@@ -564,6 +600,8 @@ export function processBossSpawning(ts: TickState): void {
 export function processUnitRespawn(ts: TickState): void {
   // Lone Wolf: no units at all
   if (ts.challengeId === 'loneWolf') return;
+  // Duelist's Oath modifier: hero fights alone
+  if (modDuelistOathActive(ts)) return;
   const { unitSlots, allies, runUpgrades, upgrades } = ts;
   const bossesDefeated = ts.bossesDefeated;
   const portalX = getPortalX(ts);
@@ -593,6 +631,7 @@ export function processUnitRespawn(ts: TickState): void {
         respawnSpeed *= 1 / Math.max(0.7, 1 - 0.03 * gpCount * bpMult);
       }
     }
+    respawnSpeed /= modRespawnTimeMult(ts);
     const newTimer = slot.respawnTimer - respawnSpeed;
 
     if (newTimer <= 0) {
@@ -615,6 +654,8 @@ export function processUnitRespawn(ts: TickState): void {
       let finalHealth = allyHealth;
       if (slot.type === 'soldier' && tickHasArtifact(ts, 'reinforced')) finalHealth = Math.floor(finalHealth * 1.2);
       if (slot.type === 'wizard' && tickHasArtifact(ts, 'manaCrystal')) allyAtkRate = Math.max(15, Math.floor(allyAtkRate * 0.92));
+      finalHealth = Math.floor(finalHealth * modAllyHpMult(ts));
+      allyDef += modAllyDefenseBonus(ts);
       const v = () => 0.98 + Math.random() * 0.04; // +/- 2% variance
       let allyRange = Math.round(stats.attackRange * v()) + Math.floor(Math.random() * 7) - 3;
       const newAlly: Ally = {
@@ -624,6 +665,9 @@ export function processUnitRespawn(ts: TickState): void {
         attackRange: allyRange, frame: 0, attackCooldown: Math.floor(Math.random() * allyAtkRate),
         lane: Math.floor(Math.random() * 10) - 5,
       };
+      if (modUnstablePortalActive(ts)) {
+        newAlly.health = Math.floor(newAlly.maxHealth * 0.85);
+      }
       applyShardUpgrades(newAlly, su);
       applyRelicEffects(newAlly, ts);
       applyAncientRelicSpawnEffects(newAlly, ts);
@@ -698,6 +742,8 @@ export function processUnitRespawn(ts: TickState): void {
     let finalHealth2 = allyHealth;
     if (slot.type === 'soldier' && tickHasArtifact(ts, 'reinforced')) finalHealth2 = Math.floor(finalHealth2 * 1.2);
     if (slot.type === 'wizard' && tickHasArtifact(ts, 'manaCrystal')) allyAtkRate2 = Math.max(15, Math.floor(allyAtkRate2 * 0.92));
+    finalHealth2 = Math.floor(finalHealth2 * modAllyHpMult(ts));
+    allyDef += modAllyDefenseBonus(ts);
     const v2 = () => 0.98 + Math.random() * 0.04; // +/- 2% variance
     let allyRange2 = Math.round(stats.attackRange * v2()) + Math.floor(Math.random() * 7) - 3;
     const newAlly: Ally = {
@@ -707,6 +753,9 @@ export function processUnitRespawn(ts: TickState): void {
       attackRange: allyRange2, frame: 0, attackCooldown: Math.floor(Math.random() * allyAtkRate2),
       lane: Math.floor(Math.random() * 10) - 5,
     };
+    if (modUnstablePortalActive(ts)) {
+      newAlly.health = Math.floor(newAlly.maxHealth * 0.85);
+    }
     applyShardUpgrades(newAlly, su);
     applyRelicEffects(newAlly, ts);
     applyAncientRelicSpawnEffects(newAlly, ts);

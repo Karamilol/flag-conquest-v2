@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { CAMERA_OFFSET, VIEWPORT_W, GROUND_Y } from '../constants';
+import { setGlobalBiome } from '../biomeUtils';
 import { makeParticle } from '../utils/helpers';
 import type { GameState, PermanentUpgrades, ShardUpgrades, GameScreen, Artifact, CameraMode, Backpack, ConsumableId, ChallengeCompletions, DungeonMetaUpgrades } from '../types';
 import { passiveGoldPerMin } from '../utils/economy';
@@ -31,7 +32,7 @@ function copyArray<T extends object>(arr: T[]): T[] {
 
 /** Run one game tick: build TickState, run all systems, return new GameState */
 function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upgrades: PermanentUpgrades, shardUpgrades: ShardUpgrades, relicCollection: RelicCollection, cameraMode: CameraMode, ancientRelicsOwned: string[], ancientRelicCopies: Record<string, number>, backpack: Backpack, onCollectConsumable: (id: ConsumableId) => void, challengeCompletions: ChallengeCompletions, equippedRegalias: Record<RegaliaSlot, Regalia | null>, onCollectRegalia: (regalia: Regalia) => void, equippedPet: string, ownedPets: string[], onCollectPet: (petId: string) => void): GameState {
-  if (prev.gameOver || prev.pendingArtifactChoice || prev.pendingRelicChoice || prev.pendingRoll || prev.pendingSkillChoice || prev.tutorialDialogueVisible || prev.devPaused) return prev;
+  if (prev.gameOver || prev.pendingArtifactChoice || prev.pendingRelicChoice || prev.pendingRoll || prev.pendingSkillChoice || prev.pendingPortalChoice || prev.tutorialDialogueVisible || prev.devPaused) return prev;
   // Guard: StrictMode double-invokes state updaters — only increment once per tick
   const expectedFrame = prev.frame + 1;
   if (frameRef.current < expectedFrame) frameRef.current = expectedFrame;
@@ -178,6 +179,12 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
     equippedPet: equippedPet || '',
     onCollectPet,
     ownedPets,
+
+    // Fractured World state
+    activeModifiers: prev.activeModifiers || [],
+    activeCurse: prev.activeCurse || null,
+    curseRewards: prev.curseRewards || [],
+    pendingPortalChoice: null,
 
     devGodMode: prev.devGodMode || false,
     devSpawnMult: prev.devSpawnMult,
@@ -461,9 +468,9 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
     const lastFlag = ts.flags[ts.flags.length - 1];
     const worldEnd = ts.inDungeon && ts.dungeonType === 'timed'
       ? 1050
-      : lastFlag ? lastFlag.x + 300 : 2000;
+      : lastFlag ? lastFlag.x + 100 : 2000;
     const maxCam = Math.max(0, worldEnd - VIEWPORT_W);
-    ts.cameraX = Math.min(ts.cameraX, maxCam);
+    ts.cameraX = Math.max(0, Math.min(ts.cameraX, maxCam));
   }
 
   perf.end('tick');
@@ -587,6 +594,12 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
     lastEliteVariants: ts.lastEliteVariants,
     eliteArtifactDroppedThisRun: ts.eliteArtifactDroppedThisRun,
     forceSpawnElite: false, // always clear after tick
+
+    // Fractured World state
+    activeModifiers: ts.activeModifiers,
+    activeCurse: ts.activeCurse,
+    curseRewards: ts.curseRewards,
+    pendingPortalChoice: ts.pendingPortalChoice,
 
     // Pet state
     petCooldown: ts.petCooldown,
@@ -839,7 +852,7 @@ export function useGameLoop(
     }
 
     const TICK_MS = 1000 / 60;
-    const MAX_TICKS_PER_FRAME = 4;
+    const MAX_TICKS_PER_FRAME = 8;
     let accumulator = 0;
     let lastTime = performance.now();
     let rafId = 0;
@@ -878,18 +891,20 @@ export function useGameLoop(
 
     const loop = (now: number) => {
       if (!running) return;
-      const delta = Math.min(now - lastTime, 200);
+      const rawDelta = Math.min(now - lastTime, 200);
       lastTime = now;
-      accumulator += delta;
+      accumulator += rawDelta;
 
+      const speedMult = gameRef.current.devSpeed || 1;
+      const effectiveTickMs = TICK_MS / speedMult;
       let ticksThisFrame = 0;
       let ticked = false;
 
-      while (accumulator >= TICK_MS && ticksThisFrame < MAX_TICKS_PER_FRAME) {
+      while (accumulator >= effectiveTickMs && ticksThisFrame < MAX_TICKS_PER_FRAME) {
         const prev = gameRef.current;
         const next = gameTick(prev, frameRef, upgradesRef.current, shardUpgradesRef.current, relicCollectionRef.current, cameraModeRef.current, ancientRelicsRef.current, ancientRelicCopiesRef.current, backpackRef.current, collectConsumableRef.current, challengeCompletionsRef.current, equippedRegaliasRef.current, collectRegaliaRef.current, equippedPetRef.current, ownedPetsRef.current, collectPetRef.current);
         gameRef.current = next;
-        accumulator -= TICK_MS;
+        accumulator -= effectiveTickMs;
         ticksThisFrame++;
         ticked = true;
       }
@@ -897,6 +912,7 @@ export function useGameLoop(
 
       if (ticked) {
         const state = gameRef.current;
+        setGlobalBiome(state.currentBiome || null);
 
         // Dungeon exit: restore main game state when dungeonOver fires
         if (state.inDungeon && state.dungeonOver) {
@@ -914,7 +930,7 @@ export function useGameLoop(
         if (!state.gameOver) _gameOverSignaled = false;
 
         // Signal React ONLY for modal events that need overlay rendering
-        if (state.pendingArtifactChoice || state.pendingRelicChoice || state.pendingRoll || state.pendingSkillChoice) {
+        if (state.pendingArtifactChoice || state.pendingRelicChoice || state.pendingRoll || state.pendingSkillChoice || state.pendingPortalChoice) {
           onModalEventRef.current();
         }
       }

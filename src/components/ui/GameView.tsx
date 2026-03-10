@@ -14,6 +14,10 @@ import GameHUD from './GameHUD';
 import { ArtifactPicker } from './ArtifactPicker';
 import { SkillPicker } from './SkillPicker';
 import { RelicPicker } from './RelicPicker';
+import { PortalSelect } from './PortalSelect';
+import { ModifierIndicator } from './ModifierIndicator';
+import { applyPortalChoice } from '../../systems/flags';
+import type { PortalChoiceData } from '../../types';
 import { TutorialOverlay } from '../../tutorial/TutorialOverlay';
 import { ShopPanel, ShopTabs } from './ShopPanel';
 import { DungeonShopPanel } from './DungeonShopPanel';
@@ -280,7 +284,7 @@ export default function GameView({
     if (g.inDungeon && g.dungeonType === 'timed') return Math.max(0, 1050 - VIEWPORT_W);
     const flags = g.flags;
     const lastFlag = flags[flags.length - 1];
-    const worldEnd = lastFlag ? lastFlag.x + 300 : 2000;
+    const worldEnd = lastFlag ? lastFlag.x + 100 : 2000;
     return Math.max(0, worldEnd - VIEWPORT_W);
   }, [gameRef]);
 
@@ -314,8 +318,9 @@ export default function GameView({
     if (dragRef.current.isDragging) {
       const deltaScreen = dragRef.current.startScreenX - e.clientX;
       const deltaGame = screenToGameX(deltaScreen);
-      const newCam = Math.max(0, Math.min(getMaxCam(), dragRef.current.startCamX + deltaGame));
       const g = gameRef.current;
+      const minCam = g?.cameraMinX || 0;
+      const newCam = Math.max(minCam, Math.min(getMaxCam(), dragRef.current.startCamX + deltaGame));
       if (g) g.cameraX = newCam;
     }
   }, [screenToGameX, getMaxCam, gameRef, setCameraMode]);
@@ -426,10 +431,17 @@ export default function GameView({
     game.pendingRelicChoice = null;
   }, [gameRef]);
 
+  const onSelectPortal = useCallback((portal: PortalChoiceData) => {
+    const game = gameRef.current;
+    if (!game) return;
+    applyPortalChoice(game, portal);
+  }, [gameRef]);
+
   const game = gameRef.current;
   const showArtifactPicker = !!(game?.pendingArtifactChoice);
   const showSkillPicker = !!(game?.pendingSkillChoice);
   const showRelicPicker = !!(game?.pendingRelicChoice);
+  const showPortalSelect = !!(game?.pendingPortalChoice);
 
   const [purchaseMode, setPurchaseMode] = useState<'1x' | '10x' | 'MAX'>('1x');
   const cyclePurchaseMode = useCallback(() => {
@@ -528,6 +540,13 @@ export default function GameView({
             relics={game.pendingRelicChoice}
             onSelect={onSelectRelic}
             relicCollection={relicCollection}
+          />
+        )}
+
+        {showPortalSelect && game.pendingPortalChoice && (
+          <PortalSelect
+            portals={game.pendingPortalChoice}
+            onSelect={onSelectPortal}
           />
         )}
 
@@ -770,6 +789,7 @@ export default function GameView({
                   <button onClick={() => { const g = gameRef.current; if (g) { g.devGodMode = !g.devGodMode; if (g.devGodMode) g.hero.health = g.hero.maxHealth; } }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: game?.devGodMode ? 'rgba(0,255,100,0.3)' : 'rgba(20,15,30,0.85)', color: game?.devGodMode ? '#44ff88' : '#ccc', border: `1px solid ${game?.devGodMode ? '#00ff66' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>{game?.devGodMode ? '\u{1F49A} GOD MODE' : 'Stay Full HP'}</button>
                   <button onClick={() => { const g = gameRef.current; if (g) { g.backpack.healingPotion += 5; g.backpack.rerollVoucher += 5; g.backpack.artifactKey += 5; g.backpack.regaliaKey += 5; g.backpack.challengeKey += 5; } }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: 'rgba(20,15,30,0.85)', color: '#ccc', border: '1px solid rgba(138,74,223,0.3)', borderRadius: 3, cursor: 'pointer' }}>+5 Items</button>
                   <button onClick={() => { const g = gameRef.current; if (g) g.devSpawnMult = g.devSpawnMult === 0.2 ? 1 : 0.2; }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: game?.devSpawnMult === 0.2 ? 'rgba(255,120,0,0.3)' : 'rgba(20,15,30,0.85)', color: game?.devSpawnMult === 0.2 ? '#ff8844' : '#ccc', border: `1px solid ${game?.devSpawnMult === 0.2 ? '#ff6600' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>{game?.devSpawnMult === 0.2 ? '5x Spawns ON' : '5x Spawns'}</button>
+                  <button onClick={() => { const g = gameRef.current; if (g) g.devSpeed = (g.devSpeed || 1) === 1 ? 2 : (g.devSpeed || 1) === 2 ? 4 : 1; }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: (game?.devSpeed || 1) > 1 ? 'rgba(0,180,255,0.3)' : 'rgba(20,15,30,0.85)', color: (game?.devSpeed || 1) > 1 ? '#44ccff' : '#ccc', border: `1px solid ${(game?.devSpeed || 1) > 1 ? '#0088cc' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>{(game?.devSpeed || 1) > 1 ? `${game?.devSpeed}x Speed` : '2x Speed'}</button>
                 </div>
                 {/* Spawn row */}
                 <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>

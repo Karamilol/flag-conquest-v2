@@ -1,4 +1,14 @@
 import type { HeroClassId } from './classes';
+import type { BiomeId, PortalDifficulty } from './fracturedMap';
+
+// ---- Fractured World Types ----
+
+export interface PortalChoiceData {
+  difficulty: PortalDifficulty;
+  biome: BiomeId;
+  modifiers: string[];
+  curse: string | null;
+}
 
 // ---- Entity Types ----
 
@@ -916,11 +926,19 @@ export interface GameState {
   lastEliteVariants: string[];
   eliteArtifactDroppedThisRun?: boolean;
   forceSpawnElite?: boolean;
+  // ---- Fractured World state ----
+  activeModifiers: string[];
+  activeCurse: string | null;
+  curseRewards: string[];
+  pendingPortalChoice: PortalChoiceData[] | null;
+  currentBiome: import('./constants').Biome;
+  cameraMinX: number;
   // Dev tools
   devSpawnsDisabled?: boolean;
   devPaused?: boolean;
   devGodMode?: boolean;
   devSpawnMult?: number; // multiplier on spawn rate (0.2 = 5x faster)
+  devSpeed?: number; // game speed multiplier (2 = 2x speed)
   // ---- Pet state (per-run) ----
   petCooldown: number;
   backpack: Backpack;

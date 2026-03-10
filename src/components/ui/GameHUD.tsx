@@ -7,6 +7,7 @@ import { formatNumber } from '../../utils/helpers';
 import { SpriteIcon } from '../sprites/SpriteIcon';
 import { getSkillDef } from '../../skills';
 import { HealthPotionIconHTML } from '../sprites/HealthPotionIcon';
+import { getModifierDef, getCurseDef } from '../../modifiers';
 
 interface GameHUDProps {
   gameRef: React.MutableRefObject<GameState>;
@@ -72,6 +73,8 @@ interface HUDValues {
   potionCount: number;
   eliteVariant: string | null;
   eliteTimeLeft: number; // frames remaining
+  activeModifiers: string[];
+  activeCurse: string | null;
 }
 
 function snapshotHUD(game: GameState): HUDValues {
@@ -112,6 +115,8 @@ function snapshotHUD(game: GameState): HUDValues {
     eliteTimeLeft: game.activeEliteId != null
       ? Math.max(0, 10800 - (game.frame - (game.eliteLastSpawnFrame || 0)))
       : 0,
+    activeModifiers: game.activeModifiers || [],
+    activeCurse: game.activeCurse || null,
   };
 }
 
@@ -161,28 +166,64 @@ const TopBar = memo(({ hud, cameraMode, onCycleCameraMode, onOpenSettings,
     }}>
       {/* Left: game info */}
       <div style={{ pointerEvents: 'none' }}>
-        <div style={{ fontSize: 10, lineHeight: '14px' }}>
-          <span
-            style={{ pointerEvents: 'auto', cursor: 'pointer', color: '#cc99ff', background: 'rgba(138,74,223,0.15)', padding: '0 3px', borderRadius: 2 }}
-            onPointerEnter={() => {
-              const z = hud.zone;
-              const enemyScale = Math.pow(1.3, z * Math.pow(0.98, z));
-              const passiveMult = 1 + z * 0.05;
-              const killMult = 1 + z * (z - 1) * 5;
-              showTooltip(
-                `Zone ${z + 1} Bonuses\n` +
-                `Enemy stats: x${enemyScale.toFixed(2)}\n` +
-                `Passive income: x${passiveMult.toFixed(2)}\n` +
-                `Kill gold: x${killMult.toFixed(0)}`,
-                6, 40
-              );
-            }}
-            onPointerLeave={hideTooltip}
-          >ZONE: {hud.zone + 1}</span> | FLAGS: {hud.flagsCaptured} | {timer}
-        </div>
-        <div style={{ fontSize: 10, color: '#ffd700', lineHeight: '14px' }}>
-          GOLD: {formatNumber(hud.gold)}
-        </div>
+        {(() => {
+          const z = hud.zone;
+          const hasFracture = hud.activeModifiers.length > 0 || !!hud.activeCurse;
+          const posMods = hud.activeModifiers.filter(id => getModifierDef(id)?.category === 'positive');
+          const negMods = hud.activeModifiers.filter(id => getModifierDef(id)?.category === 'negative');
+          const curseDef = hud.activeCurse ? getCurseDef(hud.activeCurse) : null;
+
+          const buildTooltip = () => {
+            const enemyScale = Math.pow(1.3, z * Math.pow(0.98, z));
+            const passiveMult = 1 + z * 0.05;
+            const killMult = 1 + z * (z - 1) * 5;
+            const lines: string[] = [
+              `── Zone ${z + 1} ──`,
+              `Enemy stats: x${enemyScale.toFixed(2)}`,
+              `Passive income: x${passiveMult.toFixed(2)}`,
+              `Kill gold: x${killMult.toFixed(0)}`,
+            ];
+            if (hasFracture) {
+              lines.push('', '── Fracture Modifiers ──');
+              for (const id of posMods) { const d = getModifierDef(id); if (d) lines.push(`${d.icon} ${d.name}: ${d.description}`); }
+              for (const id of negMods) { const d = getModifierDef(id); if (d) lines.push(`${d.icon} ${d.name}: ${d.description}`); }
+              if (curseDef) {
+                lines.push('', `⛧ CURSE: ${curseDef.name}`);
+                lines.push(`  ${curseDef.downside}`);
+                lines.push(`  ✨ ${curseDef.reward}`);
+              }
+            }
+            return lines.join('\n');
+          };
+
+          return (
+            <>
+              <div style={{ fontSize: 10, lineHeight: '14px' }}>
+                <span
+                  style={{ pointerEvents: 'auto', cursor: 'pointer', color: '#cc99ff', background: 'rgba(138,74,223,0.15)', padding: '0 3px', borderRadius: 2 }}
+                  onPointerEnter={() => showTooltip(buildTooltip(), 6, 40)}
+                  onPointerLeave={hideTooltip}
+                >ZONE: {z + 1}</span> | FLAGS: {hud.flagsCaptured} | {timer}
+                {hasFracture && (
+                  <span style={{ marginLeft: 4 }}>
+                    {posMods.map(id => {
+                      const d = getModifierDef(id);
+                      return d ? <span key={id} style={{ fontSize: 9 }}>{d.icon}</span> : null;
+                    })}
+                    {negMods.map(id => {
+                      const d = getModifierDef(id);
+                      return d ? <span key={id} style={{ fontSize: 9 }}>{d.icon}</span> : null;
+                    })}
+                    {curseDef && <span style={{ fontSize: 9, color: '#ff2244' }}>⛧</span>}
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: 10, color: '#ffd700', lineHeight: '14px' }}>
+                GOLD: {formatNumber(hud.gold)}
+              </div>
+            </>
+          );
+        })()}
       </div>
 
       {/* Center: elite timer */}

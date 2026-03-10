@@ -7,6 +7,7 @@ import { getAncientEffect, getAncientRelicLevel } from '../ancientRelics';
 import { isUnitInCategory } from '../regalias';
 import { getChallengeRewardMult } from '../challenges';
 import { getPetDef } from '../pets';
+import { modAllyDmgMult, modMeleeDmgMult, modRangedDmgMult, modMagicDmgMult, modAllyRangeMult, modMovementSpeedMult, modEnemySpeedMult } from './modifierEffects';
 
 /** Check if an enemy is blocked by a barricade ahead (to the left).
  *  If blocked and attack cooldown is ready, deal damage to the barricade.
@@ -1315,7 +1316,8 @@ export function processAllyAI(ts: TickState): void {
     const isRanged = a.unitType === 'archer';
     const isWizard = a.unitType === 'wizard';
     const isCleric = a.unitType === 'cleric';
-    const attackRange = a.attackRange || 30;
+    let attackRange = a.attackRange || 30;
+    if (isRanged || isWizard || isCleric) attackRange = Math.floor(attackRange * modAllyRangeMult(ts));
     const startAttackRange = (UNIT_STATS[a.unitType as keyof typeof UNIT_STATS] as any)?.startAttackRange || attackRange;
 
     // === Shard runtime timers ===
@@ -1527,6 +1529,8 @@ export function processAllyAI(ts: TickState): void {
           clericDmg = Math.floor(clericDmg * clericCritMult);
           clericCrit = true;
         }
+        // Fractured World: ally + magic damage multipliers
+        clericDmg = Math.floor(clericDmg * modAllyDmgMult(ts) * modMagicDmgMult(ts));
         const target = clericTarget as any;
         ts.projectiles.push({ id: uid(), x: a.x + 15, y: a.y + (a.lane || 0) + 8, targetX: target.x, speed: -10, damage: clericDmg, type: 'clericBolt', crit: clericCrit });
       } else if (!clericTarget) {
@@ -1799,6 +1803,8 @@ export function processAllyAI(ts: TickState): void {
           wizDmg = Math.floor(wizDmg * wizCritMult);
           wizCrit = true;
         }
+        // Fractured World: ally + magic damage multipliers
+        wizDmg = Math.floor(wizDmg * modAllyDmgMult(ts) * modMagicDmgMult(ts));
         const hasBurn = su.wizard_elemental > 0 || hasFireRunes;
         const bRate = hasFireRunes ? 0.02 : 0.01;
         const bDuration = hasFireRunes ? 180 : 240;
@@ -1885,6 +1891,8 @@ export function processAllyAI(ts: TickState): void {
           aimDmg = Math.floor(aimDmg * archerCritMult);
           archerCrit = true;
         }
+        // Fractured World: ally + ranged damage multipliers
+        aimDmg = Math.floor(aimDmg * modAllyDmgMult(ts) * modRangedDmgMult(ts));
         // Target from unified scan (rangedTarget already found above)
         const tX = rangedTarget ? rangedTarget.x : a.x;
         const rangedRef = rangedTarget ? rangedTarget.ref : null;
@@ -1963,6 +1971,8 @@ export function processAllyAI(ts: TickState): void {
             meleeDmg = Math.floor(meleeDmg * meleeCritMult);
             meleeCrit = true;
           }
+          // Fractured World: ally + melee damage multipliers
+          meleeDmg = Math.floor(meleeDmg * modAllyDmgMult(ts) * modMeleeDmgMult(ts));
           const def = target.defense || 0;
           let dmg = def ? Math.max(1, meleeDmg - def) : meleeDmg;
           if (isBoss) dmg = absorbBossShield(boss, dmg);

@@ -1,6 +1,12 @@
 import type { Biome } from './constants';
 import { VIEWPORT_W } from './constants';
 
+// ── Global biome override (set from game loop) ──────────────────
+let _globalBiome: Biome | null = null;
+export function setGlobalBiome(biome: Biome | null): void {
+  _globalBiome = biome;
+}
+
 // ── Biome color palettes ──────────────────────────────────────────
 export const BIOME_COLORS: Record<Biome, {
   sky: { top: string; mid: string; bot: string };
@@ -67,6 +73,7 @@ export const BLEND_ZONE = 300; // px of gradient transition
 
 // ── Position-based biome lookup ───────────────────────────────────
 export function getBiomeAtX(worldX: number): Biome {
+  if (_globalBiome) return _globalBiome;
   if (worldX < 5300) return 'forest';
   if (worldX < 9700) return 'cave';
   if (worldX < 14100) return 'nordic';
@@ -81,6 +88,9 @@ export interface BiomeBlendInfo {
 }
 
 export function computeBiomeBlend(cameraX: number, viewportW: number): BiomeBlendInfo {
+  // Global biome override — no blending, just one biome everywhere
+  if (_globalBiome) return { primary: _globalBiome, secondary: null, blendFactor: 0 };
+
   const camCenter = cameraX + viewportW / 2;
   const halfZone = BLEND_ZONE / 2;
 
@@ -126,6 +136,7 @@ export function lerpColorObj<K extends string>(
 // Returns a deterministic biome for a decoration at world-x,
 // with probabilistic mixing in the blend zone.
 export function getDecorationBiome(x: number): Biome {
+  if (_globalBiome) return _globalBiome;
   const halfZone = BLEND_ZONE / 2;
   for (const boundary of BIOME_BOUNDARIES) {
     if (x > boundary.x - halfZone && x < boundary.x + halfZone) {

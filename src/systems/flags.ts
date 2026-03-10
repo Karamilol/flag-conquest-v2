@@ -11,6 +11,8 @@ import { rollBossConsumable, getConsumableDef } from '../consumables';
 import { MAX_CHALLENGE_LEVEL } from '../challenges';
 import { getBossPetId, getPetDef } from '../pets';
 import { passiveGoldPerMin, zoneGoldMult } from '../utils/economy';
+import { rollPortals, rollModifiers, getBiome } from '../fracturedMap';
+import type { PortalChoiceData } from '../types';
 import { rollRegalia, rollBossRegaliaRarity, rollSurveyRegaliaRarity, getBossDropSlot, getRandomSlot, RARITY_COLORS, MOB_RARITY_POOL, buildUnlockFilter } from '../regalias';
 import type { RegaliaRarity } from '../regalias';
 
@@ -362,6 +364,27 @@ export function processBossDefeat(ts: TickState): void {
     }
   }
 
+  // Fractured World: generate portal choices (non-challenge runs only)
+  if (!ts.challengeId) {
+    const nextTier = bossZone + 1;
+    const biome = getBiome(nextTier);
+    const difficulties = rollPortals();
+    const portalChoices: PortalChoiceData[] = difficulties.map(diff => {
+      const roll = rollModifiers(diff, nextTier);
+      return { difficulty: diff, biome, modifiers: roll.modifiers, curse: roll.curse };
+    });
+    ts.pendingPortalChoice = portalChoices;
+    // Spawn artifact chest now (player collects before choosing portal)
+    ts.chests.push({ id: uid(), x: boss.x, y: GROUND_Y - 22, type: artifactTier, value: 0, age: 0 });
+    const artTierLabel = artifactTier.replace('artifact', '').toUpperCase();
+    const artTierColor = artifactTier === 'artifactLegendary' ? '#ffd700' : artifactTier === 'artifactRare' ? '#4a9fff' : '#B8860B';
+    ts.particles.push(makeParticle(boss.x, boss.y - 50, `✨ ${artTierLabel} ARTIFACT CHEST! ✨`, artTierColor));
+    ts.boss = null;
+    // Don't advance zone yet — deferred until portal selection
+    return;
+  }
+
+  // Challenge runs: immediate zone advancement (no portal choice)
   if (ts.autoPortalForward) autoAdvancePortal(ts);
 
   // Generate next zone
@@ -683,6 +706,87 @@ export function processFlagBuildings(ts: TickState): void {
 }
 
 /** Age and cull expired particles */
+/**
+ * Apply the player's portal choice: set modifiers, advance zone, generate flags.
+ * Called from React (GameView.tsx) on the mutable GameState ref.
+ */
+export function applyPortalChoice(game: import('../types').GameState, portal: PortalChoiceData): void {
+  const nextZone = game.currentZone + 1;
+
+  // Apply modifiers
+  game.activeModifiers = portal.modifiers;
+  game.activeCurse = portal.curse;
+
+  // Toggle biome — instant switch, no gradients
+  const renderBiome = portal.biome === 'final' ? 'volcanic' : portal.biome;
+  game.currentBiome = renderBiome as import('../constants').Biome;
+
+  // Purge all enemies from old zone
+  game.enemies = [];
+  game.enemyArchers = [];
+  game.enemyWraiths = [];
+  game.enemyHounds = [];
+  game.enemyLichs = [];
+  game.enemyShadowAssassins = [];
+  game.enemyFlameCallers = [];
+  game.enemyCorruptedSentinels = [];
+  game.enemyDungeonRats = [];
+  game.enemyFireImps = [];
+  game.enemyCursedKnights = [];
+  game.projectiles = [];
+
+  // Generate next zone flags
+  const newFlags = generateZoneFlags(nextZone);
+  // Forgotten Land modifier: strip buildings from new flags
+  if (portal.modifiers.includes('forgottenLand')) {
+    for (const f of newFlags) {
+      delete f.buildingType;
+    }
+  }
+  game.flags = [...game.flags, ...newFlags];
+  game.currentZone = nextZone;
+
+  game.smithingBonusStacks = 0;
+  game.heroSkills = { ...game.heroSkills, secondWindAvailable: true, naturesGraceAvailable: true };
+
+  // Spawn at the dead boss's flag — it becomes the start of the new biome
+  const oldZoneLastFlagIdx = game.flags.length - newFlags.length - 1;
+  const portalX = oldZoneLastFlagIdx >= 0 ? game.flags[oldZoneLastFlagIdx].x : game.hero.x;
+
+  // Advance portal so hero can't retreat past it
+  if (oldZoneLastFlagIdx >= 0) {
+    game.portalFlagIndex = oldZoneLastFlagIdx;
+  }
+
+  // Camera left clamp — can't scroll back past the boss flag
+  game.cameraMinX = Math.max(0, portalX - 50);
+
+  // Teleport hero + allies to the boss flag
+  game.hero = { ...game.hero, x: portalX };
+  game.allies = game.allies.map(a => ({
+    ...a,
+    x: portalX + 10 + Math.random() * 30,
+  }));
+
+  // Snap camera to new position
+  game.cameraX = Math.max(game.cameraMinX, portalX - 100);
+
+  // Death flash effect for visual transition
+  game.bossDeathFlash = true;
+
+  // Zone entry particle
+  game.particles = [
+    ...game.particles,
+    { id: Math.random().toString(36).slice(2), x: portalX + 16, y: GROUND_Y - 50, text: `🌀 ZONE ${nextZone + 1}`, color: '#a855f7', age: 0 } as any,
+    { id: Math.random().toString(36).slice(2), x: portalX + 16, y: GROUND_Y - 70, text: `🚩 ${portal.difficulty.toUpperCase()} PATH`, color: DIFF_COLORS[portal.difficulty] || '#ccc', age: 0 } as any,
+  ];
+
+  // Clear portal choice (unpauses game)
+  game.pendingPortalChoice = null;
+}
+
+const DIFF_COLORS: Record<string, string> = { easy: '#4aff4a', medium: '#ffcc44', hard: '#ff4444' };
+
 export function processParticles(ts: TickState): void {
   let write = 0;
   for (let i = 0; i < ts.particles.length; i++) {

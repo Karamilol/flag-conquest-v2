@@ -127,4 +127,5 @@ export function processHeroMovement(ts: TickState): void {
       hero.x = heroXBefore + Math.min(effectiveSpeed, portalMinX - heroXBefore);
     }
   }
+
 }

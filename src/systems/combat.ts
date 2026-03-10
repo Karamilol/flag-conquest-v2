@@ -7,6 +7,7 @@ import { getRelicLevel } from '../relics';
 import { getChallengeRewardMult } from '../challenges';
 import { getAncientEffect, getAncientRelicLevel } from '../ancientRelics';
 import { getSkillDef } from '../skills';
+import { modHeroMult, modEnemyDamageReduction, modDuelistRewardActive, modEnemyRegenActive } from './modifierEffects';
 
 /** Hero auto-attack — branches on melee vs ranged */
 export function processHeroCombat(ts: TickState): void {
@@ -38,6 +39,8 @@ function processHeroMeleeCombat(ts: TickState, baseAtkCD: number, attackRange: n
   if (heroAtkSpdBonus > 0) atkCD = Math.max(10, Math.floor(atkCD * (1 - heroAtkSpdBonus / 100)));
   // Barracks building: hero +5% atk speed per barracks
   { const { barracks: barN, blueprintsMult: bpM } = ts.buildingCounts; if (barN > 0) atkCD = Math.max(10, Math.floor(atkCD * Math.max(0.7, 1 - 0.05 * barN * bpM))); }
+  // Fractured World: Duelist reward — hero attack speed +10%
+  if (modDuelistRewardActive(ts)) atkCD = Math.floor(atkCD * 0.9);
   hero.attackCooldown++;
   if (hero.attackCooldown < atkCD) return;
 
@@ -79,6 +82,8 @@ function processHeroMeleeCombat(ts: TickState, baseAtkCD: number, attackRange: n
   if (heroDmgFlat > 0) heroDmg += Math.floor(heroDmgFlat);
   const heroDmgPct = getRegaliaBonus(ts, 'heroDamagePct');
   if (heroDmgPct > 0) heroDmg = Math.floor(heroDmg * (1 + heroDmgPct / 100));
+  // Fractured World: hero damage multiplier
+  heroDmg = Math.floor(heroDmg * modHeroMult(ts));
   // Hero base crit + Knife (3% per level) + War Shrine (3% per building) + Regalia
   let heroCrit = false;
   let heroCritChance = getClassDef(ts.heroClass).baseStats.critChance;
@@ -119,6 +124,8 @@ function processHeroMeleeCombat(ts: TickState, baseAtkCD: number, attackRange: n
     if (Math.abs(e.x - hero.x) >= attackRange) return;
     let dmg = heroDmg;
     if (e.defense) dmg = Math.max(1, dmg - e.defense);
+    const modReduction = modEnemyDamageReduction(ts);
+    if (modReduction > 0) dmg = Math.max(1, Math.floor(dmg * (1 - modReduction)));
     if ((e.markedTimer || 0) > 0) dmg = Math.floor(dmg * 1.3);
     e.health -= dmg;
     e.lastDamageTime = ts.frame;
@@ -172,6 +179,8 @@ function processHeroRangedCombat(ts: TickState, baseAtkCD: number, attackRange: 
   if (rangedHeroAtkSpd > 0) atkCD = Math.max(10, Math.floor(atkCD * (1 - rangedHeroAtkSpd / 100)));
   // Barracks building: hero +5% atk speed per barracks
   { const { barracks: barN, blueprintsMult: bpM } = ts.buildingCounts; if (barN > 0) atkCD = Math.max(10, Math.floor(atkCD * Math.max(0.7, 1 - 0.05 * barN * bpM))); }
+  // Fractured World: Duelist reward — hero attack speed +10%
+  if (modDuelistRewardActive(ts)) atkCD = Math.floor(atkCD * 0.9);
   hero.attackCooldown++;
   if (hero.attackCooldown < atkCD) return;
 
@@ -216,6 +225,8 @@ function processHeroRangedCombat(ts: TickState, baseAtkCD: number, attackRange: 
   if (rangedHeroDmgFlat > 0) arrowDmg += Math.floor(rangedHeroDmgFlat);
   const rangedHeroDmgPct = getRegaliaBonus(ts, 'heroDamagePct');
   if (rangedHeroDmgPct > 0) arrowDmg = Math.floor(arrowDmg * (1 + rangedHeroDmgPct / 100));
+  // Fractured World: hero damage multiplier
+  arrowDmg = Math.floor(arrowDmg * modHeroMult(ts));
   // Hero base crit + Knife (3% per level) + War Shrine (3% per building) + Regalia
   let rangedHeroCritChance = getClassDef(ts.heroClass).baseStats.critChance;
   const rangedKnifeLv = getRelicLevel(ts.relicCollection['knife'] || 0);
@@ -285,6 +296,8 @@ function processHeroChainLightning(ts: TickState, baseAtkCD: number, attackRange
   const heroAtkSpd = getRegaliaBonus(ts, 'heroAttackSpeed');
   if (heroAtkSpd > 0) atkCD = Math.max(10, Math.floor(atkCD * (1 - heroAtkSpd / 100)));
   { const { barracks: barN, blueprintsMult: bpM } = ts.buildingCounts; if (barN > 0) atkCD = Math.max(10, Math.floor(atkCD * Math.max(0.7, 1 - 0.05 * barN * bpM))); }
+  // Fractured World: Duelist reward — hero attack speed +10%
+  if (modDuelistRewardActive(ts)) atkCD = Math.floor(atkCD * 0.9);
   hero.attackCooldown++;
   if (hero.attackCooldown < atkCD) return;
 
@@ -308,6 +321,8 @@ function processHeroChainLightning(ts: TickState, baseAtkCD: number, attackRange
   if (heroDmgFlat > 0) heroDmg += Math.floor(heroDmgFlat);
   const heroDmgPct = getRegaliaBonus(ts, 'heroDamagePct');
   if (heroDmgPct > 0) heroDmg = Math.floor(heroDmg * (1 + heroDmgPct / 100));
+  // Fractured World: hero damage multiplier
+  heroDmg = Math.floor(heroDmg * modHeroMult(ts));
 
   // Arcane Intellect buff check
   if (tickSkillBuffActive(ts, 'arcaneIntellect')) heroDmg = Math.floor(heroDmg * 1.2);

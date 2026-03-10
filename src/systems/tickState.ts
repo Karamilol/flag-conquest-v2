@@ -161,6 +161,12 @@ export interface TickState {
   onCollectPet: (petId: string) => void;
   readonly ownedPets: string[];
 
+  // Fractured World state
+  activeModifiers: string[];
+  activeCurse: string | null;
+  curseRewards: string[];
+  pendingPortalChoice: import('../types').PortalChoiceData[] | null;
+
   // Dev tools
   devGodMode?: boolean;
   devSpawnMult?: number;

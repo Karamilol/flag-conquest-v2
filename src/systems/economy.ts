@@ -15,6 +15,7 @@ import { applyShardUpgrades, applyRelicEffects, applyAncientRelicSpawnEffects, a
 import { grantEliteRewards } from './elites';
 import { rollRegaliaDrop, getRandomSlot, MOB_RARITY_POOL, RARITY_COLORS, buildUnlockFilter } from '../regalias';
 import { getPetDef } from '../pets';
+import { modKillGoldMult, modPassiveIncomeMult, modVoidTouchedMult, modHealingWellsActive, modCorruptionActive, modMartyrdomActive, modMartyrdomRewardActive, modNoChestDrops } from './modifierEffects';
 
 /** Process passive income tiers and hero HP regen */
 export function processEconomy(ts: TickState): void {
@@ -26,13 +27,13 @@ export function processEconomy(ts: TickState): void {
       ts.regenTimer = ts.regenTimer + 1;
       if (ts.regenTimer >= 120 && hero.health < hero.maxHealth && hero.health > 0) {
         ts.regenTimer = 0;
-        const regenAmount = Math.max(1, Math.floor(hero.maxHealth * 0.008));
+        const regenAmount = Math.max(1, Math.floor(hero.maxHealth * 0.008 * modVoidTouchedMult(ts)));
         hero.health = Math.min(hero.maxHealth, hero.health + regenAmount);
         ts.particles.push(makeParticle(hero.x + 16, hero.y - 5, `+${regenAmount}`, '#4aff4a'));
       }
     }
     if (tickHasArtifact(ts, 'regeneration') && hero.health > 0 && hero.health < hero.maxHealth && ts.frame % 60 === 0) {
-      const vitalityHeal = Math.max(1, Math.floor(hero.maxHealth * 0.02));
+      const vitalityHeal = Math.max(1, Math.floor(hero.maxHealth * 0.02 * modVoidTouchedMult(ts)));
       hero.health = Math.min(hero.maxHealth, hero.health + vitalityHeal);
     }
     if (ts.blessingCooldown > 0) ts.blessingCooldown--;
@@ -52,7 +53,7 @@ export function processEconomy(ts: TickState): void {
   const harvestActive = tickSkillBuffActive(ts, 'harvest');
   // Regalia: global gold bonus applies to income too
   const rGoldBonusIncome = getRegaliaBonus(ts, 'goldBonusPct');
-  const harvestMult = (harvestActive ? 1.5 : 1) * (1 + rGoldBonusIncome / 100);
+  const harvestMult = (harvestActive ? 1.5 : 1) * (1 + rGoldBonusIncome / 100) * modPassiveIncomeMult(ts);
 
   // Harvest gold rain animation: scatter gold coins around hero while active
   if (harvestActive && ts.frame % 10 === 0) {
@@ -418,7 +419,7 @@ export function processEconomy(ts: TickState): void {
     ts.regenTimer = ts.regenTimer + 1;
     if (ts.regenTimer >= 120 && hero.health < hero.maxHealth && hero.health > 0) {
       ts.regenTimer = 0;
-      const regenAmount = Math.max(1, Math.floor(hero.maxHealth * 0.008));
+      const regenAmount = Math.max(1, Math.floor(hero.maxHealth * 0.008 * modVoidTouchedMult(ts)));
       hero.health = Math.min(hero.maxHealth, hero.health + regenAmount);
       ts.particles.push(makeParticle(hero.x + 16, hero.y - 5, `+${regenAmount}`, '#4aff4a'));
     }
@@ -426,17 +427,41 @@ export function processEconomy(ts: TickState): void {
 
   // Regeneration artifact: hero regens 2% HP/sec always (bypasses damage delay, applied once per second)
   if (tickHasArtifact(ts, 'regeneration') && hero.health > 0 && hero.health < hero.maxHealth && ts.frame % 60 === 0) {
-    const vitalityHeal = Math.max(1, Math.floor(hero.maxHealth * 0.02));
+    const vitalityHeal = Math.max(1, Math.floor(hero.maxHealth * 0.02 * modVoidTouchedMult(ts)));
     hero.health = Math.min(hero.maxHealth, hero.health + vitalityHeal);
   }
 
   // Ancient Relic: Titan's Heart — HP regen/sec scales with level
   if (ts.ancientRelicsOwned.includes('titansHeart') && hero.health > 0 && hero.health < hero.maxHealth && ts.frame % 60 === 0) {
     const titanEff = getAncientEffect('titansHeart', getAncientRelicLevel(ts.ancientRelicCopies['titansHeart'] || 1));
-    const titanHeal = Math.max(1, Math.floor(hero.maxHealth * (titanEff.regenPct || 0.003)));
+    const titanHeal = Math.max(1, Math.floor(hero.maxHealth * (titanEff.regenPct || 0.003) * modVoidTouchedMult(ts)));
     hero.health = Math.min(hero.maxHealth, hero.health + titanHeal);
   }
   } // end Cursed Lands heal skip
+
+  // Fractured World: Healing Wells — all units regen 1% HP/sec
+  if (modHealingWellsActive(ts) && ts.frame % 60 === 0) {
+    if (hero.health > 0 && hero.health < hero.maxHealth) {
+      const wellHeal = Math.max(1, Math.floor(hero.maxHealth * 0.01));
+      hero.health = Math.min(hero.maxHealth, hero.health + wellHeal);
+    }
+    for (const a of ts.allies) {
+      if (a.health > 0 && a.health < a.maxHealth) {
+        const wellHeal = Math.max(1, Math.floor(a.maxHealth * 0.01));
+        a.health = Math.min(a.maxHealth, a.health + wellHeal);
+      }
+    }
+  }
+
+  // Fractured World: Corruption — allies lose 0.5% max HP/sec
+  if (modCorruptionActive(ts) && ts.frame % 60 === 0) {
+    for (const a of ts.allies) {
+      if (a.health > 0 && !a.isPet) {
+        a.health -= Math.max(1, Math.floor(a.maxHealth * 0.005));
+        if (a.health < 1) a.health = 1; // Don't kill, just bring to 1
+      }
+    }
+  }
 
   // Blessing cooldown tick
   if (ts.blessingCooldown > 0) ts.blessingCooldown--;
@@ -626,10 +651,30 @@ export function processRelicFlagHaven(_ts: TickState): void {
   // flagHaven relic removed in relic v2
 }
 
+/** Martyrdom reward: enemy deaths detonate for 3% max HP to nearby enemies */
+function applyMartyrdomRewardAoE(ts: TickState, x: number): void {
+  if (!modMartyrdomRewardActive(ts)) return;
+  const RADIUS = 60;
+  const allEnemyArrays = [ts.enemies, ts.enemyArchers, ts.enemyWraiths, ts.enemyHounds, ts.enemyLichs,
+    ts.enemyShadowAssassins, ts.enemyFlameCallers, ts.enemyCorruptedSentinels, ts.enemyDungeonRats, ts.enemyFireImps, ts.enemyCursedKnights];
+  for (const arr of allEnemyArrays) {
+    for (const e of arr) {
+      if (Math.abs(e.x - x) < RADIUS && e.health > 0) {
+        const dmg = Math.floor((e as any).maxHealth * 0.03);
+        e.health -= dmg;
+      }
+    }
+  }
+  if (ts.boss && ts.boss.health > 0 && Math.abs(ts.boss.x - x) < RADIUS) {
+    ts.boss.health -= Math.floor(ts.boss.maxHealth * 0.03);
+  }
+  ts.particles.push(makeParticle(x, GROUND_Y - 30, '💀', '#ff6644'));
+}
+
 /** Try to spawn a chest at a given position (drop rate soft-capped by active enemy count) */
 export function trySpawnChest(ts: TickState, x: number, y: number): void {
-  // Embargo: no chests from kills
-  if (ts.challengeId === 'embargo') return;
+  // Embargo challenge or modifier: no chests from kills
+  if (ts.challengeId === 'embargo' || modNoChestDrops(ts)) return;
   // Soft cap: more active enemies = lower per-kill drop rate, keeps chests/min steady
   const activeEnemies = ts.enemies.length + ts.enemyArchers.length + ts.enemyWraiths.length + ts.enemyHounds.length + ts.enemyLichs.length;
   const luckyMult = 1;
@@ -680,7 +725,7 @@ export function trySpawnChest(ts: TickState, x: number, y: number): void {
 export function processDeathRewards(ts: TickState): void {
   const gdLevel = ts.runUpgrades?.goldBonus || 0;
   const gdMult = goldDropMult(gdLevel);
-  const zkMult = zoneKillGoldMult(ts.currentZone);
+  const zkMult = zoneKillGoldMult(ts.currentZone) * modKillGoldMult(ts);
   // Challenge: Horde Mode / Embargo — no gold from kills
   const noKillGold = ts.challengeId === 'hordeMode' || ts.challengeId === 'embargo';
   // Reward: Scavenger's Bounty (Famine completion) — kill gold bonus (L1=25%, L2=37.5%, L3=50%)
@@ -748,6 +793,7 @@ export function processDeathRewards(ts: TickState): void {
         ts.enemiesKilled++;
         ts.particles.push(makeParticle(e.x + 20, e.y - 12, `+${formatNumber(gold)}g`, e.isElite ? '#ff4444' : '#ffd700'));
         if (!e.isLichSkeleton) trySpawnChest(ts, e.x, e.y);
+        applyMartyrdomRewardAoE(ts, e.x);
         // Riches: hero kills have increased chance to drop consumable chest
         if (tickHasArtifact(ts, 'riches') && e.lastHitByHero && Math.random() < 0.05) {
           ts.chests.push({ id: uid(), x: e.x + 10, y: GROUND_Y - 20, type: 'consumable', value: 0, age: 0, consumableId: 'healingPotion' as any });
@@ -799,6 +845,7 @@ export function processDeathRewards(ts: TickState): void {
         ts.enemiesKilled++;
         ts.particles.push(makeParticle(a.x + 20, a.y - 12, `+${formatNumber(gold)}g`, a.isElite ? '#ff4444' : '#ffd700'));
         trySpawnChest(ts, a.x, a.y);
+        applyMartyrdomRewardAoE(ts, a.x);
         // Riches: hero kills have increased chance to drop consumable chest
         if (tickHasArtifact(ts, 'riches') && a.lastHitByHero && Math.random() < 0.05) {
           ts.chests.push({ id: uid(), x: a.x + 10, y: GROUND_Y - 20, type: 'consumable', value: 0, age: 0, consumableId: 'healingPotion' as any });
@@ -836,6 +883,7 @@ export function processDeathRewards(ts: TickState): void {
         ts.enemiesKilled++;
         ts.particles.push(makeParticle(w.x + 20, w.y - 12, `+${formatNumber(gold)}g`, w.isElite ? '#ff4444' : '#ffd700'));
         trySpawnChest(ts, w.x, w.y);
+        applyMartyrdomRewardAoE(ts, w.x);
         // Riches: hero kills have increased chance to drop consumable chest
         if (tickHasArtifact(ts, 'riches') && w.lastHitByHero && Math.random() < 0.05) {
           ts.chests.push({ id: uid(), x: w.x + 10, y: GROUND_Y - 20, type: 'consumable', value: 0, age: 0, consumableId: 'healingPotion' as any });
@@ -873,6 +921,7 @@ export function processDeathRewards(ts: TickState): void {
         ts.enemiesKilled++;
         ts.particles.push(makeParticle(hd.x + 20, hd.y - 12, `+${formatNumber(gold)}g`, hd.isElite ? '#ff4444' : '#ffd700'));
         trySpawnChest(ts, hd.x, hd.y);
+        applyMartyrdomRewardAoE(ts, hd.x);
         // Riches: hero kills have increased chance to drop consumable chest
         if (tickHasArtifact(ts, 'riches') && hd.lastHitByHero && Math.random() < 0.05) {
           ts.chests.push({ id: uid(), x: hd.x + 10, y: GROUND_Y - 20, type: 'consumable', value: 0, age: 0, consumableId: 'healingPotion' as any });
@@ -910,6 +959,7 @@ export function processDeathRewards(ts: TickState): void {
         ts.enemiesKilled++;
         ts.particles.push(makeParticle(l.x + 20, l.y - 12, `+${formatNumber(gold)}g`, l.isElite ? '#ff4444' : '#ffd700'));
         trySpawnChest(ts, l.x, l.y);
+        applyMartyrdomRewardAoE(ts, l.x);
         // Riches: hero kills have increased chance to drop consumable chest
         if (tickHasArtifact(ts, 'riches') && l.lastHitByHero && Math.random() < 0.05) {
           ts.chests.push({ id: uid(), x: l.x + 10, y: GROUND_Y - 20, type: 'consumable', value: 0, age: 0, consumableId: 'healingPotion' as any });
@@ -950,6 +1000,7 @@ export function processDeathRewards(ts: TickState): void {
         ts.enemiesKilled++;
         ts.particles.push(makeParticle(sa.x + 20, sa.y - 12, `+${formatNumber(gold)}g`, sa.isElite ? '#ff4444' : '#ffd700'));
         trySpawnChest(ts, sa.x, sa.y);
+        applyMartyrdomRewardAoE(ts, sa.x);
         // Riches: hero kills have increased chance to drop consumable chest
         if (tickHasArtifact(ts, 'riches') && sa.lastHitByHero && Math.random() < 0.05) {
           ts.chests.push({ id: uid(), x: sa.x + 10, y: GROUND_Y - 20, type: 'consumable', value: 0, age: 0, consumableId: 'healingPotion' as any });
@@ -988,6 +1039,7 @@ export function processDeathRewards(ts: TickState): void {
         ts.enemiesKilled++;
         ts.particles.push(makeParticle(fc.x + 20, fc.y - 12, `+${formatNumber(gold)}g`, fc.isElite ? '#ff4444' : '#ffd700'));
         trySpawnChest(ts, fc.x, fc.y);
+        applyMartyrdomRewardAoE(ts, fc.x);
         // Riches: hero kills have increased chance to drop consumable chest
         if (tickHasArtifact(ts, 'riches') && fc.lastHitByHero && Math.random() < 0.05) {
           ts.chests.push({ id: uid(), x: fc.x + 10, y: GROUND_Y - 20, type: 'consumable', value: 0, age: 0, consumableId: 'healingPotion' as any });
@@ -1026,6 +1078,7 @@ export function processDeathRewards(ts: TickState): void {
         ts.enemiesKilled++;
         ts.particles.push(makeParticle(cs.x + 20, cs.y - 12, `+${formatNumber(gold)}g`, cs.isElite ? '#ff4444' : '#ffd700'));
         trySpawnChest(ts, cs.x, cs.y);
+        applyMartyrdomRewardAoE(ts, cs.x);
         // Riches: hero kills have increased chance to drop consumable chest
         if (tickHasArtifact(ts, 'riches') && cs.lastHitByHero && Math.random() < 0.05) {
           ts.chests.push({ id: uid(), x: cs.x + 10, y: GROUND_Y - 20, type: 'consumable', value: 0, age: 0, consumableId: 'healingPotion' as any });
@@ -1059,6 +1112,7 @@ export function processDeathRewards(ts: TickState): void {
       ts.enemiesKilled++;
       ts.particles.push(makeParticle(dr.x + 10, dr.y - 8, `+${formatNumber(gold)}g`, dr.isElite ? '#ff4444' : '#ffd700'));
       trySpawnChest(ts, dr.x, dr.y);
+      applyMartyrdomRewardAoE(ts, dr.x);
       if (tickHasSynergy(ts, 'heroPair2') && dr.lastHitByHero) {
         const stacks = Math.min(8, (ts.hero.momentumStacks || 0) + 1);
         ts.hero.momentumStacks = stacks;
@@ -1097,6 +1151,7 @@ export function processDeathRewards(ts: TickState): void {
       ts.enemiesKilled++;
       ts.particles.push(makeParticle(fi.x + 10, fi.y - 8, `+${formatNumber(gold)}g`, fi.isElite ? '#ff4444' : '#ffd700'));
       trySpawnChest(ts, fi.x, fi.y);
+      applyMartyrdomRewardAoE(ts, fi.x);
       if (tickHasSynergy(ts, 'heroPair2') && fi.lastHitByHero) {
         const stacks = Math.min(8, (ts.hero.momentumStacks || 0) + 1);
         ts.hero.momentumStacks = stacks;
@@ -1123,6 +1178,7 @@ export function processDeathRewards(ts: TickState): void {
       ts.enemiesKilled++;
       ts.particles.push(makeParticle(ck.x + 10, ck.y - 8, `+${formatNumber(gold)}g`, ck.isElite ? '#ff4444' : '#ffd700'));
       trySpawnChest(ts, ck.x, ck.y);
+      applyMartyrdomRewardAoE(ts, ck.x);
       if (tickHasSynergy(ts, 'heroPair2') && ck.lastHitByHero) {
         const stacks = Math.min(8, (ts.hero.momentumStacks || 0) + 1);
         ts.hero.momentumStacks = stacks;
@@ -1189,6 +1245,30 @@ export function processAllyDeaths(ts: TickState): void {
           nearestAlly.health = Math.min(nearestAlly.maxHealth, nearestAlly.health + healAmt);
           ts.particles.push(makeParticle(nearestAlly.x + 10, nearestAlly.y - 15, `+${healAmt} BRETHREN`, '#88ffaa'));
         }
+      }
+      // Fractured World: Martyrdom — dying allies explode for 10% max HP AoE
+      if (modMartyrdomActive(ts)) {
+        const aoeDmg = Math.floor(a.maxHealth * 0.10);
+        // Damage nearby allies
+        for (const other of ts.allies) {
+          if (other.id !== a.id && other.health > 0 && !other.isPet && Math.abs(other.x - a.x) < 60) {
+            other.health -= aoeDmg;
+          }
+        }
+        // Damage nearby enemies
+        for (const e of ts.enemies) {
+          if (e.health > 0 && Math.abs(e.x - a.x) < 60) e.health -= aoeDmg;
+        }
+        for (const e of ts.enemyArchers) {
+          if (e.health > 0 && Math.abs(e.x - a.x) < 60) e.health -= aoeDmg;
+        }
+        for (const e of ts.enemyWraiths) {
+          if (e.health > 0 && Math.abs(e.x - a.x) < 60) e.health -= aoeDmg;
+        }
+        for (const e of ts.enemyHounds) {
+          if (e.health > 0 && Math.abs(e.x - a.x) < 60) e.health -= aoeDmg;
+        }
+        ts.particles.push(makeParticle(a.x, a.y - 20, `💥 MARTYRDOM`, '#ff4444'));
       }
       // Record death for Lich necromancy
       ts.recentAllyDeaths.push({

@@ -253,6 +253,13 @@ export function createInitialState(upgrades: PermanentUpgrades, heroClassId: Her
     timedDungeonPortalTimer: 0,
     timedDungeonPortalFlagId: -1,
     dungeonTicksSpent: 0,
+    // Fractured World state
+    activeModifiers: [],
+    activeCurse: null,
+    curseRewards: [],
+    pendingPortalChoice: null,
+    currentBiome: 'forest' as const,
+    cameraMinX: 0,
     // Elite mini-boss state
     eliteLastSpawnFrame: -99999,
     activeEliteId: null,
