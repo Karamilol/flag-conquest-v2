@@ -31,7 +31,7 @@ function copyArray<T extends object>(arr: T[]): T[] {
 
 /** Run one game tick: build TickState, run all systems, return new GameState */
 function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upgrades: PermanentUpgrades, shardUpgrades: ShardUpgrades, relicCollection: RelicCollection, cameraMode: CameraMode, ancientRelicsOwned: string[], ancientRelicCopies: Record<string, number>, backpack: Backpack, onCollectConsumable: (id: ConsumableId) => void, challengeCompletions: ChallengeCompletions, equippedRegalias: Record<RegaliaSlot, Regalia | null>, onCollectRegalia: (regalia: Regalia) => void, equippedPet: string, ownedPets: string[], onCollectPet: (petId: string) => void): GameState {
-  if (prev.gameOver || prev.pendingArtifactChoice || prev.pendingRelicChoice || prev.pendingRoll || prev.pendingSkillChoice || prev.tutorialDialogueVisible || prev.challengeLevelUpPending || prev.devPaused) return prev;
+  if (prev.gameOver || prev.pendingArtifactChoice || prev.pendingRelicChoice || prev.pendingRoll || prev.pendingSkillChoice || prev.tutorialDialogueVisible || prev.devPaused) return prev;
   // Guard: StrictMode double-invokes state updaters — only increment once per tick
   const expectedFrame = prev.frame + 1;
   if (frameRef.current < expectedFrame) frameRef.current = expectedFrame;
@@ -716,7 +716,21 @@ function handleDungeonExit(g: GameState): DungeonExitInfo | null {
   g.lastEliteVariants = ss.lastEliteVariants;
   g.unitSlots = ss.unitSlots;
   g.allies = ss.allies.map(a => ({ ...a, x: portalX + Math.random() * 30 }));
-  g.runUpgrades = ss.runUpgrades;
+
+  // Merge run upgrades: restore saved combat levels, but keep any non-combat
+  // upgrades (income, goldBonus, etc.) the player bought while inside the dungeon
+  const combatKeys = new Set(['hero', 'soldier', 'archer', 'halberd', 'knight', 'wizard', 'cleric', 'conjurer', 'bombard']);
+  const merged: Record<string, number> = {};
+  for (const key of Object.keys(ss.runUpgrades)) {
+    merged[key] = combatKeys.has(key) ? (ss.runUpgrades as any)[key] : Math.max((ss.runUpgrades as any)[key] || 0, (g.runUpgrades as any)?.[key] || 0);
+  }
+  // Pick up any new keys bought inside dungeon that didn't exist before
+  for (const key of Object.keys(g.runUpgrades || {})) {
+    if (!(key in merged) && !combatKeys.has(key)) {
+      merged[key] = (g.runUpgrades as any)[key];
+    }
+  }
+  g.runUpgrades = merged as typeof g.runUpgrades;
 
   // Hero: restore saved hero, place at portal, clamp health
   const savedHero = ss.hero;
@@ -900,7 +914,7 @@ export function useGameLoop(
         if (!state.gameOver) _gameOverSignaled = false;
 
         // Signal React ONLY for modal events that need overlay rendering
-        if (state.pendingArtifactChoice || state.pendingRelicChoice || state.pendingRoll || state.pendingSkillChoice || state.challengeLevelUpPending) {
+        if (state.pendingArtifactChoice || state.pendingRelicChoice || state.pendingRoll || state.pendingSkillChoice) {
           onModalEventRef.current();
         }
       }

@@ -3,7 +3,8 @@ import type { GameState, CameraMode, Artifact, PermanentUpgrades, ShardUpgrades,
 import type { RelicCollection } from '../../relics';
 import type { Regalia, RegaliaSlot } from '../../regalias';
 import type { KeyBindings, ActionId } from '../../keybindings';
-import { VIEWPORT_W, VIEWPORT_H, DISPLAY_W, DISPLAY_H, COLORS, GROUND_Y } from '../../constants';
+import { VIEWPORT_W, VIEWPORT_H, DISPLAY_W, DISPLAY_H, COLORS, GROUND_Y, UNIT_STATS } from '../../constants';
+import { computeFullUnitStats, type UnitType } from '../../utils/unitStats';
 import { drawEntities } from '../../canvasRenderer';
 import { TileCache } from '../../rendering/tileRenderer';
 import { PixiRenderer } from '../../rendering/pixiRenderer';
@@ -13,7 +14,9 @@ import GameHUD from './GameHUD';
 import { ArtifactPicker } from './ArtifactPicker';
 import { SkillPicker } from './SkillPicker';
 import { RelicPicker } from './RelicPicker';
+import { TutorialOverlay } from '../../tutorial/TutorialOverlay';
 import { ShopPanel, ShopTabs } from './ShopPanel';
+import { DungeonShopPanel } from './DungeonShopPanel';
 import { BackpackPanel } from './BackpackPanel';
 import { AchievementPanel } from './AchievementPanel';
 import { RelicPanel } from './RelicPanel';
@@ -51,6 +54,9 @@ interface GameViewProps {
   buyRunUpgrade: (type: string, cost: number) => void;
   buyRunUpgradeMulti: (type: string, totalCost: number, levels: number) => void;
   onRoll: () => void;
+  onConfirmRoll: () => void;
+  onReroll: () => void;
+  extraRerolls: number;
   movePortalForward: () => void;
   toggleAutoPortal: () => void;
   onReturnHome: () => void;
@@ -106,6 +112,22 @@ interface GameViewProps {
   devWarpZone?: (zone: number) => void;
   devEnterWaveDungeon?: () => void;
   devEnterTimedDungeon?: () => void;
+  onEnterDungeon?: () => void;
+  onEnterTimedDungeon?: () => void;
+  // Dungeon shop callbacks
+  dungeonBuyUnit?: () => void;
+  dungeonBuyMeleeBoost?: () => void;
+  dungeonBuyRangedBoost?: () => void;
+  dungeonBuyMagicBoost?: () => void;
+  dungeonBuyMetaUpgrade?: (key: keyof import('../../types').DungeonMetaUpgrades) => void;
+  dungeonSetAllyMode?: (mode: 'advance' | 'hold' | 'retreat') => void;
+  tutorialHighlights?: { roll?: boolean; heroUpgrade?: boolean; income?: boolean; portalTab?: boolean; retreatButton?: boolean; forwardButton?: boolean; backButton?: boolean };
+  tutorialDialogue?: import('../../tutorial/tutorialData').TutorialDialogue | null;
+  tutorialDialogueIndex?: number;
+  tutorialPlayerName?: string;
+  tutorialDarkOverlay?: boolean;
+  onTutorialAdvance?: () => void;
+  onTutorialNameSubmit?: (name: string) => void;
 }
 
 export default function GameView({
@@ -114,7 +136,7 @@ export default function GameView({
   musicTrack, musicPaused, onMusicNext, onMusicPrev, onMusicToggle,
   shopTab, setShopTab, upgrades, shardUpgrades, challengeCompletions,
   relicCollection, ancientRelicsOwned, ancientRelicCopies, highestZone, highestFlags,
-  buyRunUpgrade, buyRunUpgradeMulti, onRoll, movePortalForward, toggleAutoPortal, onReturnHome,
+  buyRunUpgrade, buyRunUpgradeMulti, onRoll, onConfirmRoll, onReroll, extraRerolls, movePortalForward, toggleAutoPortal, onReturnHome,
   regaliaEquipped,
   settingsOpen, volume, setVolume, sfxVolume, setSfxVolume, setShowHpNumbers, setKillParticles, hideNotifications, setHideNotifications,
   keybindings, setKeybindings, rebindingAction, setRebindingAction,
@@ -126,7 +148,11 @@ export default function GameView({
   blockedTracks, setBlockedTracks, allTracks, playTrack, activeBiome,
   showFps, setShowFps, fpsValue,
   devSpawnArtifact, devSpawnRegalia, devSpawnRelic, devWarpZone,
-  devEnterWaveDungeon, devEnterTimedDungeon,
+  devEnterWaveDungeon, devEnterTimedDungeon, onEnterDungeon, onEnterTimedDungeon,
+  dungeonBuyUnit, dungeonBuyMeleeBoost, dungeonBuyRangedBoost, dungeonBuyMagicBoost, dungeonBuyMetaUpgrade, dungeonSetAllyMode,
+  tutorialHighlights,
+  tutorialDialogue, tutorialDialogueIndex, tutorialPlayerName, tutorialDarkOverlay,
+  onTutorialAdvance, onTutorialNameSubmit,
 }: GameViewProps) {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const tileCacheRef = useRef(new TileCache());
@@ -299,29 +325,61 @@ export default function GameView({
     const wasDragging = dragRef.current.isDragging;
     dragRef.current = null;
 
-    // Click-to-collect: if it wasn't a drag, find nearest chest and teleport it to hero
+    // Click-to-collect / portal entry: if it wasn't a drag
     if (!wasDragging) {
       const g = gameRef.current;
-      if (!g || !g.chests?.length) return;
+      if (!g) return;
       const container = canvasContainerRef.current;
       if (!container) return;
       const rect = container.getBoundingClientRect();
       const clickX = (e.clientX - rect.left) * (VIEWPORT_W / rect.width) + (g.cameraX || 0);
       const clickY = (e.clientY - rect.top) * (VIEWPORT_H / rect.height);
-      const CHEST_RADIUS = 35;
-      let closestIdx = -1;
-      let closestDist = CHEST_RADIUS;
-      for (let i = 0; i < g.chests.length; i++) {
-        const c = g.chests[i];
-        const d = Math.hypot(c.x + 10 - clickX, c.y + 10 - clickY);
-        if (d < closestDist) { closestDist = d; closestIdx = i; }
+
+      // Portal click detection (before chest check so portals take priority)
+      if (!g.inDungeon) {
+        const PORTAL_RADIUS = 40;
+        // Wave dungeon portal
+        if (g.dungeonPortalTimer > 0 && g.dungeonPortalFlagId >= 0 && onEnterDungeon) {
+          const portalFlag = g.flags.find(f => f.id === g.dungeonPortalFlagId);
+          if (portalFlag) {
+            const portalX = portalFlag.x + 40;
+            const portalY = GROUND_Y - 20;
+            if (Math.hypot(clickX - portalX, clickY - portalY) < PORTAL_RADIUS) {
+              onEnterDungeon();
+              return;
+            }
+          }
+        }
+        // Timed dungeon portal
+        if (g.timedDungeonPortalTimer > 0 && g.timedDungeonPortalFlagId >= 0 && onEnterTimedDungeon) {
+          const portalFlag = g.flags.find(f => f.id === g.timedDungeonPortalFlagId);
+          if (portalFlag) {
+            const portalX = portalFlag.x + 40;
+            const portalY = GROUND_Y - 20;
+            if (Math.hypot(clickX - portalX, clickY - portalY) < PORTAL_RADIUS) {
+              onEnterTimedDungeon();
+              return;
+            }
+          }
+        }
       }
-      if (closestIdx >= 0) {
-        // Move chest to hero so processChestCollection picks it up next tick
-        g.chests[closestIdx].x = g.hero.x;
+
+      // Click-to-collect chests
+      if (g.chests?.length) {
+        const CHEST_RADIUS = 35;
+        let closestIdx = -1;
+        let closestDist = CHEST_RADIUS;
+        for (let i = 0; i < g.chests.length; i++) {
+          const c = g.chests[i];
+          const d = Math.hypot(c.x + 10 - clickX, c.y + 10 - clickY);
+          if (d < closestDist) { closestDist = d; closestIdx = i; }
+        }
+        if (closestIdx >= 0) {
+          g.chests[closestIdx].x = g.hero.x;
+        }
       }
     }
-  }, [gameRef]);
+  }, [gameRef, onEnterDungeon, onEnterTimedDungeon]);
 
   // === Movement callbacks ===
   const onMovePrev = useCallback(() => {
@@ -421,6 +479,10 @@ export default function GameView({
           onMusicClick={onMusicClick}
           musicClicks={musicClicks}
           onOpenTrackSelector={() => setTrackSelectorOpen(p => !p)}
+          keybindings={keybindings}
+          onUseConsumable={onUseConsumable}
+          tutorialHighlightForward={tutorialHighlights?.forwardButton}
+          tutorialHighlightBack={tutorialHighlights?.backButton}
         />
 
         {/* Track selector overlay */}
@@ -465,6 +527,92 @@ export default function GameView({
           <RelicPicker
             relics={game.pendingRelicChoice}
             onSelect={onSelectRelic}
+            relicCollection={relicCollection}
+          />
+        )}
+
+        {/* Reroll overlay */}
+        {game?.pendingRoll && (() => {
+          const unit = game.pendingRoll;
+          const stats = UNIT_STATS[unit.unitType as keyof typeof UNIT_STATS] as any;
+          const unitIcons: Record<string, string> = { soldier: '\u{1F5E1}\uFE0F', archer: '\u{1F3F9}', knight: '\u{1F6E1}\uFE0F', halberd: '\u{1F531}', wizard: '\u{1F9D9}', cleric: '\u{1FA7A}', conjurer: '\u{1F537}', bombard: '\u{1F4A3}' };
+          const unitIcon = unitIcons[unit.unitType] || '\u{2753}';
+          const starTiers: Record<string, string> = { soldier: '\u2605', archer: '\u2605\u2605', halberd: '\u2605\u2605', knight: '\u2605\u2605\u2605', wizard: '\u2605\u2605\u2605', cleric: '\u2605\u2605\u2605', conjurer: '\u2605\u2605\u2605\u2605', bombard: '\u2605\u2605\u2605\u2605' };
+          const starTier = starTiers[unit.unitType] || '\u2605\u2605';
+          const maxRerolls = 1 + extraRerolls;
+          const rerollsRemaining = maxRerolls - unit.rerollCount;
+          const rerollCost = unit.rerollCount + 1;
+          const hasFreeReroll = (game.freeRerolls || 0) > 0;
+          const hasVoucher = !hasFreeReroll && (backpack?.rerollVoucher || 0) > 0;
+          const canReroll = rerollsRemaining > 0 && (hasFreeReroll || hasVoucher || gems >= rerollCost);
+          const artifactIds = (game.artifacts || []).map((a: any) => a.id);
+          const bldgs = (game.flags || []).filter((f: any) => f.captured && f.buildingType).map((f: any) => f.buildingType!);
+          const computed = computeFullUnitStats(unit.unitType as UnitType, {
+            runLevel: game.runUpgrades?.[unit.unitType] || 0,
+            shardUpgrades, challengeCompletions, artifacts: artifactIds,
+            relicCollection, buildings: bldgs, bossesDefeated: game.bossesDefeated || 0,
+            challengeId: game.challengeId, equippedRegalias: regaliaEquipped,
+          });
+          const { health: computedHp, damage: computedDmg, defense: computedDef, attackRate: computedAtkRate } = computed.final;
+          return (
+            <div style={{
+              position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.75)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 30,
+            }}>
+              <div style={{
+                width: '85%', maxWidth: '340px',
+                background: 'linear-gradient(135deg, rgba(30,12,50,0.98) 0%, rgba(15,8,25,0.98) 100%)',
+                border: '2px solid #8a4adf', borderRadius: '8px',
+                padding: '16px 14px', textAlign: 'center',
+                boxShadow: '0 0 24px rgba(138,74,223,0.5), 0 8px 24px rgba(0,0,0,0.6)',
+              }}>
+                <div style={{ fontSize: '13px', color: '#ffd700', marginBottom: '10px', textShadow: '0 0 8px rgba(255,215,0,0.5)' }}>
+                  {'\u{1F3B2}'} UNIT ROLLED!
+                </div>
+                <div style={{ fontSize: '32px', marginBottom: '4px' }}>{unitIcon}</div>
+                <div style={{ fontSize: '15px', color: stats.color || '#fff', fontWeight: 'bold', marginBottom: '2px' }}>
+                  {stats.name || unit.unitType.charAt(0).toUpperCase() + unit.unitType.slice(1)}
+                </div>
+                <div style={{ fontSize: '10px', color: '#ffd700', marginBottom: '10px' }}>{starTier}</div>
+                <div style={{ fontSize: '11px', color: '#ccc', marginBottom: '14px', lineHeight: '1.8' }}>
+                  {'\u2764\uFE0F'}{computedHp}{'  '}{'\u2694\uFE0F'}{computedDmg}{'  '}{'\u{1F6E1}\uFE0F'}{computedDef}{'  '}{'\u26A1'}{(60 / computedAtkRate).toFixed(1)}/s
+                </div>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                  <button onClick={onConfirmRoll} style={{
+                    padding: '10px 20px', fontSize: '13px', fontFamily: 'inherit', fontWeight: 'bold',
+                    background: stats.color || COLORS.heroBlue, color: '#000', border: 'none',
+                    borderRadius: '6px', cursor: 'pointer',
+                  }}>
+                    {'\u2705'} KEEP
+                  </button>
+                  {rerollsRemaining > 0 && (
+                    <button onClick={onReroll} disabled={!canReroll} style={{
+                      padding: '10px 20px', fontSize: '13px', fontFamily: 'inherit', fontWeight: 'bold',
+                      background: canReroll ? '#a855f7' : 'rgba(20,15,30,0.85)', color: canReroll ? '#fff' : '#666',
+                      border: canReroll ? 'none' : '1px solid rgba(138,74,223,0.3)', borderRadius: '6px', cursor: canReroll ? 'pointer' : 'not-allowed',
+                    }}>
+                      {'\u{1F3B2}'} REROLL {hasFreeReroll ? '(FREE!)' : hasVoucher ? '(Voucher)' : `(${rerollCost}\u{1F48E})`}
+                    </button>
+                  )}
+                </div>
+                {rerollsRemaining <= 0 && (
+                  <div style={{ color: '#a855f7', fontSize: '10px', marginTop: '8px' }}>{maxRerolls > 1 ? 'All rerolls used!' : 'Reroll used!'}</div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Tutorial overlay */}
+        {tutorialDialogue && onTutorialAdvance && onTutorialNameSubmit && (
+          <TutorialOverlay
+            dialogue={tutorialDialogue}
+            dialogueIndex={tutorialDialogueIndex ?? 0}
+            playerName={tutorialPlayerName ?? ''}
+            darkOverlay={tutorialDarkOverlay ?? false}
+            onAdvance={onTutorialAdvance}
+            onNameSubmit={onTutorialNameSubmit}
           />
         )}
 
@@ -683,36 +831,53 @@ export default function GameView({
       {/* Shop panel — always visible during gameplay (matches old project) */}
       {game && (
         <div style={{ width: DISPLAY_W, fontFamily: F }}>
-          <ShopTabs
-            game={game}
-            shopTab={shopTab}
-            setShopTab={setShopTab}
-            purchaseMode={purchaseMode}
-            cycleMode={cyclePurchaseMode}
-          />
-          <div className="hide-scrollbar" style={{ maxHeight: 400, overflowY: 'auto', overflowX: 'hidden' }}>
-            <ShopPanel
+          {game.inDungeon && game.dungeonType === 'wave' && dungeonBuyUnit && dungeonBuyMeleeBoost && dungeonBuyRangedBoost && dungeonBuyMagicBoost && dungeonBuyMetaUpgrade && dungeonSetAllyMode ? (
+            <DungeonShopPanel
               game={game}
-              upgrades={upgrades}
-              shardUpgrades={shardUpgrades}
-              challengeCompletions={challengeCompletions}
-              relicCollection={relicCollection}
-              ancientRelicsOwned={ancientRelicsOwned}
-              ancientRelicCopies={ancientRelicCopies}
-              shopTab={shopTab}
-              setShopTab={setShopTab}
-              buyRunUpgrade={buyRunUpgrade}
-              buyRunUpgradeMulti={buyRunUpgradeMulti}
-              movePortalForward={movePortalForward}
-              toggleAutoPortal={toggleAutoPortal}
-              onRoll={onRoll}
-              onReturnHome={onReturnHome}
-              highestZone={highestZone}
-              highestFlags={highestFlags}
-              equippedRegalias={regaliaEquipped}
-              purchaseMode={purchaseMode}
+              unlockedUnits={upgrades.unlockedUnits as string[]}
+              onBuyUnit={dungeonBuyUnit}
+              onBuyMeleeBoost={dungeonBuyMeleeBoost}
+              onBuyRangedBoost={dungeonBuyRangedBoost}
+              onBuyMagicBoost={dungeonBuyMagicBoost}
+              onBuyMetaUpgrade={dungeonBuyMetaUpgrade}
+              onSetAllyMode={dungeonSetAllyMode}
             />
-          </div>
+          ) : (
+            <>
+              <ShopTabs
+                game={game}
+                shopTab={shopTab}
+                setShopTab={setShopTab}
+                purchaseMode={purchaseMode}
+                cycleMode={cyclePurchaseMode}
+                tutorialHighlightPortal={tutorialHighlights?.portalTab}
+              />
+              <div className="hide-scrollbar" style={{ maxHeight: 400, overflowY: 'auto', overflowX: 'hidden' }}>
+                <ShopPanel
+                  game={game}
+                  upgrades={upgrades}
+                  shardUpgrades={shardUpgrades}
+                  challengeCompletions={challengeCompletions}
+                  relicCollection={relicCollection}
+                  ancientRelicsOwned={ancientRelicsOwned}
+                  ancientRelicCopies={ancientRelicCopies}
+                  shopTab={shopTab}
+                  setShopTab={setShopTab}
+                  buyRunUpgrade={buyRunUpgrade}
+                  buyRunUpgradeMulti={buyRunUpgradeMulti}
+                  movePortalForward={movePortalForward}
+                  toggleAutoPortal={toggleAutoPortal}
+                  onRoll={onRoll}
+                  onReturnHome={onReturnHome}
+                  highestZone={highestZone}
+                  highestFlags={highestFlags}
+                  equippedRegalias={regaliaEquipped}
+                  purchaseMode={purchaseMode}
+                  tutorialHighlights={tutorialHighlights}
+                />
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

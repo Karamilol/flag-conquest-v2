@@ -70,7 +70,11 @@ export function RelicPicker({ relics, onSelect, relicCollection }: Props) {
               {(() => {
                 const copies = relicCollection?.[relic.id] || 0;
                 const level = getRelicLevel(copies);
-                if (copies === 0) return null;
+                if (copies === 0) return (
+                  <div style={{ fontSize: '8px', color: '#ffcc44', marginBottom: '2px' }}>
+                    {'\u2728'} NEW
+                  </div>
+                );
                 return (
                   <div style={{ fontSize: '8px', color: '#aaddaa', marginBottom: '2px' }}>
                     Owned — Lv {level} ({copies} {copies === 1 ? 'copy' : 'copies'})

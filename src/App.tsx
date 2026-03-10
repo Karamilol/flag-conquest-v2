@@ -11,13 +11,14 @@ import { useMusicManager } from './hooks/useMusicManager';
 import { preloadSprites, allSpritesLoaded } from './canvasRenderer';
 import { getClassDef } from './classes';
 import { heroTotalHp, heroTotalDmg, unitHpMult, unitDmgMult } from './utils/economy';
-import { rollUnitType, COLORS, GROUND_Y } from './constants';
+import { rollUnitType, COLORS, GROUND_Y, UNIT_STATS } from './constants';
 import { makeParticle, formatNumber, uid } from './utils/helpers';
 import { SHARD_UPGRADES } from './shardUpgrades';
 import { COSMETICS } from './cosmetics';
 import { getSalvageRewards, getUpgradeCost, levelUpRegalia, getEnhanceCost, enhanceModifier, getMaxStars, getTotalStars, addStar, STAR_COST, MAX_STASH, findAutoSalvageTarget, RARITY_COLORS as REGALIA_RARITY_COLORS, SLOT_ICONS, getModDisplayText } from './regalias';
 import { getChallengeDef, getChallengeShardsPerLevel } from './challenges';
-import { DEFAULT_KEYBINDINGS, ACTION_ORDER, ACTION_LABELS, displayKey } from './keybindings';
+import { getSkillDef } from './skills';
+import { DEFAULT_KEYBINDINGS, ACTION_ORDER, ACTION_LABELS, displayKey, matchesBinding } from './keybindings';
 import type { KeyBindings, ActionId } from './keybindings';
 import { uploadCloudSave, downloadCloudSave } from './firebase';
 import { getUnclaimedCount, ACHIEVEMENTS, checkAchievements } from './achievements';
@@ -34,6 +35,8 @@ import { DailyLoginPanel } from './components/ui/DailyLoginPanel';
 import { LeaderboardPanel } from './components/ui/LeaderboardPanel';
 import GameView from './components/ui/GameView';
 import VoidScene from './components/ui/VoidScene';
+import { useTutorialEngine } from './tutorial/useTutorialEngine';
+import { TutorialOverlay } from './tutorial/TutorialOverlay';
 
 const F = '"Press Start 2P", monospace';
 const STORAGE_KEY = 'flag-conquest-save';
@@ -79,6 +82,8 @@ function loadRunState(): { game: GameState; gameScreen: string; timestamp: numbe
     if (!data.game || !data.gameScreen) return null;
     // Discard dungeon saves — dungeon instances are ephemeral
     if (data.game.inDungeon) return null;
+    // Fix broken saves where challengeLevelUpPending froze the game loop
+    if (data.game.challengeLevelUpPending) data.game.challengeLevelUpPending = false;
     return data;
   } catch { return null; }
 }
@@ -102,7 +107,10 @@ export default function App() {
   // === Persistent state (cross-run) ===
   const [gems, setGems] = useState(saved?.gems || 0);
   const [shards, setShards] = useState(saved?.shards || 0);
-  const [upgrades, setUpgrades] = useState<PermanentUpgrades>(saved?.upgrades || {});
+  const [upgrades, setUpgrades] = useState<PermanentUpgrades>(() => {
+    const u = saved?.upgrades || {};
+    return { ...u, unlockedUnits: u.unlockedUnits || ['soldier'], unitTogglePurchased: u.unitTogglePurchased || [], disabledUnits: u.disabledUnits || [] };
+  });
   const [shardUpgrades, setShardUpgrades] = useState<ShardUpgrades>(saved?.shardUpgrades || {});
   const [relicCollection, setRelicCollection] = useState<RelicCollection>(saved?.relicCollection || {});
   const [highestZone, setHighestZone] = useState(saved?.highestZone || 0);
@@ -330,6 +338,43 @@ export default function App() {
     }
   }, [backpack]);
 
+  // Keyboard controls (binding-aware)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (gameScreen !== 'playing') return;
+      if (rebindingAction) return;
+      const g = gameRef.current;
+      if (!g || g.gameOver) return;
+      if (matchesBinding(keybindings, 'moveLeft', e.key)) {
+        e.preventDefault();
+        g.hero.targetFlagIndex = Math.max(-1, g.hero.targetFlagIndex - 1);
+      } else if (matchesBinding(keybindings, 'moveRight', e.key)) {
+        e.preventDefault();
+        g.hero.targetFlagIndex = g.hero.targetFlagIndex + 1;
+      } else if (matchesBinding(keybindings, 'skill1', e.key)) {
+        const active = g.heroSkills.equippedSkills.filter(id => { const d = getSkillDef(id); return d && d.cooldownFrames > 0; });
+        if (active[0]) g.pendingSkillUses = [...(g.pendingSkillUses || []), active[0]];
+      } else if (matchesBinding(keybindings, 'skill2', e.key)) {
+        const active = g.heroSkills.equippedSkills.filter(id => { const d = getSkillDef(id); return d && d.cooldownFrames > 0; });
+        if (active[1]) g.pendingSkillUses = [...(g.pendingSkillUses || []), active[1]];
+      } else if (matchesBinding(keybindings, 'skill3', e.key)) {
+        const active = g.heroSkills.equippedSkills.filter(id => { const d = getSkillDef(id); return d && d.cooldownFrames > 0; });
+        if (active[2]) g.pendingSkillUses = [...(g.pendingSkillUses || []), active[2]];
+      } else if (matchesBinding(keybindings, 'skill4', e.key)) {
+        const active = g.heroSkills.equippedSkills.filter(id => { const d = getSkillDef(id); return d && d.cooldownFrames > 0; });
+        if (active[3]) g.pendingSkillUses = [...(g.pendingSkillUses || []), active[3]];
+      } else if (matchesBinding(keybindings, 'healPotion', e.key)) {
+        useConsumable('healingPotion');
+      } else if (matchesBinding(keybindings, 'armyToggle', e.key)) {
+        e.preventDefault();
+        g.armyHoldMode = !g.armyHoldMode;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameScreen, keybindings, useConsumable, rebindingAction]);
+
   // === Regalia collection ===
   const collectRegalia = useCallback((regalia: Regalia) => {
     if (collectedRegaliaIds.current.has(regalia.id)) return;
@@ -348,6 +393,88 @@ export default function App() {
     setRegaliaNotif(regalia);
     if (regaliaNotifTimer.current) clearTimeout(regaliaNotifTimer.current);
     regaliaNotifTimer.current = setTimeout(() => setRegaliaNotif(null), 8000);
+  }, []);
+
+  // === Dungeon shop callbacks ===
+  const dungeonBuyUnit = useCallback(() => {
+    const g = gameRef.current; if (!g || !g.inDungeon) return;
+    const cost = (g.dungeonUnitsRolled || 0) + 1;
+    if (g.dungeonMedals < cost) return;
+    const randomType = rollUnitType(upgrades.unlockedUnits as string[]);
+    if (!randomType) return;
+    const stats = UNIT_STATS[randomType as keyof typeof UNIT_STATS] as any;
+    g.dungeonMedals -= cost;
+    g.dungeonUnitsRolled = (g.dungeonUnitsRolled || 0) + 1;
+    g.unitSlots = [...g.unitSlots, { type: randomType, respawnTimer: 0, alive: true }];
+    g.particles.push(makeParticle(g.hero.x, GROUND_Y - 50, `+${stats?.name || randomType}!`, '#aa44ff'));
+  }, [upgrades.unlockedUnits]);
+
+  const applyDungeonBoostDelta = (g: GameState, category: 'melee' | 'ranged' | 'magic', oldLevel: number) => {
+    const oldMult = 1 + oldLevel * 0.15;
+    const newMult = 1 + (oldLevel + 1) * 0.15;
+    const delta = newMult / oldMult;
+    const isMatch = (t: string) =>
+      category === 'melee' ? (t === 'soldier' || t === 'knight' || t === 'halberd') :
+      category === 'ranged' ? (t === 'archer' || t === 'bombard') :
+      (t === 'wizard' || t === 'cleric' || t === 'conjurer');
+    for (const a of g.allies) {
+      if (!isMatch(a.unitType)) continue;
+      const newDmg = Math.floor(a.damage * delta);
+      const newMaxHp = Math.floor(a.maxHealth * delta);
+      const hpGain = newMaxHp - a.maxHealth;
+      a.damage = newDmg; a.maxHealth = newMaxHp; a.health = a.health + Math.max(0, hpGain);
+    }
+    const heroIsMatch = (category === 'melee' && g.heroClass === 'warlord') || (category === 'ranged' && g.heroClass === 'ranger');
+    if (heroIsMatch) {
+      const newDmg = Math.floor(g.hero.damage * delta);
+      const newMaxHp = Math.floor(g.hero.maxHealth * delta);
+      const hpGain = newMaxHp - g.hero.maxHealth;
+      g.hero.damage = newDmg; g.hero.maxHealth = newMaxHp; g.hero.health = g.hero.health + Math.max(0, hpGain);
+    }
+  };
+
+  const dungeonBuyMeleeBoost = useCallback(() => {
+    const g = gameRef.current; if (!g || !g.inDungeon) return;
+    const level = g.dungeonMeleeBoost || 0;
+    const cost = level + 1;
+    if (g.dungeonMedals < cost) return;
+    g.dungeonMedals -= cost;
+    applyDungeonBoostDelta(g, 'melee', level);
+    g.dungeonMeleeBoost = level + 1;
+  }, []);
+
+  const dungeonBuyRangedBoost = useCallback(() => {
+    const g = gameRef.current; if (!g || !g.inDungeon) return;
+    const level = g.dungeonRangedBoost || 0;
+    const cost = level + 1;
+    if (g.dungeonMedals < cost) return;
+    g.dungeonMedals -= cost;
+    applyDungeonBoostDelta(g, 'ranged', level);
+    g.dungeonRangedBoost = level + 1;
+  }, []);
+
+  const dungeonBuyMagicBoost = useCallback(() => {
+    const g = gameRef.current; if (!g || !g.inDungeon) return;
+    const level = g.dungeonMagicBoost || 0;
+    const cost = level + 1;
+    if (g.dungeonMedals < cost) return;
+    g.dungeonMedals -= cost;
+    applyDungeonBoostDelta(g, 'magic', level);
+    g.dungeonMagicBoost = level + 1;
+  }, []);
+
+  const dungeonBuyMetaUpgrade = useCallback((key: keyof import('./types').DungeonMetaUpgrades) => {
+    const g = gameRef.current; if (!g || !g.inDungeon) return;
+    const level = (g.dungeonMetaUpgrades as any)[key] || 0;
+    const cost = level + 1;
+    if (g.dungeonMedals < cost) return;
+    g.dungeonMedals -= cost;
+    g.dungeonMetaUpgrades = { ...g.dungeonMetaUpgrades, [key]: level + 1 };
+  }, []);
+
+  const dungeonSetAllyMode = useCallback((mode: 'advance' | 'hold' | 'retreat') => {
+    const g = gameRef.current; if (!g || !g.inDungeon) return;
+    g.dungeonAllyMode = mode;
   }, []);
 
   // === Dungeon exit callback (React state updates) ===
@@ -425,7 +552,7 @@ export default function App() {
 
   // Start game: either skip to class select (tutorial) or show mode select
   const startGame = useCallback(() => {
-    if ((upgrades.tutorialStep as number) === 0 && upgrades.playerName === '') {
+    if (!((upgrades.tutorialStep as number) || 0) && !upgrades.playerName) {
       selectClass('warlord');
       return;
     }
@@ -498,6 +625,23 @@ export default function App() {
   const [shopTab, setShopTab] = useState('units');
   const [shopTick, setShopTick] = useState(0);
   const refreshShop = useCallback(() => setShopTick(t => t + 1), []);
+
+  // === Tutorial engine ===
+  const tutorialSetGame = useCallback((updater: React.SetStateAction<GameState>) => {
+    if (typeof updater === 'function') {
+      gameRef.current = updater(gameRef.current);
+    } else {
+      gameRef.current = updater;
+    }
+  }, []) as React.Dispatch<React.SetStateAction<GameState>>;
+  const tutorialSetPlayerName = useCallback((name: string) => {
+    gameRef.current = { ...gameRef.current, playerName: name };
+  }, []);
+  const regaliaCount = regaliaState.stash.length + Object.values(regaliaState.equipped).filter(r => r !== null).length;
+  const [tutorialState, tutorialActions] = useTutorialEngine(
+    gameScreen, gameRef.current, upgrades, tutorialSetGame, setUpgrades,
+    tutorialSetPlayerName, setShopTab, regaliaCount,
+  );
 
   // Periodic shop refresh so prices update as gold changes from combat/income
   useEffect(() => {
@@ -596,12 +740,42 @@ export default function App() {
     if (!randomType) return;
     game.goldEarned -= game.rollCost;
     game.pendingRoll = { unitType: randomType, rerollCount: 0 };
-    game.unitSlots = [...game.unitSlots, { type: randomType, respawnTimer: 0, alive: true }];
+    refreshShop();
+  }, [gameRef, upgrades, refreshShop]);
+
+  const confirmRoll = useCallback(() => {
+    const game = gameRef.current;
+    if (!game || !game.pendingRoll) return;
+    game.unitSlots = [...game.unitSlots, { type: game.pendingRoll.unitType, respawnTimer: 0, alive: true }];
     game.rollCost = Math.floor(game.rollCost * 2.45);
     game.rollCount = game.rollCount + 1;
     game.pendingRoll = null;
     refreshShop();
-  }, [gameRef, upgrades, refreshShop]);
+  }, [gameRef, refreshShop]);
+
+  const rerollUnit = useCallback(() => {
+    const game = gameRef.current;
+    if (!game || !game.pendingRoll) return;
+    const maxRerolls = 1 + ((upgrades.extraRerolls as number) || 0);
+    if (game.pendingRoll.rerollCount >= maxRerolls) return;
+    const hasFreeReroll = (game.freeRerolls || 0) > 0;
+    const hasVoucher = !hasFreeReroll && backpack.rerollVoucher > 0;
+    const rerollCost = game.pendingRoll.rerollCount + 1;
+    if (!hasFreeReroll && !hasVoucher && gems < rerollCost) return;
+    if (hasVoucher) {
+      setBackpack(prev => ({ ...prev, rerollVoucher: prev.rerollVoucher - 1 }));
+    } else if (!hasFreeReroll) {
+      setGems((prev: number) => prev - rerollCost);
+    }
+    const allowed = ((upgrades.unlockedUnits as string[]) || ['soldier']).filter((t: string) => !((upgrades.disabledUnits as string[]) || []).includes(t));
+    const randomType = rollUnitType(allowed);
+    if (!randomType) return;
+    game.pendingRoll = { unitType: randomType, rerollCount: game.pendingRoll.rerollCount + 1 };
+    if (hasFreeReroll) {
+      game.freeRerolls = Math.max(0, (game.freeRerolls || 0) - 1);
+    }
+    refreshShop();
+  }, [gameRef, upgrades, gems, backpack, refreshShop]);
 
   const movePortalForward = useCallback(() => {
     const game = gameRef.current;
@@ -640,21 +814,21 @@ export default function App() {
   }, [gems]);
 
   const buyUnitUnlock = useCallback((unitType: string, cost: number) => {
-    if (gems >= cost && !(upgrades.unlockedUnits as string[]).includes(unitType)) {
+    if (gems >= cost && !((upgrades.unlockedUnits as string[]) || []).includes(unitType)) {
       setGems((prev: number) => prev - cost);
-      setUpgrades((prev: PermanentUpgrades) => ({ ...prev, unlockedUnits: [...(prev.unlockedUnits as string[]), unitType] }));
+      setUpgrades((prev: PermanentUpgrades) => ({ ...prev, unlockedUnits: [...((prev.unlockedUnits as string[]) || []), unitType] }));
     }
   }, [gems, upgrades.unlockedUnits]);
 
   const buyUnitToggle = useCallback((unitType: string, cost: number) => {
-    if (gems >= cost && !(upgrades.unitTogglePurchased as string[]).includes(unitType) && unitType !== 'soldier') {
+    if (gems >= cost && !((upgrades.unitTogglePurchased as string[]) || []).includes(unitType) && unitType !== 'soldier') {
       setGems((prev: number) => prev - cost);
-      setUpgrades((prev: PermanentUpgrades) => ({ ...prev, unitTogglePurchased: [...(prev.unitTogglePurchased as string[]), unitType] }));
+      setUpgrades((prev: PermanentUpgrades) => ({ ...prev, unitTogglePurchased: [...((prev.unitTogglePurchased as string[]) || []), unitType] }));
     }
   }, [gems, upgrades.unitTogglePurchased]);
 
   const toggleUnitPool = useCallback((unitType: string) => {
-    if (!(upgrades.unitTogglePurchased as string[]).includes(unitType) || unitType === 'soldier') return;
+    if (!((upgrades.unitTogglePurchased as string[]) || []).includes(unitType) || unitType === 'soldier') return;
     setUpgrades((prev: PermanentUpgrades) => ({
       ...prev,
       disabledUnits: (prev.disabledUnits as string[]).includes(unitType)
@@ -891,7 +1065,7 @@ export default function App() {
 
     // Collect gems and shards from this run
     const gemsEarned = game.gemsThisRun || 0;
-    const shardsEarned = game.shardsThisRun || 0;
+    let shardsEarned = game.shardsThisRun || 0;
     if (gemsEarned > 0) {
       setGems((g: number) => g + gemsEarned);
       setTotalGemsEarned((g: number) => g + gemsEarned);
@@ -899,6 +1073,32 @@ export default function App() {
     if (shardsEarned > 0) {
       setShards((s: number) => s + shardsEarned);
       setTotalShardsEarned((s: number) => s + shardsEarned);
+    }
+
+    // Merge relic drops into persistent collection
+    let updatedRelicCollection = relicCollection;
+    if (game.relicDrops && game.relicDrops.length > 0) {
+      updatedRelicCollection = { ...relicCollection };
+      for (const id of game.relicDrops) updatedRelicCollection[id] = (updatedRelicCollection[id] || 0) + 1;
+      setRelicCollection(updatedRelicCollection);
+    }
+
+    // Challenge run completion: award shards for new levels + update highest level
+    let updatedChallengeCompletions = challengeCompletions;
+    if (game.challengeId && game.challengeLevel > 0) {
+      const prevLevel = challengeCompletions[game.challengeId] || 0;
+      if (game.challengeLevel > prevLevel) {
+        updatedChallengeCompletions = { ...challengeCompletions, [game.challengeId]: game.challengeLevel };
+        setChallengeCompletions(updatedChallengeCompletions);
+        const shardsPerLevel = getChallengeShardsPerLevel(getChallengeDef(game.challengeId).stars);
+        const newLevels = game.challengeLevel - prevLevel;
+        const shardDelta = shardsPerLevel * newLevels;
+        if (shardDelta > 0) {
+          shardsEarned += shardDelta;
+          setShards((s: number) => s + shardDelta);
+          setTotalShardsEarned((s: number) => s + shardDelta);
+        }
+      }
     }
 
     // Update records
@@ -912,7 +1112,7 @@ export default function App() {
     // Save to localStorage
     const saveData = {
       gems: gems + gemsEarned, shards: shards + shardsEarned,
-      upgrades, shardUpgrades, relicCollection,
+      upgrades, shardUpgrades, relicCollection: updatedRelicCollection,
       highestZone: Math.max(highestZone, game.currentZone || 0),
       highestFlags: Math.max(highestFlags, game.flagsCaptured || 0),
       totalRuns: totalRuns + 1, totalGemsEarned: totalGemsEarned + gemsEarned,
@@ -921,7 +1121,7 @@ export default function App() {
       totalFlagsCaptured: totalFlagsCaptured + (game.flagsCaptured || 0),
       totalDistance, totalRetreats, totalPlayTime: totalPlayTime + Math.floor((game.frame || 0) / 60),
       achievementProgress, ancientRelicsOwned, ancientRelicCopies, ancientFragments,
-      backpack, challengeCompletions, regaliaState, petState,
+      backpack, challengeCompletions: updatedChallengeCompletions, regaliaState, petState,
       dungeonUnlocked, dungeonPityCounter, dungeonMetaUpgrades, dungeonsEntered,
       dailyLoginDay, lastDailyClaimDate, musicClicks, redeemedCodes,
     };
@@ -953,6 +1153,108 @@ export default function App() {
     }
     setMercyReward(null);
   }, [mercyReward]);
+
+  // === Dungeon entry callbacks ===
+  const enterWaveDungeon = useCallback(() => {
+    const g = gameRef.current; if (!g || g.inDungeon) return;
+    g.savedMainState = {
+      flags: g.flags, enemies: g.enemies, enemyArchers: g.enemyArchers,
+      enemyWraiths: g.enemyWraiths, enemyHounds: g.enemyHounds, enemyLichs: g.enemyLichs,
+      enemyShadowAssassins: g.enemyShadowAssassins, enemyFlameCallers: g.enemyFlameCallers,
+      enemyCorruptedSentinels: g.enemyCorruptedSentinels,
+      boss: g.boss, currentZone: g.currentZone, bossesDefeated: g.bossesDefeated,
+      goldEarned: g.goldEarned, totalGoldEarned: g.totalGoldEarned,
+      flagsCaptured: g.flagsCaptured, lastFlagCaptureFrame: g.lastFlagCaptureFrame,
+      portalFlagIndex: g.portalFlagIndex, armyHoldMode: g.armyHoldMode, cameraX: g.cameraX,
+      incomeTimer: g.incomeTimer, incomeTimer2: g.incomeTimer2, incomeTimer3: g.incomeTimer3,
+      incomeTimer4: g.incomeTimer4, incomeTimer5: g.incomeTimer5,
+      incomeTimer6: g.incomeTimer6 || 0, incomeTimer7: g.incomeTimer7 || 0, incomeTimer8: g.incomeTimer8 || 0,
+      projectiles: g.projectiles, chests: g.chests, banners: g.banners || [], barricades: g.barricades || [],
+      crystalTurrets: g.crystalTurrets || [], iceWalls: g.iceWalls || [], iceTurrets: g.iceTurrets || [],
+      smithingBonusStacks: g.smithingBonusStacks || 0,
+      gemsThisRun: g.gemsThisRun, shardsThisRun: g.shardsThisRun, relicDrops: g.relicDrops,
+      enemiesKilled: g.enemiesKilled, killGoldEarned: g.killGoldEarned || 0,
+      eliteKills: g.eliteKills || 0, eliteLastSpawnFrame: g.eliteLastSpawnFrame ?? -99999,
+      activeEliteId: g.activeEliteId ?? null, activeEliteVariant: g.activeEliteVariant ?? null,
+      lastEliteVariants: g.lastEliteVariants ? [...g.lastEliteVariants] : [],
+      unitSlots: g.unitSlots, allies: [...g.allies], hero: { ...g.hero },
+      runUpgrades: { ...g.runUpgrades },
+    };
+    const dungeonFlags = generateDungeonArena();
+    const arenaLeftX = dungeonFlags[0].x;
+    const arenaRightX = dungeonFlags[3].x;
+    const spawnX = arenaRightX + 30;
+    const allySpawnX = arenaLeftX + 80;
+    const cls = getClassDef(g.heroClass);
+    const startingMedals = 1 + dungeonMetaUpgrades.headStart;
+    g.inDungeon = true; g.dungeonType = 'wave'; g.armyHoldMode = false;
+    g.flags = dungeonFlags;
+    g.enemies = []; g.enemyArchers = []; g.enemyWraiths = []; g.enemyHounds = []; g.enemyLichs = [];
+    g.enemyShadowAssassins = []; g.enemyFlameCallers = []; g.enemyCorruptedSentinels = [];
+    g.enemyDungeonRats = []; g.enemyFireImps = []; g.enemyCursedKnights = [];
+    g.boss = null; g.projectiles = []; g.chests = []; g.banners = []; g.barricades = [];
+    g.dungeonTicksSpent = 0;
+    g.hero.x = allySpawnX; g.hero.targetFlagIndex = -1;
+    g.hero.maxHealth = cls.baseStats.hp; g.hero.health = cls.baseStats.hp;
+    g.hero.damage = cls.baseStats.dmg; g.hero.defense = cls.baseStats.def; g.hero.speed = cls.baseStats.speed;
+    g.runUpgrades = { ...g.runUpgrades, hero: 0, soldier: 0, archer: 0, halberd: 0, knight: 0, wizard: 0, cleric: 0, conjurer: 0, bombard: 0 };
+    g.allies = []; g.unitSlots = []; g.portalFlagIndex = -1; g.cameraX = 0;
+    g.dungeonWave = 0; g.dungeonWaveTimer = 0; g.dungeonMiningTimer = 0;
+    g.dungeonMedals = startingMedals; g.dungeonFragmentsEarned = 0;
+    g.dungeonEnemiesAlive = 0; g.dungeonEliteWaveNext = false; g.dungeonBonusMedalAwarded = false;
+    g.dungeonArenaLeftX = arenaLeftX; g.dungeonArenaRightX = arenaRightX; g.dungeonArenaSpawnX = spawnX;
+    g.dungeonShopOpen = false; g.dungeonTriggerZone = Math.max(g.currentZone, 1);
+    g.dungeonTriggerFlags = g.flagsCaptured;
+    g.dungeonPortalTimer = 0; g.dungeonPortalFlagId = -1; g.dungeonOver = false;
+    g.dungeonMeleeBoost = 0; g.dungeonRangedBoost = 0; g.dungeonMagicBoost = 0;
+    g.dungeonAllyMode = 'advance'; g.dungeonUnitsRolled = 0;
+    g.dungeonMetaUpgrades = { ...dungeonMetaUpgrades };
+  }, [dungeonMetaUpgrades]);
+
+  const enterTimedDungeon = useCallback(() => {
+    const g = gameRef.current; if (!g || g.inDungeon) return;
+    g.savedMainState = {
+      flags: g.flags, enemies: g.enemies, enemyArchers: g.enemyArchers,
+      enemyWraiths: g.enemyWraiths, enemyHounds: g.enemyHounds, enemyLichs: g.enemyLichs,
+      enemyShadowAssassins: g.enemyShadowAssassins, enemyFlameCallers: g.enemyFlameCallers,
+      enemyCorruptedSentinels: g.enemyCorruptedSentinels,
+      boss: g.boss, currentZone: g.currentZone, bossesDefeated: g.bossesDefeated,
+      goldEarned: g.goldEarned, totalGoldEarned: g.totalGoldEarned,
+      flagsCaptured: g.flagsCaptured, lastFlagCaptureFrame: g.lastFlagCaptureFrame,
+      portalFlagIndex: g.portalFlagIndex, armyHoldMode: g.armyHoldMode, cameraX: g.cameraX,
+      incomeTimer: g.incomeTimer, incomeTimer2: g.incomeTimer2, incomeTimer3: g.incomeTimer3,
+      incomeTimer4: g.incomeTimer4, incomeTimer5: g.incomeTimer5,
+      incomeTimer6: g.incomeTimer6 || 0, incomeTimer7: g.incomeTimer7 || 0, incomeTimer8: g.incomeTimer8 || 0,
+      projectiles: g.projectiles, chests: g.chests, banners: g.banners || [], barricades: g.barricades || [],
+      crystalTurrets: g.crystalTurrets || [], iceWalls: g.iceWalls || [], iceTurrets: g.iceTurrets || [],
+      smithingBonusStacks: g.smithingBonusStacks || 0,
+      gemsThisRun: g.gemsThisRun, shardsThisRun: g.shardsThisRun, relicDrops: g.relicDrops,
+      enemiesKilled: g.enemiesKilled, killGoldEarned: g.killGoldEarned || 0,
+      eliteKills: g.eliteKills || 0, eliteLastSpawnFrame: g.eliteLastSpawnFrame ?? -99999,
+      activeEliteId: g.activeEliteId ?? null, activeEliteVariant: g.activeEliteVariant ?? null,
+      lastEliteVariants: g.lastEliteVariants ? [...g.lastEliteVariants] : [],
+      unitSlots: g.unitSlots, allies: [...g.allies], hero: { ...g.hero },
+      runUpgrades: { ...g.runUpgrades },
+    };
+    const zone = g.currentZone;
+    const timedFlags = generateTimedDungeonArena(zone);
+    g.inDungeon = true; g.dungeonType = 'timed'; g.armyHoldMode = false;
+    g.flags = timedFlags;
+    g.enemies = []; g.enemyArchers = []; g.enemyWraiths = []; g.enemyHounds = []; g.enemyLichs = [];
+    g.enemyShadowAssassins = []; g.enemyFlameCallers = []; g.enemyCorruptedSentinels = [];
+    g.enemyDungeonRats = []; g.enemyFireImps = []; g.enemyCursedKnights = [];
+    g.boss = null; g.projectiles = []; g.chests = []; g.banners = []; g.barricades = [];
+    g.hero.x = 40; g.hero.targetFlagIndex = -1;
+    g.allies = g.allies.map(a => ({ ...a, x: 40 + Math.random() * 30 }));
+    g.portalFlagIndex = -1; g.cameraX = 0;
+    g.timedDungeonTimer = 18000; g.timedDungeonVictory = false;
+    g.timedDungeonPortalTimer = 0; g.timedDungeonPortalFlagId = -1;
+    g.dungeonTicksSpent = 0; g.dungeonTriggerZone = zone; g.dungeonTriggerFlags = g.flagsCaptured;
+    g.dungeonOver = false;
+    g.dungeonWave = 0; g.dungeonWaveTimer = 0; g.dungeonMiningTimer = 0;
+    g.dungeonMedals = 0; g.dungeonFragmentsEarned = 0; g.dungeonEnemiesAlive = 0;
+    g.dungeonShopOpen = false; g.dungeonPortalTimer = 0; g.dungeonPortalFlagId = -1;
+  }, []);
 
   // Keep handleGameOverRef in sync (declared before useGameLoop, updated here)
   handleGameOverRef.current = handleGameOver;
@@ -1090,6 +1392,9 @@ export default function App() {
         buyRunUpgrade={buyRunUpgrade}
         buyRunUpgradeMulti={buyRunUpgradeMulti}
         onRoll={rollForUnit}
+        onConfirmRoll={confirmRoll}
+        onReroll={rerollUnit}
+        extraRerolls={(upgrades.extraRerolls as number) || 0}
         movePortalForward={movePortalForward}
         toggleAutoPortal={toggleAutoPortal}
         onReturnHome={returnHome}
@@ -1164,104 +1469,23 @@ export default function App() {
           g.boss = null; g.projectiles = []; g.chests = []; g.banners = []; g.barricades = [];
           g.cameraX = Math.max(0, flags[0].x - 200); g.portalFlagIndex = -1;
         }}
-        devEnterWaveDungeon={() => {
-          const g = gameRef.current; if (!g || g.inDungeon) return;
-          g.savedMainState = {
-            flags: g.flags, enemies: g.enemies, enemyArchers: g.enemyArchers,
-            enemyWraiths: g.enemyWraiths, enemyHounds: g.enemyHounds, enemyLichs: g.enemyLichs,
-            enemyShadowAssassins: g.enemyShadowAssassins, enemyFlameCallers: g.enemyFlameCallers,
-            enemyCorruptedSentinels: g.enemyCorruptedSentinels,
-            boss: g.boss, currentZone: g.currentZone, bossesDefeated: g.bossesDefeated,
-            goldEarned: g.goldEarned, totalGoldEarned: g.totalGoldEarned,
-            flagsCaptured: g.flagsCaptured, lastFlagCaptureFrame: g.lastFlagCaptureFrame,
-            portalFlagIndex: g.portalFlagIndex, armyHoldMode: g.armyHoldMode, cameraX: g.cameraX,
-            incomeTimer: g.incomeTimer, incomeTimer2: g.incomeTimer2, incomeTimer3: g.incomeTimer3,
-            incomeTimer4: g.incomeTimer4, incomeTimer5: g.incomeTimer5,
-            incomeTimer6: g.incomeTimer6 || 0, incomeTimer7: g.incomeTimer7 || 0, incomeTimer8: g.incomeTimer8 || 0,
-            projectiles: g.projectiles, chests: g.chests, banners: g.banners || [], barricades: g.barricades || [],
-            crystalTurrets: g.crystalTurrets || [], iceWalls: g.iceWalls || [], iceTurrets: g.iceTurrets || [],
-            smithingBonusStacks: g.smithingBonusStacks || 0,
-            gemsThisRun: g.gemsThisRun, shardsThisRun: g.shardsThisRun, relicDrops: g.relicDrops,
-            enemiesKilled: g.enemiesKilled, killGoldEarned: g.killGoldEarned || 0,
-            eliteKills: g.eliteKills || 0, eliteLastSpawnFrame: g.eliteLastSpawnFrame ?? -99999,
-            activeEliteId: g.activeEliteId ?? null, activeEliteVariant: g.activeEliteVariant ?? null,
-            lastEliteVariants: g.lastEliteVariants ? [...g.lastEliteVariants] : [],
-            unitSlots: g.unitSlots, allies: [...g.allies], hero: { ...g.hero },
-            runUpgrades: { ...g.runUpgrades },
-          };
-          const dungeonFlags = generateDungeonArena();
-          const arenaLeftX = dungeonFlags[0].x;
-          const arenaRightX = dungeonFlags[3].x;
-          const spawnX = arenaRightX + 30;
-          const allySpawnX = arenaLeftX + 80;
-          const cls = getClassDef(g.heroClass);
-          const startingMedals = 1 + dungeonMetaUpgrades.headStart;
-          g.inDungeon = true; g.dungeonType = 'wave'; g.armyHoldMode = false;
-          g.flags = dungeonFlags;
-          g.enemies = []; g.enemyArchers = []; g.enemyWraiths = []; g.enemyHounds = []; g.enemyLichs = [];
-          g.enemyShadowAssassins = []; g.enemyFlameCallers = []; g.enemyCorruptedSentinels = [];
-          g.enemyDungeonRats = []; g.enemyFireImps = []; g.enemyCursedKnights = [];
-          g.boss = null; g.projectiles = []; g.chests = []; g.banners = []; g.barricades = [];
-          g.dungeonTicksSpent = 0;
-          g.hero.x = allySpawnX; g.hero.targetFlagIndex = -1;
-          g.hero.maxHealth = cls.baseStats.hp; g.hero.health = cls.baseStats.hp;
-          g.hero.damage = cls.baseStats.dmg; g.hero.defense = cls.baseStats.def; g.hero.speed = cls.baseStats.speed;
-          g.runUpgrades = { ...g.runUpgrades, hero: 0, soldier: 0, archer: 0, halberd: 0, knight: 0, wizard: 0, cleric: 0, conjurer: 0, bombard: 0 };
-          g.allies = []; g.unitSlots = []; g.portalFlagIndex = -1; g.cameraX = 0;
-          g.dungeonWave = 0; g.dungeonWaveTimer = 0; g.dungeonMiningTimer = 0;
-          g.dungeonMedals = startingMedals; g.dungeonFragmentsEarned = 0;
-          g.dungeonEnemiesAlive = 0; g.dungeonEliteWaveNext = false; g.dungeonBonusMedalAwarded = false;
-          g.dungeonArenaLeftX = arenaLeftX; g.dungeonArenaRightX = arenaRightX; g.dungeonArenaSpawnX = spawnX;
-          g.dungeonShopOpen = false; g.dungeonTriggerZone = Math.max(g.currentZone, 1);
-          g.dungeonTriggerFlags = g.flagsCaptured;
-          g.dungeonPortalTimer = 0; g.dungeonPortalFlagId = -1; g.dungeonOver = false;
-          g.dungeonMeleeBoost = 0; g.dungeonRangedBoost = 0; g.dungeonMagicBoost = 0;
-          g.dungeonAllyMode = 'advance'; g.dungeonUnitsRolled = 0;
-        }}
-        devEnterTimedDungeon={() => {
-          const g = gameRef.current; if (!g || g.inDungeon) return;
-          g.savedMainState = {
-            flags: g.flags, enemies: g.enemies, enemyArchers: g.enemyArchers,
-            enemyWraiths: g.enemyWraiths, enemyHounds: g.enemyHounds, enemyLichs: g.enemyLichs,
-            enemyShadowAssassins: g.enemyShadowAssassins, enemyFlameCallers: g.enemyFlameCallers,
-            enemyCorruptedSentinels: g.enemyCorruptedSentinels,
-            boss: g.boss, currentZone: g.currentZone, bossesDefeated: g.bossesDefeated,
-            goldEarned: g.goldEarned, totalGoldEarned: g.totalGoldEarned,
-            flagsCaptured: g.flagsCaptured, lastFlagCaptureFrame: g.lastFlagCaptureFrame,
-            portalFlagIndex: g.portalFlagIndex, armyHoldMode: g.armyHoldMode, cameraX: g.cameraX,
-            incomeTimer: g.incomeTimer, incomeTimer2: g.incomeTimer2, incomeTimer3: g.incomeTimer3,
-            incomeTimer4: g.incomeTimer4, incomeTimer5: g.incomeTimer5,
-            incomeTimer6: g.incomeTimer6 || 0, incomeTimer7: g.incomeTimer7 || 0, incomeTimer8: g.incomeTimer8 || 0,
-            projectiles: g.projectiles, chests: g.chests, banners: g.banners || [], barricades: g.barricades || [],
-            crystalTurrets: g.crystalTurrets || [], iceWalls: g.iceWalls || [], iceTurrets: g.iceTurrets || [],
-            smithingBonusStacks: g.smithingBonusStacks || 0,
-            gemsThisRun: g.gemsThisRun, shardsThisRun: g.shardsThisRun, relicDrops: g.relicDrops,
-            enemiesKilled: g.enemiesKilled, killGoldEarned: g.killGoldEarned || 0,
-            eliteKills: g.eliteKills || 0, eliteLastSpawnFrame: g.eliteLastSpawnFrame ?? -99999,
-            activeEliteId: g.activeEliteId ?? null, activeEliteVariant: g.activeEliteVariant ?? null,
-            lastEliteVariants: g.lastEliteVariants ? [...g.lastEliteVariants] : [],
-            unitSlots: g.unitSlots, allies: [...g.allies], hero: { ...g.hero },
-            runUpgrades: { ...g.runUpgrades },
-          };
-          const zone = g.currentZone;
-          const timedFlags = generateTimedDungeonArena(zone);
-          g.inDungeon = true; g.dungeonType = 'timed'; g.armyHoldMode = false;
-          g.flags = timedFlags;
-          g.enemies = []; g.enemyArchers = []; g.enemyWraiths = []; g.enemyHounds = []; g.enemyLichs = [];
-          g.enemyShadowAssassins = []; g.enemyFlameCallers = []; g.enemyCorruptedSentinels = [];
-          g.enemyDungeonRats = []; g.enemyFireImps = []; g.enemyCursedKnights = [];
-          g.boss = null; g.projectiles = []; g.chests = []; g.banners = []; g.barricades = [];
-          g.hero.x = 40; g.hero.targetFlagIndex = -1;
-          g.allies = g.allies.map(a => ({ ...a, x: 40 + Math.random() * 30 }));
-          g.portalFlagIndex = -1; g.cameraX = 0;
-          g.timedDungeonTimer = 18000; g.timedDungeonVictory = false;
-          g.timedDungeonPortalTimer = 0; g.timedDungeonPortalFlagId = -1;
-          g.dungeonTicksSpent = 0; g.dungeonTriggerZone = zone; g.dungeonTriggerFlags = g.flagsCaptured;
-          g.dungeonOver = false;
-          g.dungeonWave = 0; g.dungeonWaveTimer = 0; g.dungeonMiningTimer = 0;
-          g.dungeonMedals = 0; g.dungeonFragmentsEarned = 0; g.dungeonEnemiesAlive = 0;
-          g.dungeonShopOpen = false; g.dungeonPortalTimer = 0; g.dungeonPortalFlagId = -1;
-        }}
+        devEnterWaveDungeon={enterWaveDungeon}
+        devEnterTimedDungeon={enterTimedDungeon}
+        onEnterDungeon={enterWaveDungeon}
+        onEnterTimedDungeon={enterTimedDungeon}
+        dungeonBuyUnit={dungeonBuyUnit}
+        dungeonBuyMeleeBoost={dungeonBuyMeleeBoost}
+        dungeonBuyRangedBoost={dungeonBuyRangedBoost}
+        dungeonBuyMagicBoost={dungeonBuyMagicBoost}
+        dungeonBuyMetaUpgrade={dungeonBuyMetaUpgrade}
+        dungeonSetAllyMode={dungeonSetAllyMode}
+        tutorialHighlights={tutorialState.highlights}
+        tutorialDialogue={tutorialState.currentDialogue}
+        tutorialDialogueIndex={tutorialState.dialogueIndex}
+        tutorialPlayerName={String(upgrades.playerName || '')}
+        tutorialDarkOverlay={tutorialState.darkOverlay}
+        onTutorialAdvance={tutorialActions.advanceDialogue}
+        onTutorialNameSubmit={tutorialActions.submitName}
       />
       {/* Regalia loot notification */}
       {regaliaNotif && !hideNotifications && (
@@ -1509,6 +1733,11 @@ export default function App() {
                   )}
                   <button onClick={() => setShowLeaderboard(true)} title="Leaderboard" style={{ background: 'rgba(20,15,30,0.85)', border: '1.5px solid #6a4a9a', borderRadius: 6, width: 34, height: 34, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, fontSize: 16, filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))', opacity: 0.7 }}>
                     {'\u{1F4CA}'}
+                  </button>
+                  <button onClick={() => window.open('https://discord.gg/UXASDwwqKe', '_blank')} title="Join Discord" style={{ background: 'rgba(20,15,30,0.85)', border: '1.5px solid #5865F2', borderRadius: 6, width: 34, height: 34, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }}>
+                    <svg width="18" height="14" viewBox="0 0 71 55" fill="#5865F2" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M60.1 4.9A58.5 58.5 0 0045.4.5a.2.2 0 00-.2.1 40.8 40.8 0 00-1.8 3.7 54 54 0 00-16.2 0A37.3 37.3 0 0025.4.6a.2.2 0 00-.2-.1A58.4 58.4 0 0010.5 4.9a.2.2 0 00-.1.1C1.5 18.7-.9 32.2.3 45.5v.2a58.9 58.9 0 0017.7 9 .2.2 0 00.3-.1 42.1 42.1 0 003.6-5.9.2.2 0 00-.1-.3 38.8 38.8 0 01-5.5-2.7.2.2 0 01 0-.4l1.1-.9a.2.2 0 01.2 0 42 42 0 0035.6 0 .2.2 0 01.2 0l1.1.9a.2.2 0 010 .4 36.4 36.4 0 01-5.5 2.7.2.2 0 00-.1.3 47.2 47.2 0 003.6 5.9.2.2 0 00.3.1A58.7 58.7 0 0070.5 45.7v-.2c1.4-15-2.3-28-9.8-39.6a.2.2 0 00-.1-.1zM23.7 37.3c-3.4 0-6.3-3.2-6.3-7s2.8-7 6.3-7 6.4 3.1 6.3 7-2.8 7-6.3 7zm23.2 0c-3.4 0-6.3-3.2-6.3-7s2.8-7 6.3-7 6.4 3.1 6.3 7-2.8 7-6.3 7z"/>
+                    </svg>
                   </button>
                 </div>
 

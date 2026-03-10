@@ -279,7 +279,7 @@ export function processBossDefeat(ts: TickState): void {
   if (ts.challengeId && ts.challengeLevel < MAX_CHALLENGE_LEVEL) {
     ts.challengeLevel++;
     ts.challengeComplete = true; // backwards compat for game-over display
-    ts.challengeLevelUpPending = true; // triggers popup in App.tsx, pauses game
+    ts.challengeLevelUpPending = false; // no longer pauses — particles handle the celebration
     ts.particles.push(makeParticle(boss.x, boss.y - 60, `🏆 CHALLENGE LV.${ts.challengeLevel} COMPLETE! 🏆`, '#ffd700'));
   }
 

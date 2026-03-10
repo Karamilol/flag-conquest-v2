@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import type { GameState, CameraMode, Artifact, UnitSlot } from '../../types';
+import type { KeyBindings } from '../../keybindings';
+import { displayKey } from '../../keybindings';
 import { DISPLAY_W, DISPLAY_H, UNIT_STATS } from '../../constants';
 import { formatNumber } from '../../utils/helpers';
 import { SpriteIcon } from '../sprites/SpriteIcon';
@@ -26,6 +28,10 @@ interface GameHUDProps {
   onMusicClick?: () => void;
   musicClicks?: number;
   onOpenTrackSelector?: () => void;
+  keybindings: KeyBindings;
+  onUseConsumable?: (id: import('../../types').ConsumableId) => void;
+  tutorialHighlightForward?: boolean;
+  tutorialHighlightBack?: boolean;
 }
 
 interface SkillHUDData {
@@ -115,6 +121,7 @@ const F = '"Press Start 2P", monospace';
 const TopBar = memo(({ hud, cameraMode, onCycleCameraMode, onOpenSettings,
   musicTrack, musicPaused, onMusicNext, onMusicPrev, onMusicToggle,
   onMusicClick, musicClicks, onOpenTrackSelector,
+  showTooltip, hideTooltip,
 }: {
   hud: HUDValues;
   cameraMode: CameraMode;
@@ -123,6 +130,8 @@ const TopBar = memo(({ hud, cameraMode, onCycleCameraMode, onOpenSettings,
   musicTrack: string; musicPaused: boolean;
   onMusicNext: () => void; onMusicPrev: () => void; onMusicToggle: () => void;
   onMusicClick?: () => void; musicClicks?: number; onOpenTrackSelector?: () => void;
+  showTooltip: (text: string, x: number, y: number) => void;
+  hideTooltip: () => void;
 }) => {
   const m = Math.floor(hud.frame / 3600);
   const s = Math.floor((hud.frame % 3600) / 60);
@@ -153,7 +162,23 @@ const TopBar = memo(({ hud, cameraMode, onCycleCameraMode, onOpenSettings,
       {/* Left: game info */}
       <div style={{ pointerEvents: 'none' }}>
         <div style={{ fontSize: 10, lineHeight: '14px' }}>
-          ZONE: {hud.zone + 1} | FLAGS: {hud.flagsCaptured} | {timer}
+          <span
+            style={{ pointerEvents: 'auto', cursor: 'pointer', color: '#cc99ff', background: 'rgba(138,74,223,0.15)', padding: '0 3px', borderRadius: 2 }}
+            onPointerEnter={() => {
+              const z = hud.zone;
+              const enemyScale = Math.pow(1.3, z * Math.pow(0.98, z));
+              const passiveMult = 1 + z * 0.05;
+              const killMult = 1 + z * (z - 1) * 5;
+              showTooltip(
+                `Zone ${z + 1} Bonuses\n` +
+                `Enemy stats: x${enemyScale.toFixed(2)}\n` +
+                `Passive income: x${passiveMult.toFixed(2)}\n` +
+                `Kill gold: x${killMult.toFixed(0)}`,
+                6, 40
+              );
+            }}
+            onPointerLeave={hideTooltip}
+          >ZONE: {hud.zone + 1}</span> | FLAGS: {hud.flagsCaptured} | {timer}
         </div>
         <div style={{ fontSize: 10, color: '#ffd700', lineHeight: '14px' }}>
           GOLD: {formatNumber(hud.gold)}
@@ -258,6 +283,11 @@ const SidebarIcons = memo(({
       <button onClick={onOpenShop} style={iconStyle} title="Backpack">🎒</button>
       <button onClick={onOpenRelics} style={iconStyle} title="Relics">🏺</button>
       <button onClick={onOpenAchievements} style={iconStyle} title="Achievements">🏆</button>
+      <button onClick={() => window.open('https://discord.gg/UXASDwwqKe', '_blank')} style={{ ...iconStyle, borderColor: '#5865F2' }} title="Join Discord">
+        <svg width="16" height="12" viewBox="0 0 71 55" fill="#5865F2" xmlns="http://www.w3.org/2000/svg">
+          <path d="M60.1 4.9A58.5 58.5 0 0045.4.5a.2.2 0 00-.2.1 40.8 40.8 0 00-1.8 3.7 54 54 0 00-16.2 0A37.3 37.3 0 0025.4.6a.2.2 0 00-.2-.1A58.4 58.4 0 0010.5 4.9a.2.2 0 00-.1.1C1.5 18.7-.9 32.2.3 45.5v.2a58.9 58.9 0 0017.7 9 .2.2 0 00.3-.1 42.1 42.1 0 003.6-5.9.2.2 0 00-.1-.3 38.8 38.8 0 01-5.5-2.7.2.2 0 01 0-.4l1.1-.9a.2.2 0 01.2 0 42 42 0 0035.6 0 .2.2 0 01.2 0l1.1.9a.2.2 0 010 .4 36.4 36.4 0 01-5.5 2.7.2.2 0 00-.1.3 47.2 47.2 0 003.6 5.9.2.2 0 00.3.1A58.7 58.7 0 0070.5 45.7v-.2c1.4-15-2.3-28-9.8-39.6a.2.2 0 00-.1-.1zM23.7 37.3c-3.4 0-6.3-3.2-6.3-7s2.8-7 6.3-7 6.4 3.1 6.3 7-2.8 7-6.3 7zm23.2 0c-3.4 0-6.3-3.2-6.3-7s2.8-7 6.3-7 6.4 3.1 6.3 7-2.8 7-6.3 7z"/>
+        </svg>
+      </button>
     </div>
   );
 });
@@ -293,28 +323,43 @@ const ArtifactRow = memo(({ artifacts, showTooltip, moveTooltip, hideTooltip }: 
 });
 
 // === Army unit roster ===
+const UNIT_TYPE_ORDER: Record<string, number> = { soldier: 0, archer: 1, halberd: 2, knight: 3, wizard: 4, conjurer: 5, cleric: 6, bombard: 7 };
+
 const ArmyRoster = memo(({ unitSlots, showTooltip, moveTooltip, hideTooltip }: {
   unitSlots: UnitSlot[];
   showTooltip: (text: string, x: number, y: number) => void;
   moveTooltip: (e: React.PointerEvent) => void;
   hideTooltip: () => void;
 }) => {
+  const [sortMode, setSortMode] = useState<'order' | 'alpha' | 'type'>('order');
   if (unitSlots.length === 0) return null;
+
+  const indexed = unitSlots.map((slot, i) => ({ slot, idx: i }));
+  if (sortMode === 'alpha') indexed.sort((a, b) => a.slot.type.localeCompare(b.slot.type));
+  else if (sortMode === 'type') indexed.sort((a, b) => (UNIT_TYPE_ORDER[a.slot.type] ?? 99) - (UNIT_TYPE_ORDER[b.slot.type] ?? 99));
+
   return (
     <div style={{
       position: 'absolute', top: 76, left: 5,
-      display: 'flex', flexWrap: 'wrap', width: 34, gap: 2, zIndex: 10,
-      maxHeight: DISPLAY_H - 76 - 38, overflow: 'hidden',
+      display: 'flex', flexDirection: 'column', alignItems: 'flex-start', zIndex: 10,
     }}>
-      {unitSlots.map((u, i) => {
+      <div
+        onClick={() => setSortMode(m => m === 'order' ? 'alpha' : m === 'alpha' ? 'type' : 'order')}
+        style={{ fontSize: 6, color: '#888', cursor: 'pointer', userSelect: 'none', fontFamily: F, marginBottom: 2 }}
+      >{sortMode === 'order' ? 'Order' : sortMode === 'alpha' ? 'A-Z' : 'Type'} ▼</div>
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', width: 34, gap: 2,
+        maxHeight: DISPLAY_H - 90 - 38, overflow: 'hidden',
+      }}>
+      {indexed.map(({ slot: u, idx }, vi) => {
         const stats = UNIT_STATS[u.type as keyof typeof UNIT_STATS] as any;
         const color = stats?.color || '#888';
         const alive = u.alive !== false;
         const respawnSec = alive ? 0 : Math.ceil(u.respawnTimer / 60);
-        const row = Math.floor(i / 2);
-        const sy = 64 + row * 16;
+        const row = Math.floor(vi / 2);
+        const sy = 78 + row * 16;
         return (
-          <div key={i}
+          <div key={idx}
             onPointerEnter={() => showTooltip(
               `${stats?.name || u.type}${alive ? '' : ` (${respawnSec}s)`}`,
               40, sy
@@ -334,6 +379,7 @@ const ArmyRoster = memo(({ unitSlots, showTooltip, moveTooltip, hideTooltip }: {
           </div>
         );
       })}
+      </div>
     </div>
   );
 });
@@ -342,8 +388,8 @@ const ArmyRoster = memo(({ unitSlots, showTooltip, moveTooltip, hideTooltip }: {
 // Layout: [potion] [active skills...] [◀] [defend/attack] [▶] [passive indicators...]
 const BottomBar = memo(({
   armyHoldMode, inDungeon, skills, potionCount, gameRef, frameRef,
-  onMovePrev, onMoveNext, onToggleHold,
-  showTooltip, moveTooltip, hideTooltip,
+  onMovePrev, onMoveNext, onToggleHold, onUseConsumable,
+  showTooltip, moveTooltip, hideTooltip, keybindings, tutorialHighlightForward, tutorialHighlightBack,
 }: {
   armyHoldMode: boolean; inDungeon: boolean;
   skills: SkillHUDData[]; potionCount: number;
@@ -351,9 +397,13 @@ const BottomBar = memo(({
   frameRef: React.MutableRefObject<number>;
   onMovePrev: () => void; onMoveNext: () => void;
   onToggleHold: () => void;
+  onUseConsumable?: (id: import('../../types').ConsumableId) => void;
   showTooltip: (text: string, x: number, y: number) => void;
   moveTooltip: (e: React.PointerEvent) => void;
   hideTooltip: () => void;
+  keybindings: KeyBindings;
+  tutorialHighlightForward?: boolean;
+  tutorialHighlightBack?: boolean;
 }) => {
   const h = 28;
   const btnW = 28;
@@ -390,10 +440,7 @@ const BottomBar = memo(({
       {potionCount > 0 && (
         <button
           onClick={() => {
-            const g = gameRef.current;
-            if (g && !g.gameOver) {
-              (g as any).pendingConsumableUse = 'healingPotion';
-            }
+            if (onUseConsumable) onUseConsumable('healingPotion');
           }}
           onPointerEnter={(e) => {
             const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -418,6 +465,13 @@ const BottomBar = memo(({
             position: 'absolute', bottom: 1, right: 2,
             fontSize: 7, color: '#fff',
           }}>{potionCount}</span>
+          {keybindings.healPotion[0] && (
+            <span style={{
+              position: 'absolute', top: -1, left: 1,
+              fontSize: 6, color: '#ffcc44', opacity: 0.85,
+              textShadow: '0 0 2px #000',
+            }}>{displayKey(keybindings.healPotion[0])}</span>
+          )}
         </button>
       )}
 
@@ -474,6 +528,17 @@ const BottomBar = memo(({
                 color: '#ccc',
               }}>{cdSec}s</span>
             )}
+            {(() => {
+              const action = (`skill${i + 1}`) as keyof KeyBindings;
+              const key = keybindings[action]?.[0];
+              return key ? (
+                <span style={{
+                  position: 'absolute', top: -1, left: 1,
+                  fontSize: 6, color: '#ffcc44', opacity: 0.85,
+                  textShadow: '0 0 2px #000',
+                }}>{displayKey(key)}</span>
+              ) : null;
+            })()}
           </button>
         );
       })}
@@ -482,6 +547,11 @@ const BottomBar = memo(({
       <button onClick={onMovePrev} style={{
         ...base, position: 'absolute',
         left: leftArrowX, width: 30, fontSize: 13,
+        ...(tutorialHighlightBack ? {
+          borderColor: '#ffcc44',
+          boxShadow: '0 0 8px #ffcc44, 0 0 16px #ffcc4466',
+          animation: 'tutorialGlow 1.2s ease-in-out infinite',
+        } : {}),
       }}>◀</button>
 
       {/* Defend/Attack toggle */}
@@ -498,6 +568,11 @@ const BottomBar = memo(({
       <button onClick={onMoveNext} style={{
         ...base, position: 'absolute',
         left: rightArrowX, width: 30, fontSize: 13,
+        ...(tutorialHighlightForward ? {
+          borderColor: '#ffcc44',
+          boxShadow: '0 0 8px #ffcc44, 0 0 16px #ffcc4466',
+          animation: 'tutorialGlow 1.2s ease-in-out infinite',
+        } : {}),
       }}>▶</button>
 
       {/* Passive skill indicators — rotating dash border like v1 */}
@@ -553,7 +628,7 @@ export default function GameHUD(props: GameHUDProps) {
   const { gameRef, frameRef, cameraMode, onCycleCameraMode, onMovePrev, onMoveNext,
     onToggleHold, onOpenSettings, onOpenShop, onOpenAchievements, onOpenRelics,
     musicTrack, musicPaused, onMusicNext, onMusicPrev, onMusicToggle,
-    onMusicClick, musicClicks, onOpenTrackSelector } = props;
+    onMusicClick, musicClicks, onOpenTrackSelector, keybindings, onUseConsumable, tutorialHighlightForward, tutorialHighlightBack } = props;
 
   const [hud, setHud] = useState<HUDValues>(() => snapshotHUD(gameRef.current));
 
@@ -615,6 +690,8 @@ export default function GameHUD(props: GameHUDProps) {
           onMusicClick={onMusicClick}
           musicClicks={musicClicks}
           onOpenTrackSelector={onOpenTrackSelector}
+          showTooltip={showTooltip}
+          hideTooltip={hideTooltip}
         />
       </div>
 
@@ -649,6 +726,10 @@ export default function GameHUD(props: GameHUDProps) {
           showTooltip={showTooltip}
           moveTooltip={moveTooltip}
           hideTooltip={hideTooltip}
+          keybindings={keybindings}
+          onUseConsumable={onUseConsumable}
+          tutorialHighlightForward={tutorialHighlightForward}
+          tutorialHighlightBack={tutorialHighlightBack}
         />
       </div>
 
