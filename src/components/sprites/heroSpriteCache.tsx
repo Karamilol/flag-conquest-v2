@@ -40,20 +40,20 @@ const goldLight = '#e8c85e';
 const leather = '#5a4a3a';
 const leatherDark = '#3a2a1a';
 
-// --- Ranger Colors ---
-const rHood = '#2a4a2a';
-const rHoodDark = '#1a3a1a';
-const rHoodLight = '#3a5a3a';
-const rCloak = '#3a5a3a';
-const rCloakDark = '#2a4a2a';
-const rLeather = '#5a4a3a';
-const rLeatherDark = '#3a2a1a';
+// --- Ranger Colors (royal blue/silver — distinct from green enemy archers) ---
+const rHood = '#1a2a4a';
+const rHoodDark = '#0e1a33';
+const rHoodLight = '#2a3a5a';
+const rCloak = '#1e3050';
+const rCloakDark = '#142040';
+const rLeather = '#4a3a2a';
+const rLeatherDark = '#2a1a0a';
 const rLeatherLight = '#6a5a4a';
-const rBowWood = '#8b5a2a';
-const rBowLight = '#a87040';
-const rString = '#bbb';
+const rBowWood = '#6a3a1a';
+const rBowLight = '#8a5a30';
+const rString = '#ddd';
 const rSkin = '#e8c0a0';
-const rMetal = '#888';
+const rMetal = '#aabbcc';
 
 // ============================================================
 // WARLORD BODY
@@ -307,10 +307,15 @@ function RangerBody({ stringPull, capeSkew, eyeScaleY, showArrow, releaseFlash }
         <line x1={6} y1={26} x2={12} y2={25} stroke={rLeatherLight} strokeWidth={0.5} opacity={0.4} />
       </g>
 
-      {/* Torso — layered leather */}
+      {/* Torso — layered leather with silver trim */}
       <g>
         <rect x={4} y={6} width={16} height={14} fill={rCloak} rx={1} />
         <rect x={5} y={7} width={14} height={12} fill={rLeather} opacity={0.6} />
+        {/* Silver trim on collar */}
+        <rect x={4} y={6} width={16} height={1.5} fill={rMetal} opacity={0.5} rx={0.5} />
+        {/* Chest emblem — small blue diamond */}
+        <polygon points="12,10 14,12 12,14 10,12" fill="#3388cc" opacity={0.7} />
+        <polygon points="12,10.5 13.5,12 12,13.5 10.5,12" fill="#44aaff" opacity={0.4} />
         {/* Stitching */}
         <line x1={12} y1={7} x2={12} y2={19} stroke={rLeatherDark} strokeWidth={0.8} opacity={0.4} />
         {/* Leather texture */}
@@ -320,7 +325,7 @@ function RangerBody({ stringPull, capeSkew, eyeScaleY, showArrow, releaseFlash }
         <rect x={13} y={13} width={5} height={1} fill={rLeatherLight} opacity={0.15} />
         {/* Belt */}
         <rect x={3} y={18} width={18} height={2.5} fill={rLeather} />
-        <rect x={3} y={18} width={18} height={0.5} fill={rLeatherLight} opacity={0.3} />
+        <rect x={3} y={18} width={18} height={0.5} fill={rMetal} opacity={0.3} />
         <rect x={10} y={18} width={4} height={2.5} fill={rMetal} rx={0.5} />
         {/* Belt pouches */}
         <rect x={5} y={18.5} width={3} height={2} fill={rLeatherDark} rx={0.5} />
@@ -417,12 +422,12 @@ function RangerBody({ stringPull, capeSkew, eyeScaleY, showArrow, releaseFlash }
         {/* Hood top highlight */}
         <rect x={8} y={-8} width={8} height={2} fill={rHoodLight} opacity={0.2} rx={1} />
 
-        {/* Eyes under hood */}
+        {/* Eyes under hood — ice blue, distinct from enemy yellow */}
         <g transform={eyeTransform}>
-          <rect x={6} y={1} width={3} height={2} fill="#ffdd00" rx={0.5} />
-          <rect x={15} y={1} width={3} height={2} fill="#ffdd00" rx={0.5} />
-          <rect x={6} y={1} width={3} height={2} fill="#ffff44" opacity={0.3} rx={0.5} />
-          <rect x={15} y={1} width={3} height={2} fill="#ffff44" opacity={0.3} rx={0.5} />
+          <rect x={6} y={1} width={3} height={2} fill="#44aaff" rx={0.5} />
+          <rect x={15} y={1} width={3} height={2} fill="#44aaff" rx={0.5} />
+          <rect x={6} y={1} width={3} height={2} fill="#66ccff" opacity={0.3} rx={0.5} />
+          <rect x={15} y={1} width={3} height={2} fill="#66ccff" opacity={0.3} rx={0.5} />
         </g>
 
         {/* Face wrap / mask */}
