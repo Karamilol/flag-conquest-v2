@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { COLORS, UNIT_STATS } from '../../constants';
+import { TrophyIconHTML, PortalIconHTML } from '../sprites/GameIcons';
 import type { PermanentUpgrades, ShardUpgrades, ChallengeCompletions } from '../../types';
 import { gemUpgradeCost } from '../../utils/economy';
 import { getUpgradesForUnit, shardUpgradeCost, SHARD_UPGRADES, UNIT_ICONS, type ShardUpgradeDef } from '../../shardUpgrades';
@@ -304,7 +305,7 @@ function IncomeTiersTab({ gems, upgrades, buyUpgrade, tabSeen }: { gems: number;
 // ============ MISC TAB ============
 
 function MiscUpgradeRow({ icon, name, desc, color, isUnlocked, cost, canAfford, onBuy }: {
-  icon: string; name: string; desc: string; color: string; isUnlocked: boolean; cost: number; canAfford: boolean; onBuy: () => void;
+  icon: React.ReactNode; name: string; desc: string; color: string; isUnlocked: boolean; cost: number; canAfford: boolean; onBuy: () => void;
   level?: number; levelLabel?: string;
 }) {
   return (
@@ -342,11 +343,11 @@ function MiscTab({ gems, upgrades, buyUpgrade }: { gems: number; upgrades: Perma
         Miscellaneous permanent upgrades
       </div>
 
-      <MiscUpgradeRow icon={'\u{1F3C6}'} name="Starting Artifact" desc="Begin every run with a common artifact chest" color="#B8860B"
+      <MiscUpgradeRow icon={<TrophyIconHTML size={16} />} name="Starting Artifact" desc="Begin every run with a common artifact chest" color="#B8860B"
         isUnlocked={!!((upgrades.startingArtifact as number) || 0)} cost={75} canAfford={gems >= 75}
         onBuy={() => buyUpgrade('startingArtifact', 75)} />
 
-      <MiscUpgradeRow icon={'\u{1F300}'} name="Auto Portal" desc="Portal auto-advances to the latest captured flag" color="#a855f7"
+      <MiscUpgradeRow icon={<PortalIconHTML size={16} />} name="Auto Portal" desc="Portal auto-advances to the latest captured flag" color="#a855f7"
         isUnlocked={!!((upgrades.autoPortal as number) || 0)} cost={30} canAfford={gems >= 30}
         onBuy={() => buyUpgrade('autoPortal', 30)} />
 

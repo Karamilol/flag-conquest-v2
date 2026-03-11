@@ -14,7 +14,10 @@ import GameHUD from './GameHUD';
 import { ArtifactPicker } from './ArtifactPicker';
 import { SkillPicker } from './SkillPicker';
 import { RelicPicker } from './RelicPicker';
-import { PortalSelect } from './PortalSelect';
+import { PortalArches } from './PortalArches';
+import { ShrinePrompt } from './ShrinePrompt';
+import { DungeonGatePrompt } from './DungeonGatePrompt';
+import { SHRINE_DEFS } from '../../modifiers';
 import { ModifierIndicator } from './ModifierIndicator';
 import { applyPortalChoice } from '../../systems/flags';
 import type { PortalChoiceData } from '../../types';
@@ -25,6 +28,7 @@ import { BackpackPanel } from './BackpackPanel';
 import { AchievementPanel } from './AchievementPanel';
 import { RelicPanel } from './RelicPanel';
 import { TrackSelector } from './TrackSelector';
+import { MapOverview } from './MapOverview';
 
 interface GameViewProps {
   gameRef: React.MutableRefObject<GameState>;
@@ -90,6 +94,7 @@ interface GameViewProps {
   showRelics: boolean;
   setShowRelics: React.Dispatch<React.SetStateAction<boolean>>;
   backpack: import('../../types').Backpack;
+  setBackpack: React.Dispatch<React.SetStateAction<import('../../types').Backpack>>;
   achievementProgress: import('../../achievements').AchievementProgress[];
   onClaimAchievement: (id: string, tier: number) => void;
   onUseConsumable: (id: import('../../types').ConsumableId) => void;
@@ -146,7 +151,7 @@ export default function GameView({
   keybindings, setKeybindings, rebindingAction, setRebindingAction,
   gems, setGems, shards, setShards,
   showBackpack, setShowBackpack, showAchievements, setShowAchievements, showRelics, setShowRelics,
-  backpack, achievementProgress, onClaimAchievement, onUseConsumable,
+  backpack, setBackpack, achievementProgress, onClaimAchievement, onUseConsumable,
   ancientFragments, dungeonUnlocked,
   musicClicks, onMusicClick, trackSelectorOpen, setTrackSelectorOpen,
   blockedTracks, setBlockedTracks, allTracks, playTrack, activeBiome,
@@ -162,6 +167,7 @@ export default function GameView({
   const tileCacheRef = useRef(new TileCache());
   const pixiRef = useRef<PixiRenderer | null>(null);
   const [settingsTab, setSettingsTab] = useState<'audio' | 'controls' | 'dev'>('audio');
+  const [showMap, setShowMap] = useState(false);
 
   // Refresh shop at ~30fps so gold/costs stay current (throttled from 60fps to reduce React reconciliation)
   const [, setShopRefresh] = useState(0);
@@ -369,6 +375,39 @@ export default function GameView({
         }
       }
 
+      // Click-to-interact with shrines on captured flags
+      if (g.fracturedMap && !g.pendingShrinePrompt) {
+        for (const f of g.flags) {
+          if (!f.shrineUnitType || !f.captured) continue;
+          // Skip if this shrine's unit type was already used (broken or gifted)
+          const fm = g.fracturedMap;
+          const ut = f.shrineUnitType;
+          if (fm.chosenShrine?.startsWith(ut + ':') || fm.brokenShrine?.startsWith(ut + ':')) continue;
+          // Shrine hitbox: centered at flag.x - 20, from ground up ~50px (scaled 2x structure)
+          const shrineX = f.x - 20;
+          const shrineY = GROUND_Y - 50;
+          if (clickX > shrineX - 25 && clickX < shrineX + 25 && clickY > shrineY && clickY < GROUND_Y + 5) {
+            g.pendingShrinePrompt = true;
+            g.shrineFlagId = f.id;
+            return;
+          }
+        }
+      }
+
+      // Click-to-interact with dungeon gates on captured flags
+      if (!g.inDungeon && !g.pendingDungeonGatePrompt) {
+        for (const f of g.flags) {
+          if (!f.dungeonGateType || !f.captured) continue;
+          const gateX = f.x + 40;
+          const gateY = GROUND_Y - 20;
+          if (Math.hypot(clickX - gateX, clickY - gateY) < 40) {
+            g.pendingDungeonGatePrompt = true;
+            g.dungeonGateFlagId = f.id;
+            return;
+          }
+        }
+      }
+
       // Click-to-collect chests
       if (g.chests?.length) {
         const CHEST_RADIUS = 35;
@@ -437,13 +476,102 @@ export default function GameView({
     applyPortalChoice(game, portal);
   }, [gameRef]);
 
+  const onShrinePledge = useCallback((shrineChoice: string, cost?: { type: 'gold' | 'gems'; amount: number }) => {
+    const game = gameRef.current;
+    if (!game || !game.fracturedMap) return;
+    // Deduct cost
+    if (cost) {
+      if (cost.type === 'gold') {
+        if (game.goldEarned < cost.amount) return; // can't afford
+        game.goldEarned -= cost.amount;
+      } else {
+        if (gems < cost.amount) return;
+        setGems(g => g - cost.amount);
+      }
+    }
+    const isBreak = shrineChoice.endsWith(':break');
+    if (isBreak) {
+      game.fracturedMap.brokenShrine = shrineChoice;
+    } else {
+      game.fracturedMap.chosenShrine = shrineChoice;
+    }
+    game.pendingShrinePrompt = false;
+    game.shrineFlagId = null;
+    // Particle feedback
+    const hx = game.hero.x;
+    game.particles.push({ id: Math.random().toString(36).slice(2), x: hx, y: 140, text: isBreak ? '💔 SHRINE DESECRATED!' : '🏛️ ALLEGIANCE SWORN!', color: isBreak ? '#ff4444' : '#ffd700', age: 0 } as any);
+  }, [gameRef, gems, setGems]);
+
+  const onShrineLeave = useCallback(() => {
+    const game = gameRef.current;
+    if (!game) return;
+    // Remove shrine so it doesn't re-trigger
+    const flagId = game.shrineFlagId;
+    if (flagId != null) {
+      const idx = game.flags.findIndex(f => f.id === flagId);
+      if (idx >= 0) game.flags[idx] = { ...game.flags[idx], shrineUnitType: undefined };
+    }
+    game.pendingShrinePrompt = false;
+    game.shrineFlagId = null;
+  }, [gameRef]);
+
+  // Dungeon gate handlers
+  const onDungeonGateUnlock = useCallback((keyType: 'artifact' | 'regalia') => {
+    const game = gameRef.current;
+    if (!game) return;
+    const keyId = keyType === 'artifact' ? 'artifactKey' as const : 'regaliaKey' as const;
+    if ((backpack[keyId] || 0) <= 0) return;
+    // Consume key
+    setBackpack(prev => ({ ...prev, [keyId]: prev[keyId] - 1 }));
+    // Unlock the gate and set its type to match the key used
+    const flagId = game.dungeonGateFlagId;
+    if (flagId != null) {
+      const idx = game.flags.findIndex(f => f.id === flagId);
+      if (idx >= 0) {
+        game.flags[idx] = { ...game.flags[idx], dungeonGateType: keyType, dungeonGateLocked: false };
+      }
+    }
+    game.particles.push({ id: Math.random().toString(36).slice(2), x: game.hero.x, y: 140, text: '🔓 GATE UNSEALED!', color: keyType === 'artifact' ? '#cc88ff' : '#ffaa44', age: 0 } as any);
+  }, [gameRef, backpack, setBackpack]);
+
+  const onDungeonGateEnter = useCallback(() => {
+    const game = gameRef.current;
+    if (!game) return;
+    const flagId = game.dungeonGateFlagId;
+    if (flagId == null) return;
+    const flag = game.flags.find(f => f.id === flagId);
+    if (!flag || flag.dungeonGateLocked) return;
+    game.pendingDungeonGatePrompt = false;
+    game.dungeonGateFlagId = null;
+    // Remove gate from flag
+    const idx = game.flags.findIndex(f => f.id === flagId);
+    if (idx >= 0) game.flags[idx] = { ...game.flags[idx], dungeonGateType: undefined, dungeonGateLocked: undefined };
+    // Enter the appropriate dungeon
+    if (flag.dungeonGateType === 'regalia' && onEnterTimedDungeon) {
+      onEnterTimedDungeon();
+    } else if (onEnterDungeon) {
+      onEnterDungeon();
+    }
+  }, [gameRef, onEnterDungeon, onEnterTimedDungeon]);
+
+  const onDungeonGateLeave = useCallback(() => {
+    const game = gameRef.current;
+    if (!game) return;
+    game.pendingDungeonGatePrompt = false;
+    game.dungeonGateFlagId = null;
+  }, [gameRef]);
+
   const game = gameRef.current;
   const showArtifactPicker = !!(game?.pendingArtifactChoice);
   const showSkillPicker = !!(game?.pendingSkillChoice);
   const showRelicPicker = !!(game?.pendingRelicChoice);
-  const showPortalSelect = !!(game?.pendingPortalChoice);
+  const showPortalArches = !!(game?.pendingPortalChoice && game.pendingPortalChoice.length > 0);
+  const showShrinePrompt = !!(game?.pendingShrinePrompt);
+  const showDungeonGatePrompt = !!(game?.pendingDungeonGatePrompt);
 
   const [purchaseMode, setPurchaseMode] = useState<'1x' | '10x' | 'MAX'>('1x');
+  const [devShrineUnit, setDevShrineUnit] = useState('soldier');
+  const [, forceRender] = useState(0);
   const cyclePurchaseMode = useCallback(() => {
     setPurchaseMode(prev => prev === '1x' ? '10x' : prev === '10x' ? 'MAX' : '1x');
   }, []);
@@ -495,6 +623,9 @@ export default function GameView({
           onUseConsumable={onUseConsumable}
           tutorialHighlightForward={tutorialHighlights?.forwardButton}
           tutorialHighlightBack={tutorialHighlights?.backButton}
+          onOpenMap={() => setShowMap(p => !p)}
+          hasMap={true}
+          gems={gems}
         />
 
         {/* Track selector overlay */}
@@ -543,12 +674,44 @@ export default function GameView({
           />
         )}
 
-        {showPortalSelect && game.pendingPortalChoice && (
-          <PortalSelect
+        {showPortalArches && game.pendingPortalChoice && (
+          <PortalArches
             portals={game.pendingPortalChoice}
             onSelect={onSelectPortal}
           />
         )}
+
+        {showShrinePrompt && (() => {
+          const shrineFlag = game?.flags.find(f => f.id === game?.shrineFlagId);
+          const shrineUnit = shrineFlag?.shrineUnitType || 'soldier';
+          const fm = game?.fracturedMap;
+          const alreadyUsed = (fm?.chosenShrine?.startsWith(shrineUnit + ':')) || (fm?.brokenShrine?.startsWith(shrineUnit + ':'));
+          return (
+            <ShrinePrompt
+              shrineUnitType={shrineUnit}
+              alreadyChosen={!!alreadyUsed}
+              gold={game?.goldEarned || 0}
+              gems={gems}
+              onPledge={onShrinePledge}
+              onLeave={onShrineLeave}
+            />
+          );
+        })()}
+
+        {showDungeonGatePrompt && (() => {
+          const gateFlag = game?.flags.find(f => f.id === game?.dungeonGateFlagId);
+          return (
+            <DungeonGatePrompt
+              gateType={gateFlag?.dungeonGateType || 'artifact'}
+              locked={!!gateFlag?.dungeonGateLocked}
+              artifactKeys={backpack.artifactKey || 0}
+              regaliaKeys={backpack.regaliaKey || 0}
+              onUnlock={onDungeonGateUnlock}
+              onEnter={onDungeonGateEnter}
+              onLeave={onDungeonGateLeave}
+            />
+          );
+        })()}
 
         {/* Reroll overlay */}
         {game?.pendingRoll && (() => {
@@ -682,6 +845,14 @@ export default function GameView({
           </div>
         )}
 
+        {/* Map overview overlay */}
+        {showMap && game?.fracturedMap && (
+          <MapOverview
+            map={game.fracturedMap}
+            onClose={() => setShowMap(false)}
+          />
+        )}
+
         {/* Settings overlay */}
         {settingsOpen && (() => {
           const isDev = typeof location !== 'undefined' && location.hostname === 'localhost';
@@ -808,6 +979,7 @@ export default function GameView({
                     const bossType = z % 7;
                     g.boss = { x: bossFlag.x, y: GROUND_Y - 70, health: hp, maxHealth: hp, damage: dmg, speed: 0, attackRate: 120, attackRange: 120, zone: z, bossType, frame: 0, attackCooldown: 60, isAttacking: false, laserWarning: 0 } as any;
                   }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: game?.boss ? 'rgba(255,60,60,0.3)' : 'rgba(20,15,30,0.85)', color: game?.boss ? '#ff8888' : '#ccc', border: `1px solid ${game?.boss ? '#ff4444' : 'rgba(138,74,223,0.3)'}`, borderRadius: 3, cursor: 'pointer' }}>{game?.boss ? 'Boss Active' : 'Spawn Boss'}</button>
+                  <button onClick={() => { const g = gameRef.current; if (g?.boss) g.boss.health = 0; }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: 'rgba(80,20,20,0.85)', color: '#ff6666', border: '1px solid #882222', borderRadius: 3, cursor: 'pointer' }}>Kill Boss</button>
                   <button onClick={() => {
                     const g = gameRef.current; if (!g) return;
                     const z = g.currentZone;
@@ -817,6 +989,41 @@ export default function GameView({
                       g.enemies.push({ id: Date.now() + i, x: g.hero.x + 30 + Math.random() * 100, y: GROUND_Y, health: baseHp, maxHealth: baseHp, damage: baseDmg, speed: 0.3 + Math.random() * 0.3, attackRate: 90, attackRange: 40, attackCooldown: Math.floor(Math.random() * 60), frame: 0, isAttacking: false } as any);
                     }
                   }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: 'rgba(20,15,30,0.85)', color: '#ff8844', border: '1px solid rgba(255,120,60,0.4)', borderRadius: 3, cursor: 'pointer' }}>+100 Mobs</button>
+                </div>
+                {/* Shrine test row */}
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6, alignItems: 'center' }}>
+                  <span style={{ color: '#888', fontSize: 9 }}>Shrine:</span>
+                  <select value={devShrineUnit} onChange={e => setDevShrineUnit(e.target.value)} style={{ padding: '2px 4px', fontSize: 9, fontFamily: F, background: 'rgba(20,15,30,0.85)', color: '#ffd700', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 3 }}>
+                    {SHRINE_DEFS.map(s => <option key={s.unitType} value={s.unitType}>{s.name}</option>)}
+                  </select>
+                  <button onClick={() => {
+                    const g = gameRef.current; if (!g) return;
+                    if (!g.fracturedMap) g.fracturedMap = { zones: [], currentZoneIndex: 0, runModifiers: [], chosenShrine: null, brokenShrine: null } as any;
+                    // Create a fake shrine flag if needed
+                    let shrineFlag = g.flags.find(f => f.shrineUnitType);
+                    if (!shrineFlag) {
+                      const targetFlag = g.flags.find(f => f.captured) || g.flags[0];
+                      if (targetFlag) {
+                        const idx = g.flags.findIndex(f => f.id === targetFlag.id);
+                        g.flags[idx] = { ...g.flags[idx], shrineUnitType: devShrineUnit };
+                        shrineFlag = g.flags[idx];
+                      }
+                    } else {
+                      const idx = g.flags.findIndex(f => f.id === shrineFlag!.id);
+                      g.flags[idx] = { ...g.flags[idx], shrineUnitType: devShrineUnit };
+                      shrineFlag = g.flags[idx];
+                    }
+                    if (shrineFlag) {
+                      g.pendingShrinePrompt = true;
+                      g.shrineFlagId = shrineFlag.id;
+                    }
+                    forceRender(n => n + 1);
+                  }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: 'rgba(40,32,15,0.85)', color: '#ffd700', border: '1px solid rgba(255,215,0,0.4)', borderRadius: 3, cursor: 'pointer' }}>Prompt Shrine</button>
+                  <button onClick={() => {
+                    const g = gameRef.current; if (!g || !g.fracturedMap) return;
+                    g.fracturedMap.chosenShrine = null;
+                    g.fracturedMap.brokenShrine = null;
+                  }} style={{ padding: '3px 6px', fontSize: 9, fontFamily: F, background: 'rgba(20,15,30,0.85)', color: '#cc88ff', border: '1px solid rgba(160,80,255,0.3)', borderRadius: 3, cursor: 'pointer' }}>Reset Shrine</button>
                 </div>
                 {/* Zone warp row */}
                 {devWarpZone && (

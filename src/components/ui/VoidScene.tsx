@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { VOID_QUIPS, pickVoidQuip, formatQuip, type VoidContext } from '../../voidDialogue';
+import { initHeroSpriteCache, HERO_IDLE_FRAME_COUNT } from '../sprites/heroSpriteCache';
 
 interface Props {
   game: {
@@ -24,6 +25,7 @@ const H = 350;
 export default function VoidScene({ game, upgrades, highestZone, highestFlags }: Props) {
   const [tick, setTick] = useState(0);
   const quipRef = useRef({ index: -1, phaseTick: 0, phase: 'wait' as 'wait' | 'fadeIn' | 'show' | 'fadeOut' | 'gap', gapDuration: 210, lastTick: -1 });
+  const voidHeroRef = useRef({ x: W / 2, targetX: W * 0.7, facingRight: true, pauseFrames: 60 });
 
   useEffect(() => {
     quipRef.current = { index: -1, phaseTick: 0, phase: 'wait', gapDuration: 210, lastTick: -1 };
@@ -70,6 +72,27 @@ export default function VoidScene({ game, upgrades, highestZone, highestFlags }:
   if (vq.index >= 0 && vq.index < VOID_QUIPS.length && (vq.phase === 'fadeIn' || vq.phase === 'show' || vq.phase === 'fadeOut')) {
     quipText = formatQuip(VOID_QUIPS[vq.index].text, ctx);
   }
+
+  // === Wandering hero ===
+  const vh = voidHeroRef.current;
+  if (vh.pauseFrames > 0) {
+    vh.pauseFrames--;
+  } else {
+    const dx = vh.targetX - vh.x;
+    if (Math.abs(dx) < 5) {
+      vh.pauseFrames = 60 + Math.floor(Math.random() * 60);
+      vh.targetX = W * 0.15 + Math.random() * W * 0.7;
+    } else {
+      vh.facingRight = dx > 0;
+      vh.x += dx > 0 ? 0.5 : -0.5;
+    }
+  }
+  const heroClass = game.heroClass || 'warlord';
+  const heroCache = initHeroSpriteCache(heroClass);
+  const heroIdleIndex = Math.floor(tick / 25) % HERO_IDLE_FRAME_COUNT;
+  const heroSpriteUrl = heroCache.idle[heroIdleIndex];
+  const heroGroundY = heroCache.vbY + heroCache.vbH;
+  const heroY = H - 33 - heroGroundY;
 
   // === Animated values ===
   const floatY = Math.sin(tick * 0.03) * 6;
@@ -175,8 +198,13 @@ export default function VoidScene({ game, upgrades, highestZone, highestFlags }:
         <circle cx={eX + Math.cos(tick * 0.05 + 4) * 35} cy={eY + 20 + floatY + Math.sin(tick * 0.05 + 4) * 12}
           r={1.5} fill="#aa66dd" opacity={0.12 + Math.sin(tick * 0.05 + 2) * 0.06} />
 
+        {/* Wandering hero */}
+        <g transform={`translate(${vh.facingRight ? vh.x : vh.x + heroCache.vbW}, ${heroY})${vh.facingRight ? '' : ' scale(-1,1)'}`} opacity={0.85}>
+          <image href={heroSpriteUrl} x={heroCache.vbX} y={heroCache.vbY} width={heroCache.vbW} height={heroCache.vbH} />
+        </g>
+
         {/* Ground line */}
-        <rect x={0} y={H - 30} width={W} height={2} fill="#1a1520" opacity={0.3} />
+        <rect x={0} y={H - 40} width={W} height={2} fill="#1a1520" opacity={0.3} />
 
         {/* Speech bubble */}
         {quipText && quipOpacity > 0 && (() => {

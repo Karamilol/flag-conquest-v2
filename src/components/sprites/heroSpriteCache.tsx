@@ -434,6 +434,196 @@ function RangerBody({ stringPull, capeSkew, eyeScaleY, showArrow, releaseFlash }
 }
 
 // ============================================================
+// MAGE BODY — arcane spellcaster with staff and crystal orb
+// ============================================================
+
+// --- Mage ViewBox ---
+const M_VB_X = -10;
+const M_VB_Y = -22;
+const M_VB_W = 56;
+const M_VB_H = 66;
+
+// --- Mage Colors ---
+const mRobe = '#5a3a8a';
+const mRobeLight = '#7a5aaa';
+const mRobeDark = '#3a1a6a';
+const mSash = '#cc9900';
+const mSashLight = '#e8b830';
+const mHat = '#4a2a7a';
+const mHatDark = '#2a1050';
+const mHatLight = '#6a4a9a';
+const mStaffWood = '#6b4226';
+const mStaffLight = '#8b6246';
+const mCrystal = '#8855cc';
+const mCrystalBright = '#aa77ee';
+const mSkin = '#f0c8a0';
+const mMetal = '#888';
+
+interface MageProps {
+  staffAngle: number;      // staff tilt
+  robeSkew: number;        // robe flutter
+  eyeScaleY: number;       // blink
+  crystalGlow: number;     // 0-1
+  castPhase: number;       // 0=none, 1-6=casting
+  hatSkew: number;         // hat tip sway
+}
+
+function MageBody({ staffAngle, robeSkew, eyeScaleY, crystalGlow, castPhase, hatSkew }: MageProps) {
+  const robeTransform = robeSkew !== 0 ? `translate(16, 28) skewX(${robeSkew}) translate(-16, -28)` : undefined;
+  const eyeTransform = eyeScaleY !== 1 ? `translate(16, 2) scale(1, ${eyeScaleY}) translate(-16, -2)` : undefined;
+  const hatTransform = hatSkew !== 0 ? `translate(16, -4) skewX(${hatSkew}) translate(-16, 4)` : undefined;
+  const isCasting = castPhase > 0;
+  const castGlow = isCasting ? 0.5 + castPhase * 0.08 : 0;
+
+  return (
+    <g>
+      {/* Shadow */}
+      <ellipse cx={16} cy={36} rx={12} ry={3.5} fill="rgba(0,0,0,0.25)" />
+
+      {/* Robe back flap */}
+      <g transform={robeTransform}>
+        <polygon points="8,22 4,36 2,37 6,24" fill={mRobeDark} />
+        <polygon points="10,22 6,35 4,36 8,24" fill={mRobe} opacity={0.7} />
+        <polygon points="5,34 2,37 4,36 6,35" fill={mRobeDark} opacity={0.6} />
+      </g>
+
+      {/* Back Leg */}
+      <g>
+        <rect x={9} y={28} width={5} height={5} fill={mRobeDark} />
+        <rect x={8} y={32} width={6} height={4} fill={mHatDark} rx={1} />
+        <rect x={7} y={35} width={7} height={3} fill={mHatDark} rx={1} />
+      </g>
+
+      {/* Robe body */}
+      <g>
+        {/* Main robe */}
+        <rect x={7} y={7} width={18} height={18} fill={mRobe} rx={1} />
+        {/* Inner robe panel */}
+        <rect x={13} y={8} width={6} height={14} fill={mRobeLight} rx={1} opacity={0.5} />
+        {/* Collar */}
+        <rect x={9} y={4} width={14} height={5} fill={mRobeLight} rx={2} />
+        <rect x={10} y={5} width={12} height={3} fill={mRobe} rx={1} />
+        {/* Stitch lines */}
+        <line x1={13} y1={8} x2={13} y2={22} stroke={mRobeDark} strokeWidth={0.6} opacity={0.4} />
+        <line x1={19} y1={8} x2={19} y2={22} stroke={mRobeDark} strokeWidth={0.6} opacity={0.4} />
+        {/* Rune on chest */}
+        <polygon points="16,11 18,14 16,17 14,14" fill={mCrystal} opacity={0.4} />
+        <polygon points="16,12 17,14 16,16 15,14" fill={mCrystalBright} opacity={0.3} />
+        {/* Highlight / shadow */}
+        <rect x={7} y={7} width={18} height={1} fill={mRobeLight} opacity={0.3} />
+        <rect x={7} y={24} width={18} height={1} fill={mRobeDark} opacity={0.5} />
+        {/* Sash belt */}
+        <rect x={6} y={22} width={20} height={3} fill={mSash} />
+        <rect x={14} y={22} width={4} height={3} fill={mSashLight} rx={1} />
+        <rect x={7} y={22} width={4} height={3} fill={mSash} opacity={0.8} />
+        <rect x={21} y={22} width={4} height={3} fill={mSash} opacity={0.8} />
+      </g>
+
+      {/* Front Leg */}
+      <g>
+        <rect x={17} y={28} width={5} height={5} fill={mRobe} />
+        <rect x={16} y={32} width={6} height={4} fill={mHatDark} rx={1} />
+        <rect x={15} y={35} width={8} height={3} fill={mHatDark} rx={1} />
+      </g>
+
+      {/* Left arm (spell hand) */}
+      <g>
+        {/* Shoulder */}
+        <rect x={1} y={6} width={8} height={4} fill={mRobeLight} rx={2} />
+        {/* Upper arm sleeve */}
+        <rect x={2} y={10} width={6} height={5} fill={mRobe} />
+        {/* Forearm sleeve */}
+        <rect x={1} y={14} width={6} height={4} fill={mRobeLight} rx={1} />
+        {/* Hand */}
+        <rect x={0} y={17} width={5} height={4} fill={mSkin} rx={1} />
+        {/* Cast glow in hand */}
+        {isCasting && (
+          <>
+            <circle cx={2} cy={19} r={5} fill={mCrystal} opacity={castGlow * 0.3} />
+            <circle cx={2} cy={19} r={3} fill={mCrystalBright} opacity={castGlow * 0.5} />
+          </>
+        )}
+      </g>
+
+      {/* Staff arm (right side) — rotated around shoulder */}
+      <g transform={`translate(26, 6) rotate(${staffAngle}) translate(-26, -6)`}>
+        {/* Shoulder */}
+        <rect x={22} y={6} width={8} height={4} fill={mRobeLight} rx={2} />
+        {/* Upper arm */}
+        <rect x={24} y={10} width={6} height={5} fill={mRobe} />
+        {/* Forearm */}
+        <rect x={24} y={14} width={6} height={4} fill={mRobeLight} rx={1} />
+        {/* Hand gripping staff */}
+        <rect x={26} y={10} width={4} height={4} fill={mSkin} rx={1} />
+
+        {/* Staff shaft */}
+        <rect x={28.5} y={-14} width={3} height={48} fill={mStaffWood} rx={1} />
+        <rect x={29.5} y={-12} width={1} height={44} fill={mStaffLight} opacity={0.3} />
+        {/* Staff head mount */}
+        <rect x={27} y={-14} width={6} height={3} fill={mMetal} rx={1} />
+        <rect x={27.5} y={-13} width={5} height={1} fill="#aaa" opacity={0.4} />
+        {/* Crystal orb */}
+        <circle cx={30} cy={-18} r={5} fill={mCrystal} opacity={0.7 + crystalGlow * 0.3} />
+        <circle cx={30} cy={-18} r={3.5} fill={mCrystalBright} opacity={0.5 + crystalGlow * 0.3} />
+        <circle cx={29} cy={-20} r={1.5} fill="#fff" opacity={0.4 + crystalGlow * 0.2} />
+        {/* Crystal glow bloom */}
+        <circle cx={30} cy={-18} r={7} fill={mCrystal} opacity={crystalGlow * 0.15} />
+        {/* Staff base cap */}
+        <rect x={27.5} y={32} width={5} height={3} fill={mMetal} rx={1} />
+      </g>
+
+      {/* Cast flash — big burst when casting */}
+      {isCasting && castPhase <= 2 && (
+        <g>
+          <circle cx={30} cy={-18} r={10} fill={mCrystalBright} opacity={0.3} />
+          <circle cx={2} cy={19} r={8} fill={mCrystalBright} opacity={0.25} />
+        </g>
+      )}
+
+      {/* Head */}
+      <g>
+        {/* Face */}
+        <rect x={8} y={-1} width={16} height={8} fill={mSkin} rx={1} />
+        {/* Eyes */}
+        <g transform={eyeTransform}>
+          <rect x={11} y={1} width={3} height={2} fill="#8855cc" />
+          <rect x={18} y={1} width={3} height={2} fill="#8855cc" />
+          <rect x={11} y={1} width={3} height={2} fill="#fff" opacity={0.3} />
+          <rect x={18} y={1} width={3} height={2} fill="#fff" opacity={0.3} />
+          {/* Arcane eye glow when casting */}
+          {isCasting && (
+            <>
+              <rect x={10} y={0} width={5} height={4} fill={mCrystalBright} opacity={0.15} rx={1} />
+              <rect x={17} y={0} width={5} height={4} fill={mCrystalBright} opacity={0.15} rx={1} />
+            </>
+          )}
+        </g>
+
+        {/* Wizard hat */}
+        <g transform={hatTransform}>
+          {/* Brim */}
+          <rect x={4} y={-2} width={24} height={4} fill={mHat} rx={2} />
+          <rect x={5} y={-1} width={22} height={2} fill={mHatLight} opacity={0.15} />
+          {/* Hat body */}
+          <rect x={7} y={-7} width={18} height={7} fill={mHat} rx={1} />
+          {/* Cone */}
+          <polygon points="10,-7 16,-18 22,-7" fill={mHat} />
+          <polygon points="12,-7 16,-16 20,-7" fill={mHatDark} opacity={0.3} />
+          {/* Hat band */}
+          <rect x={7} y={-7} width={18} height={2} fill={mSash} rx={1} />
+          <rect x={8} y={-7} width={16} height={1} fill={mSashLight} opacity={0.3} />
+          {/* Star ornament */}
+          <circle cx={16} cy={-14} r={2} fill="#ffdd44" opacity={0.8} />
+          <circle cx={16} cy={-14} r={1} fill="#fff" opacity={0.5} />
+          {/* Hat tip — slight curl */}
+          <circle cx={16} cy={-18} r={1.5} fill={mHatLight} opacity={0.6} />
+        </g>
+      </g>
+    </g>
+  );
+}
+
+// ============================================================
 // RENDER HELPERS
 // ============================================================
 
@@ -447,6 +637,13 @@ function renderWarlordPose(props: WarlordProps): string {
 function renderRangerPose(props: RangerProps): string {
   const markup = renderToStaticMarkup(<RangerBody {...props} />);
   const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${R_VB_X} ${R_VB_Y} ${R_VB_W} ${R_VB_H}">${markup}</svg>`;
+  const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  return URL.createObjectURL(blob);
+}
+
+function renderMagePose(props: MageProps): string {
+  const markup = renderToStaticMarkup(<MageBody {...props} />);
+  const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${M_VB_X} ${M_VB_Y} ${M_VB_W} ${M_VB_H}">${markup}</svg>`;
   const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
   return URL.createObjectURL(blob);
 }
@@ -466,6 +663,7 @@ export interface HeroSpriteCache {
 
 let warlordCache: HeroSpriteCache | null = null;
 let rangerCache: HeroSpriteCache | null = null;
+let mageCache: HeroSpriteCache | null = null;
 
 // Idle frame animation parameters (8 phases, cycle ~3.3s at 25 ticks/frame)
 //
@@ -546,6 +744,48 @@ export function initRangerSpriteCache(): HeroSpriteCache {
   return rangerCache;
 }
 
+// Idle mage animation parameters
+const IDLE_STAFF  = [0, 0.5, 1, 1.5, 2, 1.5, 1, 0.5];
+const IDLE_ROBE   = [0, 1, 2, 1, 0, -0.8, -1.5, -0.8];
+const IDLE_HAT    = [0, 0.8, 1.5, 0.8, 0, -0.6, -1.2, -0.6];
+const IDLE_GLOW   = [0.3, 0.4, 0.5, 0.6, 0.7, 0.6, 0.5, 0.4];
+
+export function initMageSpriteCache(): HeroSpriteCache {
+  if (mageCache) return mageCache;
+
+  const idle: string[] = [];
+  for (let i = 0; i < HERO_IDLE_FRAME_COUNT; i++) {
+    idle.push(renderMagePose({
+      staffAngle: IDLE_STAFF[i],
+      robeSkew: IDLE_ROBE[i],
+      eyeScaleY: IDLE_EYE[i],
+      crystalGlow: IDLE_GLOW[i],
+      castPhase: 0,
+      hatSkew: IDLE_HAT[i],
+    }));
+  }
+
+  // Mage attack: 6 frames (cd 5=start -> 0=end) — staff raises, crystal flares, burst
+  const CAST_STAFF = [5, 12, 18, 12, 6, 0];
+  const CAST_GLOW  = [0.4, 0.7, 1.0, 0.8, 0.5, 0.2];
+  const CAST_PHASE = [6, 5, 3, 2, 1, 0];
+  const attack = CAST_STAFF.map((angle, cd) => {
+    return renderMagePose({
+      staffAngle: angle,
+      robeSkew: cd < 4 ? 2 : 0,
+      eyeScaleY: 1,
+      crystalGlow: CAST_GLOW[cd],
+      castPhase: CAST_PHASE[cd],
+      hatSkew: cd < 4 ? 1.5 : 0,
+    });
+  });
+
+  mageCache = { idle, attack, vbX: M_VB_X, vbY: M_VB_Y, vbW: M_VB_W, vbH: M_VB_H };
+  return mageCache;
+}
+
 export function initHeroSpriteCache(heroClass: string): HeroSpriteCache {
-  return heroClass === 'ranger' ? initRangerSpriteCache() : initWarlordSpriteCache();
+  if (heroClass === 'ranger') return initRangerSpriteCache();
+  if (heroClass === 'mage') return initMageSpriteCache();
+  return initWarlordSpriteCache();
 }

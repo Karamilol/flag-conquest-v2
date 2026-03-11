@@ -7,6 +7,8 @@ import { formatNumber } from '../../utils/helpers';
 import { SpriteIcon } from '../sprites/SpriteIcon';
 import { getSkillDef } from '../../skills';
 import { HealthPotionIconHTML } from '../sprites/HealthPotionIcon';
+import { MapIconHTML } from '../sprites/MapIcon';
+import { BackpackIconHTML, RelicIconHTML, TrophyIconHTML } from '../sprites/GameIcons';
 import { getModifierDef, getCurseDef } from '../../modifiers';
 
 interface GameHUDProps {
@@ -21,6 +23,8 @@ interface GameHUDProps {
   onOpenShop: () => void;
   onOpenAchievements: () => void;
   onOpenRelics: () => void;
+  onOpenMap: () => void;
+  hasMap: boolean;
   musicTrack: string;
   musicPaused: boolean;
   onMusicNext: () => void;
@@ -33,6 +37,7 @@ interface GameHUDProps {
   onUseConsumable?: (id: import('../../types').ConsumableId) => void;
   tutorialHighlightForward?: boolean;
   tutorialHighlightBack?: boolean;
+  gems?: number;
 }
 
 interface SkillHUDData {
@@ -75,6 +80,7 @@ interface HUDValues {
   eliteTimeLeft: number; // frames remaining
   activeModifiers: string[];
   activeCurse: string | null;
+  gemsThisRun: number;
 }
 
 function snapshotHUD(game: GameState): HUDValues {
@@ -117,6 +123,7 @@ function snapshotHUD(game: GameState): HUDValues {
       : 0,
     activeModifiers: game.activeModifiers || [],
     activeCurse: game.activeCurse || null,
+    gemsThisRun: game.gemsThisRun || 0,
   };
 }
 
@@ -126,7 +133,7 @@ const F = '"Press Start 2P", monospace';
 const TopBar = memo(({ hud, cameraMode, onCycleCameraMode, onOpenSettings,
   musicTrack, musicPaused, onMusicNext, onMusicPrev, onMusicToggle,
   onMusicClick, musicClicks, onOpenTrackSelector,
-  showTooltip, hideTooltip,
+  showTooltip, hideTooltip, gems,
 }: {
   hud: HUDValues;
   cameraMode: CameraMode;
@@ -137,6 +144,7 @@ const TopBar = memo(({ hud, cameraMode, onCycleCameraMode, onOpenSettings,
   onMusicClick?: () => void; musicClicks?: number; onOpenTrackSelector?: () => void;
   showTooltip: (text: string, x: number, y: number) => void;
   hideTooltip: () => void;
+  gems?: number;
 }) => {
   const m = Math.floor(hud.frame / 3600);
   const s = Math.floor((hud.frame % 3600) / 60);
@@ -220,6 +228,10 @@ const TopBar = memo(({ hud, cameraMode, onCycleCameraMode, onOpenSettings,
               </div>
               <div style={{ fontSize: 10, color: '#ffd700', lineHeight: '14px' }}>
                 GOLD: {formatNumber(hud.gold)}
+                <span style={{ marginLeft: 8, color: '#cc88ff' }}>💎 {gems ?? 0}</span>
+                {hud.gemsThisRun > 0 && (
+                  <span style={{ marginLeft: 4, color: '#88cc88' }}>(+{hud.gemsThisRun})</span>
+                )}
               </div>
             </>
           );
@@ -301,11 +313,13 @@ const TopBar = memo(({ hud, cameraMode, onCycleCameraMode, onOpenSettings,
 
 // === Right sidebar icon buttons ===
 const SidebarIcons = memo(({
-  onOpenShop, onOpenAchievements, onOpenRelics,
+  onOpenShop, onOpenAchievements, onOpenRelics, onOpenMap, hasMap,
 }: {
   onOpenShop: () => void;
   onOpenAchievements: () => void;
   onOpenRelics: () => void;
+  onOpenMap: () => void;
+  hasMap: boolean;
 }) => {
   const iconStyle: React.CSSProperties = {
     width: 28, height: 28, borderRadius: 4,
@@ -321,9 +335,12 @@ const SidebarIcons = memo(({
       position: 'absolute', top: 52, right: 4,
       display: 'flex', flexDirection: 'column', gap: 3, zIndex: 10,
     }}>
-      <button onClick={onOpenShop} style={iconStyle} title="Backpack">🎒</button>
-      <button onClick={onOpenRelics} style={iconStyle} title="Relics">🏺</button>
-      <button onClick={onOpenAchievements} style={iconStyle} title="Achievements">🏆</button>
+      <button onClick={onOpenShop} style={iconStyle} title="Backpack"><BackpackIconHTML size={18} /></button>
+      <button onClick={onOpenRelics} style={iconStyle} title="Relics"><RelicIconHTML size={18} /></button>
+      <button onClick={onOpenAchievements} style={iconStyle} title="Achievements"><TrophyIconHTML size={18} /></button>
+      {hasMap && (
+        <button onClick={onOpenMap} style={{ ...iconStyle, borderColor: '#a855f7' }} title="Fractured Map"><MapIconHTML size={18} /></button>
+      )}
       <button onClick={() => window.open('https://discord.gg/UXASDwwqKe', '_blank')} style={{ ...iconStyle, borderColor: '#5865F2' }} title="Join Discord">
         <svg width="16" height="12" viewBox="0 0 71 55" fill="#5865F2" xmlns="http://www.w3.org/2000/svg">
           <path d="M60.1 4.9A58.5 58.5 0 0045.4.5a.2.2 0 00-.2.1 40.8 40.8 0 00-1.8 3.7 54 54 0 00-16.2 0A37.3 37.3 0 0025.4.6a.2.2 0 00-.2-.1A58.4 58.4 0 0010.5 4.9a.2.2 0 00-.1.1C1.5 18.7-.9 32.2.3 45.5v.2a58.9 58.9 0 0017.7 9 .2.2 0 00.3-.1 42.1 42.1 0 003.6-5.9.2.2 0 00-.1-.3 38.8 38.8 0 01-5.5-2.7.2.2 0 01 0-.4l1.1-.9a.2.2 0 01.2 0 42 42 0 0035.6 0 .2.2 0 01.2 0l1.1.9a.2.2 0 010 .4 36.4 36.4 0 01-5.5 2.7.2.2 0 00-.1.3 47.2 47.2 0 003.6 5.9.2.2 0 00.3.1A58.7 58.7 0 0070.5 45.7v-.2c1.4-15-2.3-28-9.8-39.6a.2.2 0 00-.1-.1zM23.7 37.3c-3.4 0-6.3-3.2-6.3-7s2.8-7 6.3-7 6.4 3.1 6.3 7-2.8 7-6.3 7zm23.2 0c-3.4 0-6.3-3.2-6.3-7s2.8-7 6.3-7 6.4 3.1 6.3 7-2.8 7-6.3 7z"/>
@@ -667,9 +684,9 @@ const BottomBar = memo(({
 // === Main HUD ===
 export default function GameHUD(props: GameHUDProps) {
   const { gameRef, frameRef, cameraMode, onCycleCameraMode, onMovePrev, onMoveNext,
-    onToggleHold, onOpenSettings, onOpenShop, onOpenAchievements, onOpenRelics,
+    onToggleHold, onOpenSettings, onOpenShop, onOpenAchievements, onOpenRelics, onOpenMap, hasMap,
     musicTrack, musicPaused, onMusicNext, onMusicPrev, onMusicToggle,
-    onMusicClick, musicClicks, onOpenTrackSelector, keybindings, onUseConsumable, tutorialHighlightForward, tutorialHighlightBack } = props;
+    onMusicClick, musicClicks, onOpenTrackSelector, keybindings, onUseConsumable, tutorialHighlightForward, tutorialHighlightBack, gems } = props;
 
   const [hud, setHud] = useState<HUDValues>(() => snapshotHUD(gameRef.current));
 
@@ -733,6 +750,7 @@ export default function GameHUD(props: GameHUDProps) {
           onOpenTrackSelector={onOpenTrackSelector}
           showTooltip={showTooltip}
           hideTooltip={hideTooltip}
+          gems={gems}
         />
       </div>
 
@@ -741,6 +759,8 @@ export default function GameHUD(props: GameHUDProps) {
           onOpenShop={onOpenShop}
           onOpenAchievements={onOpenAchievements}
           onOpenRelics={onOpenRelics}
+          onOpenMap={onOpenMap}
+          hasMap={hasMap}
         />
       </div>
 

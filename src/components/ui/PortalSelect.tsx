@@ -5,9 +5,9 @@ import type { PortalChoiceData } from '../../types';
 import { getModifierDef, getCurseDef } from '../../modifiers';
 
 const DIFF_CONFIG: Record<string, { label: string; color: string; border: string; bg: string }> = {
-  easy: { label: 'SAFE PATH', color: '#4aff4a', border: '#2a8a2a', bg: 'rgba(20,60,20,0.95)' },
-  medium: { label: 'BALANCED', color: '#ffcc44', border: '#8a7a2a', bg: 'rgba(60,50,15,0.95)' },
-  hard: { label: 'DANGEROUS', color: '#ff4444', border: '#8a2a2a', bg: 'rgba(60,15,15,0.95)' },
+  easy: { label: 'STABLE', color: '#4aff4a', border: '#2a8a2a', bg: 'rgba(20,60,20,0.95)' },
+  medium: { label: 'WARPED', color: '#ffcc44', border: '#8a7a2a', bg: 'rgba(60,50,15,0.95)' },
+  hard: { label: 'VOLATILE', color: '#ff4444', border: '#8a2a2a', bg: 'rgba(60,15,15,0.95)' },
 };
 
 const BIOME_LABELS: Record<string, string> = {

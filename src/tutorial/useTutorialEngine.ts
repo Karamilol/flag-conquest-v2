@@ -54,7 +54,7 @@ export function useTutorialEngine(
   setShopTab?: (tab: string) => void,
   regaliaCount: number = 0,
 ): [TutorialEngineState, EngineActions] {
-  const tutorialStep = upgrades.tutorialStep as number;
+  const tutorialStep = (upgrades.tutorialStep as number) || 0;
 
   const [currentStepId, setCurrentStepId] = useState<string | null>(null);
   const [dialogueIndex, setDialogueIndex] = useState(0);
@@ -168,10 +168,10 @@ export function useTutorialEngine(
   // ── Step 1 trigger: fresh save starts playing ────────────────
   useEffect(() => {
     if (gameScreen !== 'playing') return;
-    if (tutorialStep === 0 && upgrades.playerName === '') {
+    if (tutorialStep === 0 && !upgrades.playerName) {
       // Fresh save — start intro
       startStep('intro');
-    } else if (tutorialStep === 0 && upgrades.playerName !== '') {
+    } else if (tutorialStep === 0 && upgrades.playerName) {
       // Returning player who played before tutorial existed — skip
       setUpgrades(prev => ({ ...prev, tutorialStep: TUTORIAL_DONE }));
     }
@@ -498,6 +498,10 @@ export function useTutorialEngine(
   // Also highlight forward button during 'forward' step even while showing dialogue
   if (currentStepId === 'forward' && step) {
     highlights.forwardButton = true;
+  }
+  // Highlight back button during battleWarning even while showing dialogue
+  if (currentStepId === 'battleWarning' && step) {
+    highlights.backButton = true;
   }
   // Event prompts with autoComplete: show highlights while dialogue is showing
   if (step?.autoComplete && showingDialogue) {

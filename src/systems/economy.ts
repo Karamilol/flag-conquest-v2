@@ -2,7 +2,7 @@ import { GROUND_Y, UNIT_STATS, ENEMY_SIZE, isUnitMelee } from '../constants';
 import { makeParticle, uid, formatNumber } from '../utils/helpers';
 import { passiveGoldPerMin, goldDropMult, zoneKillGoldMult, unitHpMult, unitDmgMult, huntingSlimesIncome, scoutingForestsPayout, deliveringResourcesPayout, smithingSwordsPayout, reinforcingBarricadesPayout, enchantingScrollsPayout, trainingMilitiaPayout, expandingTerritoriesPayout, zoneGoldMult } from '../utils/economy';
 import type { TickState } from './tickState';
-import { tickHasArtifact, tickHasSynergy, tickHasSetBonus, tickSkillBuffActive, tickHasSkill, getRegaliaBonus, dealDamageToHero, dealDamageToAlly } from './tickState';
+import { tickHasArtifact, tickHasSynergy, tickHasSetBonus, tickSkillBuffActive, tickHasSkill, getRegaliaBonus, dealDamageToHero, dealDamageToAlly, forEachEnemy } from './tickState';
 import { getRelicLevel } from '../relics';
 import { getAncientEffect, getAncientRelicLevel } from '../ancientRelics';
 import type { GameState, PermanentUpgrades, Ally } from '../types';
@@ -1269,6 +1269,17 @@ export function processAllyDeaths(ts: TickState): void {
           if (e.health > 0 && Math.abs(e.x - a.x) < 60) e.health -= aoeDmg;
         }
         ts.particles.push(makeParticle(a.x, a.y - 20, `💥 MARTYRDOM`, '#ff4444'));
+      }
+      // Shrine: death explosion (bombard break — magic/melee explode for 30% max HP)
+      if (a.shrineDeathExplosion) {
+        const explodeDmg = Math.floor(a.maxHealth * 0.30);
+        forEachEnemy(ts, (e: any) => {
+          if (Math.abs(e.x - a.x) < 50) {
+            e.health -= explodeDmg;
+            e.lastDamageTime = ts.frame;
+          }
+        });
+        ts.particles.push(makeParticle(a.x, a.y - 15, `💥 ${explodeDmg}`, '#ff8800'));
       }
       // Record death for Lich necromancy
       ts.recentAllyDeaths.push({

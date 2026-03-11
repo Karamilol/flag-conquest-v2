@@ -9,7 +9,172 @@ import { getRelicLevel } from '../relics';
 import { getAncientEffect, getAncientRelicLevel } from '../ancientRelics';
 import { isUnitInCategory } from '../regalias';
 import { getChallengeRewardMult } from '../challenges';
+import { parseShrineChoice } from '../modifiers';
 import { modEnemySpawnRateMult, modEnemyHpMult, modEnemyDmgMult, modEnemySpeedMult, modBossHpMult, modRespawnTimeMult, modFlankersActive, modSharpshootersActive, modUnstablePortalActive, modAllyHpMult, modAllyDefenseBonus, modDuelistOathActive, modColosseumRewardActive } from './modifierEffects';
+
+/** Apply Allegiance Shrine effects to an ally at spawn time */
+function applyShrineBuff(ally: Ally, ts: TickState): void {
+  // Apply both broken shrine (break) and chosen shrine (gift) — they stack
+  const choices: string[] = [];
+  if (ts.fracturedMap?.brokenShrine) choices.push(ts.fracturedMap.brokenShrine);
+  if (ts.fracturedMap?.chosenShrine) choices.push(ts.fracturedMap.chosenShrine);
+  if (choices.length === 0) return;
+
+  for (const chosen of choices) {
+  const parsed = parseShrineChoice(chosen);
+  if (!parsed) continue;
+  const { unitType: su, choice } = parsed;
+  const t = ally.unitType;
+  const cat = (UNIT_STATS[t as keyof typeof UNIT_STATS] as any)?.category || 'melee';
+
+  // ── Soldier shrine ──
+  if (su === 'soldier') {
+    if (choice === 'break') {
+      if (t === 'soldier') {
+        ally.maxHealth = Math.floor(ally.maxHealth * 0.5);
+        ally.health = ally.maxHealth;
+        ally.damage = Math.floor(ally.damage * 0.5);
+      } else if (cat === 'ranged' || cat === 'magic') {
+        ally.maxHealth = Math.floor(ally.maxHealth * 1.1);
+        ally.health = ally.maxHealth;
+        ally.damage = Math.floor(ally.damage * 1.1);
+      }
+    } else if (choice === 'small' || choice === 'big') {
+      if (t === 'soldier') {
+        ally.maxHealth = Math.floor(ally.maxHealth * 1.2);
+        ally.health = ally.maxHealth;
+        ally.damage = Math.floor(ally.damage * 1.1);
+        if (choice === 'big') ally.shrineCleave = true;
+      }
+    }
+  }
+
+  // ── Archer shrine ──
+  if (su === 'archer') {
+    if (choice === 'break') {
+      if (t === 'archer') {
+        ally.attackRate = Math.floor(ally.attackRate * 2); // 2x slower
+        ally.attackRange = Math.floor(ally.attackRange * 0.5);
+      } else if (cat === 'melee' || cat === 'magic') {
+        ally.attackRate = Math.max(15, Math.floor(ally.attackRate * 0.92)); // 8% faster
+      }
+    } else if (choice === 'small' || choice === 'big') {
+      if (t === 'archer') {
+        ally.shrineCritBonus = 0.4; // +40% crit damage
+        if (choice === 'big') ally.shrinePierce = 5;
+      }
+    }
+  }
+
+  // ── Halberd shrine ──
+  if (su === 'halberd') {
+    if (choice === 'break') {
+      if (t === 'halberd') {
+        ally.damage = Math.floor(ally.damage * 0.2); // 80% less
+      } else if (cat === 'ranged' || cat === 'magic') {
+        ally.shrineAbsorb = 1; // 1-hit shield
+      }
+    } else if (choice === 'small' || choice === 'big') {
+      if (t === 'halberd') {
+        ally.shrineDR = 0.15; // 15% flat DR
+        if (choice === 'big') { ally.shrineSpearThrow = true; ally.shrineChargeUsed = false; }
+      }
+    }
+  }
+
+  // ── Knight shrine ──
+  if (su === 'knight') {
+    if (choice === 'break') {
+      if (t === 'knight') {
+        ally.defense = 0;
+        ally.maxHealth = Math.floor(ally.maxHealth * 0.5);
+        ally.health = ally.maxHealth;
+      }
+    } else if (choice === 'small' || choice === 'big') {
+      if (t === 'knight') {
+        ally.maxHealth = Math.floor(ally.maxHealth * 1.2);
+        ally.health = ally.maxHealth;
+        ally.speed += 0.2;
+        if (choice === 'big') {
+          ally.shrineCharge = true;
+          ally.shrineChargeUsed = false;
+        }
+      }
+    }
+  }
+
+  // ── Wizard (Apprentice) shrine ──
+  if (su === 'wizard') {
+    if (choice === 'break') {
+      if (t === 'wizard') {
+        ally.speed = 0.2;
+        ally.maxHealth = Math.floor(ally.maxHealth * 0.5);
+        ally.health = ally.maxHealth;
+      } else if (cat === 'ranged' || cat === 'melee') {
+        ally.shrineCritChance = 0.03; // +3% crit chance
+      }
+    } else if (choice === 'small' || choice === 'big') {
+      if (t === 'wizard') {
+        ally.shrineCritChance = 0.10; // +10% crit chance
+        ally.attackRate = Math.max(15, Math.floor(ally.attackRate * 0.9)); // +10% attack speed
+        if (choice === 'big') ally.shrineLightningCounter = 0;
+      }
+    }
+  }
+
+  // ── Cleric shrine ──
+  if (su === 'cleric') {
+    if (choice === 'break') {
+      if (t === 'cleric') {
+        ally.shrineNoHeal = true; // can only attack
+      } else if (cat === 'melee' || cat === 'ranged') {
+        ally.shrineAllyRegen = true; // 1% HP/3s regen
+      }
+    } else if (choice === 'small' || choice === 'big') {
+      if (t === 'cleric') {
+        if (choice === 'small') {
+          ally.shrineHealMult = 1.5; // +50% healing power
+        } else {
+          ally.shrineHealMult = 1.5; // +50% healing power
+          ally.shrineHealTargets = 2; // heal two allies at once
+        }
+      }
+    }
+  }
+
+  // ── Conjurer shrine ──
+  if (su === 'conjurer') {
+    if (choice === 'break') {
+      if (t === 'conjurer') {
+        ally.shrineMaxTurrets = 1; // only 1 turret
+      } else if (cat === 'melee' || cat === 'ranged') {
+        ally.shrineEchoStrike = true; // 3% chance to hit twice
+      }
+    } else if (choice === 'small' || choice === 'big') {
+      if (t === 'conjurer') {
+        ally.shrineTurretSpeedMult = 0.8; // 20% faster turret spawn
+        if (choice === 'big') ally.shrineFloatingTurrets = true;
+      }
+    }
+  }
+
+  // ── Bombard shrine ──
+  if (su === 'bombard') {
+    if (choice === 'break') {
+      if (t === 'bombard') {
+        ally.shrineSuicideBomber = true;
+      } else if (cat === 'magic' || cat === 'melee') {
+        ally.shrineDeathExplosion = true; // explode on death for 30% max HP
+      }
+    } else if (choice === 'small' || choice === 'big') {
+      if (t === 'bombard') {
+        ally.attackRange = Math.floor(ally.attackRange * 1.15); // +15% range
+        if (choice === 'big') ally.shrineMegaBomb = true;
+      }
+    }
+  }
+  } // end for each shrine choice
+}
 
 /** Apply dungeon category boosts to an ally at spawn time */
 export function applyDungeonBoosts(ally: Ally, ts: TickState): void {
@@ -691,6 +856,8 @@ export function processUnitRespawn(ts: TickState): void {
       if (gcLv > 0) newAlly.damage = Math.floor(newAlly.damage * (1 + 0.10 * getChallengeRewardMult(gcLv)));
       const hordeLv = cc.hordeMode || 0;
       if (hordeLv > 0) newAlly.attackRate = Math.max(15, Math.floor(newAlly.attackRate * (1 - 0.08 * getChallengeRewardMult(hordeLv))));
+      // Allegiance Shrine: run-long category buff
+      applyShrineBuff(newAlly, ts);
       // Vanguard Pressure synergy: newly spawned units gain +10% damage for 3s
       if (tickHasSynergy(ts, 'armyPair1')) {
         newAlly.vanguardTimer = 180;
@@ -779,6 +946,8 @@ export function processUnitRespawn(ts: TickState): void {
     if (gcLv2 > 0) newAlly.damage = Math.floor(newAlly.damage * (1 + 0.10 * getChallengeRewardMult(gcLv2)));
     const hordeLv2 = cc2.hordeMode || 0;
     if (hordeLv2 > 0) newAlly.attackRate = Math.max(15, Math.floor(newAlly.attackRate * (1 - 0.08 * getChallengeRewardMult(hordeLv2))));
+    // Allegiance Shrine: run-long category buff
+    applyShrineBuff(newAlly, ts);
     // Vanguard Pressure synergy: newly spawned units gain +10% damage for 3s
     if (tickHasSynergy(ts, 'armyPair1')) {
       newAlly.vanguardTimer = 180;

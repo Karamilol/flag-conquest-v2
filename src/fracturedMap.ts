@@ -111,9 +111,9 @@ export function rollModifiers(difficulty: PortalDifficulty, tier: number): Modif
 export function rollPortals(): PortalDifficulty[] {
   const portals: PortalDifficulty[] = [];
 
-  if (Math.random() < 0.80) portals.push('easy');
-  if (Math.random() < 0.60) portals.push('medium');
-  if (Math.random() < 0.40) portals.push('hard');
+  if (Math.random() < 0.90) portals.push('easy');
+  if (Math.random() < 0.70) portals.push('medium');
+  if (Math.random() < 0.50) portals.push('hard');
 
   // Fallback: if nothing spawned, pick one at random
   if (portals.length === 0) {
@@ -122,4 +122,57 @@ export function rollPortals(): PortalDifficulty[] {
   }
 
   return portals;
+}
+
+// ── Full map pre-generation ─────────────────────────────────────────
+
+import type { MapNode, FracturedMap } from './types';
+
+const MAX_TIER = 7;
+
+/**
+ * Pre-generate the entire fractured world map for a run.
+ * Tier 0: single node (starting zone, no modifiers).
+ * Tiers 1-7: 1-3 portals rolled independently.
+ * Tier 8: single node (final boss zone).
+ */
+export function generateFracturedMap(): FracturedMap {
+  const tiers: MapNode[][] = [];
+
+  for (let tier = 0; tier <= MAX_TIER; tier++) {
+    const biome = getBiome(tier);
+
+    if (tier === 0) {
+      tiers.push([{ tier, index: 0, difficulty: 'easy', biome, modifiers: [], curse: null, connections: [] }]);
+    } else if (tier === MAX_TIER) {
+      const roll = rollModifiers('hard', tier);
+      tiers.push([{ tier, index: 0, difficulty: 'hard', biome, modifiers: roll.modifiers, curse: roll.curse, connections: [] }]);
+    } else {
+      const difficulties = rollPortals();
+      const nodes: MapNode[] = difficulties.map((diff, idx) => {
+        const roll = rollModifiers(diff, tier);
+        return { tier, index: idx, difficulty: diff, biome, modifiers: roll.modifiers, curse: roll.curse, connections: [] };
+      });
+      // Never allow curses on single-portal tiers — player must have a non-cursed option
+      if (nodes.length === 1) nodes[0].curse = null;
+      tiers.push(nodes);
+    }
+  }
+
+  // Wire connections: every node connects to all nodes in the next tier (full access)
+  for (let t = 0; t < MAX_TIER; t++) {
+    const curr = tiers[t];
+    const next = tiers[t + 1];
+    for (const node of curr) {
+      node.connections = next.map((_, i) => i);
+    }
+  }
+
+  return {
+    tiers,
+    chosenPath: new Array(MAX_TIER + 1).fill(null),
+    currentTier: 0,
+    chosenShrine: null,
+    brokenShrine: null,
+  };
 }

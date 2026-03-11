@@ -43,8 +43,9 @@ export function BackpackPanel({ backpack, gems, shards, onClose, onUseConsumable
 
   const canUseSelected = (() => {
     if (isCurrency || !selected || !selectedConsumableDef || selectedQty <= 0 || !canUseMidRun || !onUseConsumable) return false;
-    if (selected === 'artifactKey') return !!dungeonUnlocked && !inDungeon;
-    if (selected === 'regaliaKey') return !!dungeonUnlocked && !inDungeon;
+    // Artifact/Regalia keys are used at Dungeon Gates, not from backpack
+    if (selected === 'artifactKey') return false;
+    if (selected === 'regaliaKey') return false;
     if (selectedConsumableDef.usage === 'midRun') return !inDungeon;
     return false;
   })();

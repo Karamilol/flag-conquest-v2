@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo } from 'react';
 import { COLORS, UNIT_STATS } from '../../constants';
+import { SwordsIconHTML, GoldIconHTML, PortalIconHTML } from '../sprites/GameIcons';
 import type { GameState, PermanentUpgrades, ShardUpgrades, ChallengeCompletions } from '../../types';
 import type { RelicCollection } from '../../relics';
 import { getClassDef } from '../../classes';
@@ -9,6 +10,22 @@ import { goldUpgradeCost, goldDropUpgradeCost, heroUpgradeCost, heroTotalHp, her
 import { formatNumber } from '../../utils/helpers';
 import { computeFullUnitStats, type UnitType, type StatBonus } from '../../utils/unitStats';
 import { type RegaliaSlot, type Regalia, LEVEL_MULTS } from '../../regalias';
+// Modifier cost helpers (inline since we have GameState, not TickState)
+function getModUnitCostMult(mods: string[]): number {
+  let m = 1;
+  if (mods.includes('qualityMaterials')) m *= 0.90;
+  if (mods.includes('inflation')) m *= 1.15;
+  return m;
+}
+function getModEconCostMult(mods: string[]): number {
+  let m = 1;
+  if (mods.includes('logistics')) m *= 0.90;
+  if (mods.includes('inflation')) m *= 1.15;
+  return m;
+}
+function getModRollCostMult(mods: string[]): number {
+  return mods.includes('expensiveLabor') ? 1.20 : 1;
+}
 
 type PurchaseMode = '1x' | '10x' | 'MAX';
 const PURCHASE_MODES: PurchaseMode[] = ['1x', '10x', 'MAX'];
@@ -68,7 +85,7 @@ export function ShopTabs({ game, shopTab, setShopTab, purchaseMode, cycleMode, t
         const active = shopTab === tab;
         return (
           <button key={tab} onClick={() => setShopTab(tab)} style={{ flex: 1, padding: '6px 10px', fontSize: '12px', fontFamily: 'inherit', background: active ? 'rgba(255,255,255,0.08)' : 'transparent', color: active ? tabColor : '#666', border: 'none', borderBottom: active ? `3px solid ${tabColor}` : '3px solid transparent', cursor: 'pointer', ...(tab === 'portal' && highlightPortalTab ? { boxShadow: '0 0 12px #B8860B, 0 0 4px #FFD700', outline: '2px solid #FFD700' } : {}) }}>
-            {tab === 'units' ? '⚔️ UNITS' : tab === 'income' ? '💰 INCOME' : '🌀 PORTAL'}
+            {tab === 'units' ? <><SwordsIconHTML size={14} /> UNITS</> : tab === 'income' ? <><GoldIconHTML size={14} /> INCOME</> : <><PortalIconHTML size={14} /> PORTAL</>}
           </button>
         );
       })}
@@ -84,6 +101,7 @@ export function ShopTabs({ game, shopTab, setShopTab, purchaseMode, cycleMode, t
 export function ShopPanel({ game, upgrades, shardUpgrades, challengeCompletions, relicCollection, ancientRelicsOwned, ancientRelicCopies, shopTab, setShopTab, buyRunUpgrade, buyRunUpgradeMulti, movePortalForward, toggleAutoPortal, onRoll, onReturnHome, highestZone, highestFlags, purchaseMode: externalPurchaseMode, costDiscount = 1, equippedRegalias, tutorialHighlights }: Props & { purchaseMode?: PurchaseMode }) {
   const [internalPurchaseMode, setInternalPurchaseMode] = useState<PurchaseMode>('1x');
   const purchaseMode = externalPurchaseMode ?? internalPurchaseMode;
+  const mods = game.activeModifiers || [];
 
   return (
     <div style={{ padding: '6px', background: 'linear-gradient(135deg, rgba(25,10,42,0.9) 0%, rgba(12,6,20,0.9) 100%)' }}>
@@ -92,17 +110,19 @@ export function ShopPanel({ game, upgrades, shardUpgrades, challengeCompletions,
         const rcCount = (game.flags || []).filter(f => f.captured && !f.corrupted && !f.contested && f.buildingType === 'recruitmentCenter').length;
         const blueprintsMult = getRelicLevel(relicCollection['blueprints'] || 0) > 0 ? 1.5 : 1;
         const unitDiscount = rcCount > 0 ? Math.pow(1 - 0.03 * blueprintsMult, rcCount) : 1;
-        return <UnitsTab game={game} upgrades={upgrades} shardUpgrades={shardUpgrades} challengeCompletions={challengeCompletions} relicCollection={relicCollection} ancientRelicsOwned={ancientRelicsOwned} ancientRelicCopies={ancientRelicCopies} buyRunUpgrade={buyRunUpgrade} buyRunUpgradeMulti={buyRunUpgradeMulti} purchaseMode={purchaseMode} onRoll={onRoll} discount={costDiscount * unitDiscount} equippedRegalias={equippedRegalias} tutorialHighlights={tutorialHighlights} />;
+        const modUnitMult = getModUnitCostMult(mods);
+        return <UnitsTab game={game} upgrades={upgrades} shardUpgrades={shardUpgrades} challengeCompletions={challengeCompletions} relicCollection={relicCollection} ancientRelicsOwned={ancientRelicsOwned} ancientRelicCopies={ancientRelicCopies} buyRunUpgrade={buyRunUpgrade} buyRunUpgradeMulti={buyRunUpgradeMulti} purchaseMode={purchaseMode} onRoll={onRoll} discount={costDiscount * unitDiscount * modUnitMult} equippedRegalias={equippedRegalias} tutorialHighlights={tutorialHighlights} />;
       })()}
       {shopTab === 'income' && (() => {
         // Market: -3% income upgrade costs per building (stacks)
         const mktCount = (game.flags || []).filter(f => f.captured && !f.corrupted && !f.contested && f.buildingType === 'market').length;
         const blueprintsMult = getRelicLevel(relicCollection['blueprints'] || 0) > 0 ? 1.5 : 1;
         const incomeDiscount = mktCount > 0 ? Math.pow(1 - 0.03 * blueprintsMult, mktCount) : 1;
+        const modEconMult = getModEconCostMult(mods);
         // Grand Design (Expansion 4pc): income upgrades 3% cheaper
         const expansionSet = RELIC_SETS.find(s => s.id === 'expansionSet')!;
         const grandDesignDiscount = hasSetBonus(expansionSet, relicCollection, 4) ? 0.97 : 1;
-        return <IncomeTab game={game} upgrades={upgrades} relicCollection={relicCollection} ancientRelicsOwned={ancientRelicsOwned} ancientRelicCopies={ancientRelicCopies} challengeCompletions={challengeCompletions} buyRunUpgrade={buyRunUpgrade} buyRunUpgradeMulti={buyRunUpgradeMulti} purchaseMode={purchaseMode} discount={costDiscount * incomeDiscount * grandDesignDiscount} tutorialHighlights={tutorialHighlights} />;
+        return <IncomeTab game={game} upgrades={upgrades} relicCollection={relicCollection} ancientRelicsOwned={ancientRelicsOwned} ancientRelicCopies={ancientRelicCopies} challengeCompletions={challengeCompletions} buyRunUpgrade={buyRunUpgrade} buyRunUpgradeMulti={buyRunUpgradeMulti} purchaseMode={purchaseMode} discount={costDiscount * incomeDiscount * grandDesignDiscount * modEconMult} tutorialHighlights={tutorialHighlights} />;
       })()}
       {shopTab === 'portal' && <PortalTab game={game} upgrades={upgrades} movePortalForward={movePortalForward} toggleAutoPortal={toggleAutoPortal} onReturnHome={onReturnHome} highestZone={highestZone} highestFlags={highestFlags} highlightRetreat={tutorialHighlights?.retreatButton} />}
     </div>
@@ -223,7 +243,9 @@ function UnitsTab({ game, upgrades, shardUpgrades, challengeCompletions, relicCo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gold, runUpgrades, purchaseMode, discount, game.bossesDefeated, game.challengeId, game.unitSlots]);
 
-  const rollCanAfford = game.goldEarned >= game.rollCost;
+  const rollMult = getModRollCostMult(game.activeModifiers || []);
+  const effectiveRollCost = Math.floor(game.rollCost * rollMult);
+  const rollCanAfford = game.goldEarned >= effectiveRollCost;
   const highlightRoll = tutorialHighlights?.roll || false;
   const highlightHero = tutorialHighlights?.heroUpgrade || false;
 
@@ -238,7 +260,7 @@ function UnitsTab({ game, upgrades, shardUpgrades, challengeCompletions, relicCo
           marginBottom: '4px',
           ...(highlightRoll ? { boxShadow: '0 0 12px #B8860B, 0 0 4px #FFD700', outline: '2px solid #FFD700' } : {}),
         }}>
-          {'\u{1F3B2}'} ROLL FOR UNIT ({formatNumber(game.rollCost)}g)
+          {'\u{1F3B2}'} ROLL FOR UNIT ({formatNumber(effectiveRollCost)}g)
         </button>
       )}
 

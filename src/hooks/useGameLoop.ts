@@ -185,6 +185,13 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
     activeCurse: prev.activeCurse || null,
     curseRewards: prev.curseRewards || [],
     pendingPortalChoice: null,
+    portalSpawnX: prev.portalSpawnX || 0,
+    selectedPortalIndex: prev.selectedPortalIndex ?? null,
+    fracturedMap: prev.fracturedMap || null,
+    pendingShrinePrompt: prev.pendingShrinePrompt || false,
+    shrineFlagId: prev.shrineFlagId ?? null,
+    pendingDungeonGatePrompt: prev.pendingDungeonGatePrompt || false,
+    dungeonGateFlagId: prev.dungeonGateFlagId ?? null,
 
     devGodMode: prev.devGodMode || false,
     devSpawnMult: prev.devSpawnMult,
@@ -600,6 +607,13 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
     activeCurse: ts.activeCurse,
     curseRewards: ts.curseRewards,
     pendingPortalChoice: ts.pendingPortalChoice,
+    portalSpawnX: ts.portalSpawnX,
+    selectedPortalIndex: ts.selectedPortalIndex,
+    fracturedMap: ts.fracturedMap,
+    pendingShrinePrompt: ts.pendingShrinePrompt,
+    shrineFlagId: ts.shrineFlagId,
+    pendingDungeonGatePrompt: ts.pendingDungeonGatePrompt,
+    dungeonGateFlagId: ts.dungeonGateFlagId,
 
     // Pet state
     petCooldown: ts.petCooldown,

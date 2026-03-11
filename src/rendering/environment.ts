@@ -589,6 +589,8 @@ export function drawEnvironment(
   // ── 2. Atmosphere overlays (animated, screen-space) ──
   if (isWaveDung) {
     drawWaveDungeonAtmosphere(ctx, frame);
+  } else if (isTimedDung) {
+    drawTimedDungeonAtmosphere(ctx, frame);
   } else if (!isDungeon) {
     // Draw atmosphere for each visible biome
     if (blendPrimaryOp > 0.01) {
@@ -700,6 +702,8 @@ export function drawEnvironmentOverlaysOnly(
   // Atmosphere overlays (animated, screen-space)
   if (isWaveDung) {
     drawWaveDungeonAtmosphere(ctx, frame);
+  } else if (isTimedDung) {
+    drawTimedDungeonAtmosphere(ctx, frame);
   } else if (!isDungeon) {
     if (blendPrimaryOp > 0.01) {
       ctx.save();
@@ -723,15 +727,8 @@ export function drawEnvironmentOverlaysOnly(
     drawVolcanicParticles(ctx, camX, frame, volcanicOp);
   }
 
-  // Dungeon ground (procedural gradient — not tile-based)
-  if (isDungeon) {
-    drawDungeonGround(ctx, camX, isDungeon, dungeonType);
-  }
-
-  // Timed dungeon arena structure
-  if (isTimedDung) {
-    drawTimedDungeonArena(ctx, camX, frame);
-  }
+  // Dungeon ground + arena are drawn by PixiWorldObjectRenderer (behind entities)
+  // when Pixi is active. Only drawEnvironment() (Canvas2D-only path) draws them here.
 
   // Animated campfire (home sanctuary)
   if (!isDungeon) {
@@ -803,9 +800,44 @@ function drawWaveDungeonAtmosphere(ctx: CanvasRenderingContext2D, frame: number)
   ctx.globalAlpha = 1;
 }
 
+function drawTimedDungeonAtmosphere(ctx: CanvasRenderingContext2D, frame: number) {
+  // Warm torchlight glow from center
+  const grad = ctx.createRadialGradient(
+    VIEWPORT_W * 0.5, VIEWPORT_H * 0.55, 0,
+    VIEWPORT_W * 0.5, VIEWPORT_H * 0.55, VIEWPORT_W * 0.45,
+  );
+  grad.addColorStop(0, 'rgba(255,136,51,0.12)');
+  grad.addColorStop(0.3, 'rgba(200,100,40,0.06)');
+  grad.addColorStop(0.6, 'rgba(100,50,20,0.03)');
+  grad.addColorStop(1, 'rgba(14,8,4,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, VIEWPORT_W, VIEWPORT_H);
+
+  // Top darkness
+  const topGrad = ctx.createLinearGradient(0, 0, 0, 150);
+  topGrad.addColorStop(0, 'rgba(14,8,4,0.8)');
+  topGrad.addColorStop(0.5, 'rgba(26,16,8,0.3)');
+  topGrad.addColorStop(1, 'rgba(26,16,8,0)');
+  ctx.fillStyle = topGrad;
+  ctx.fillRect(0, 0, VIEWPORT_W, 150);
+
+  // Floating embers / dust motes
+  for (let i = 0; i < 10; i++) {
+    const dx = (i * 53 + 15) % VIEWPORT_W;
+    const dy = 40 + (i * 37) % (VIEWPORT_H * 0.5);
+    const drift = Math.sin(frame * 0.005 + i * 2.3) * 12;
+    const bob = Math.cos(frame * 0.008 + i * 3.1) * 6;
+    const op = 0.08 + Math.sin(frame * 0.012 + i * 2.7) * 0.05;
+    ctx.globalAlpha = op;
+    ctx.fillStyle = i % 3 === 0 ? '#ff8833' : '#aa8855';
+    ctx.beginPath(); ctx.arc(dx + drift, dy + bob, i % 3 === 0 ? 1.5 : 1, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
 // ── Timed dungeon arena structure (world-space: walls, ceiling, torches, vines) ──
 
-function drawTimedDungeonArena(ctx: CanvasRenderingContext2D, camX: number, frame: number) {
+export function drawTimedDungeonArena(ctx: CanvasRenderingContext2D, camX: number, frame: number) {
   const arenaLeft = -30;
   const arenaRight = 1050;
   const arenaW = arenaRight - arenaLeft;
@@ -1107,7 +1139,7 @@ function drawDungeonMountains(
 
 // ── Dungeon ground ──────────────────────────────────────────────
 
-function drawDungeonGround(ctx: CanvasRenderingContext2D, camX: number, _inDungeon: boolean, dungeonType?: string) {
+export function drawDungeonGround(ctx: CanvasRenderingContext2D, camX: number, _inDungeon: boolean, dungeonType?: string) {
   const isWave = dungeonType === 'wave';
   const colors = isWave ? DUNGEON_COLORS.wave : DUNGEON_COLORS.timed;
   const groundTop = GROUND_Y + WORLD_Y_OFFSET;

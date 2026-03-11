@@ -6,11 +6,12 @@ import type { PetState } from './pets';
 import type { HeroClassId } from './classes';
 import type { CosmeticCategory } from './cosmetics';
 import { createInitialState, generateZoneFlags, generateDungeonArena, generateTimedDungeonArena } from './state';
+import { generateFracturedMap } from './fracturedMap';
 import { useGameLoop, type DungeonExitInfo } from './hooks/useGameLoop';
 import { useMusicManager } from './hooks/useMusicManager';
 import { preloadSprites, allSpritesLoaded } from './canvasRenderer';
 import { getClassDef } from './classes';
-import { heroTotalHp, heroTotalDmg, unitHpMult, unitDmgMult } from './utils/economy';
+import { heroTotalHp, heroTotalDmg, unitHpMult, unitDmgMult, calculateOfflineIncome } from './utils/economy';
 import { rollUnitType, COLORS, GROUND_Y, UNIT_STATS } from './constants';
 import { makeParticle, formatNumber, uid } from './utils/helpers';
 import { SHARD_UPGRADES } from './shardUpgrades';
@@ -35,6 +36,7 @@ import { DailyLoginPanel } from './components/ui/DailyLoginPanel';
 import { LeaderboardPanel } from './components/ui/LeaderboardPanel';
 import GameView from './components/ui/GameView';
 import VoidScene from './components/ui/VoidScene';
+import { TrophyIconHTML, BackpackIconHTML, RelicIconHTML } from './components/sprites/GameIcons';
 import { useTutorialEngine } from './tutorial/useTutorialEngine';
 import { TutorialOverlay } from './tutorial/TutorialOverlay';
 
@@ -151,6 +153,19 @@ export default function App() {
   const [deathTab, setDeathTab] = useState<'shop' | 'regalia' | 'relics'>('shop');
   const [seenShopTabs] = useState(() => new Set<string>());
   const [mercyReward, setMercyReward] = useState<number | null>(null);
+
+  // Offline income (AFK gold while game was closed)
+  const [offlineIncome, setOfflineIncome] = useState<number | null>(() => {
+    if (!savedRun || savedRun.gameScreen !== 'playing') return null;
+    const elapsedSeconds = Math.floor((Date.now() - savedRun.timestamp) / 1000);
+    if (elapsedSeconds < 60) return null;
+    const income = calculateOfflineIncome(
+      savedRun.game.runUpgrades,
+      { incomeTier2: (saved?.upgrades?.incomeTier2 as number) || 0, incomeTier3: (saved?.upgrades?.incomeTier3 as number) || 0, incomeTier4: (saved?.upgrades?.incomeTier4 as number) || 0, incomeTier5: (saved?.upgrades?.incomeTier5 as number) || 0, incomeTier6: (saved?.upgrades?.incomeTier6 as number) || 0, incomeTier7: (saved?.upgrades?.incomeTier7 as number) || 0, incomeTier8: (saved?.upgrades?.incomeTier8 as number) || 0 },
+      elapsedSeconds,
+    );
+    return income > 0 ? income : null;
+  });
 
   // Daily login
   const [dailyLoginDay, setDailyLoginDay] = useState(saved?.dailyLoginDay ?? 0);
@@ -560,11 +575,14 @@ export default function App() {
   }, [upgrades]);
 
   const selectClass = useCallback((classId: HeroClassId) => {
-    if (!spritesLoadedRef.current) {
-      preloadSprites(String(upgrades.heroSkin || classId));
-      spritesLoadedRef.current = true;
-    }
+    preloadSprites(String(upgrades.heroSkin || classId));
     const newGame = createInitialState(upgrades, classId, selectedChallenge);
+    // Generate fractured world map (non-challenge runs)
+    if (!selectedChallenge) {
+      const map = generateFracturedMap();
+      map.chosenPath[0] = 0; // tier 0 is always chosen (starting zone)
+      newGame.fracturedMap = map;
+    }
     // Starting Artifact
     if ((upgrades.startingArtifact as number) > 0) {
       newGame.chests.push({ id: Date.now(), x: newGame.hero.x + 30, y: GROUND_Y, type: 'artifactCommon', value: 0, age: 0 });
@@ -734,11 +752,13 @@ export default function App() {
 
   const rollForUnit = useCallback(() => {
     const game = gameRef.current;
-    if (!game || game.goldEarned < game.rollCost || game.pendingRoll) return;
+    const rollMult = (game?.activeModifiers || []).includes('expensiveLabor') ? 1.20 : 1;
+    const effectiveRollCost = Math.floor((game?.rollCost || 0) * rollMult);
+    if (!game || game.goldEarned < effectiveRollCost || game.pendingRoll) return;
     const allowed = ((upgrades.unlockedUnits as string[]) || ['soldier']).filter((t: string) => !((upgrades.disabledUnits as string[]) || []).includes(t));
     const randomType = rollUnitType(allowed);
     if (!randomType) return;
-    game.goldEarned -= game.rollCost;
+    game.goldEarned -= effectiveRollCost;
     game.pendingRoll = { unitType: randomType, rerollCount: 0 };
     refreshShop();
   }, [gameRef, upgrades, refreshShop]);
@@ -1154,6 +1174,15 @@ export default function App() {
     setMercyReward(null);
   }, [mercyReward]);
 
+  // Offline income claim (resuming a saved run after being away)
+  const claimOfflineIncome = useCallback(() => {
+    if (offlineIncome) {
+      const g = gameRef.current;
+      if (g) g.goldEarned += offlineIncome;
+    }
+    setOfflineIncome(null);
+  }, [offlineIncome]);
+
   // === Dungeon entry callbacks ===
   const enterWaveDungeon = useCallback(() => {
     const g = gameRef.current; if (!g || g.inDungeon) return;
@@ -1244,8 +1273,10 @@ export default function App() {
     g.enemyShadowAssassins = []; g.enemyFlameCallers = []; g.enemyCorruptedSentinels = [];
     g.enemyDungeonRats = []; g.enemyFireImps = []; g.enemyCursedKnights = [];
     g.boss = null; g.projectiles = []; g.chests = []; g.banners = []; g.barricades = [];
-    g.hero.x = 40; g.hero.targetFlagIndex = -1;
-    g.allies = g.allies.map(a => ({ ...a, x: 40 + Math.random() * 30 }));
+    g.crystalTurrets = []; g.iceWalls = []; g.iceTurrets = [];
+    g.hero.x = 40; g.hero.y = GROUND_Y - 32; g.hero.targetFlagIndex = -1;
+    g.hero.health = g.hero.maxHealth; // Heal to full on dungeon entry
+    g.allies = g.allies.map(a => ({ ...a, x: 40 + Math.random() * 30, y: GROUND_Y - 22, health: a.maxHealth }));
     g.portalFlagIndex = -1; g.cameraX = 0;
     g.timedDungeonTimer = 18000; g.timedDungeonVictory = false;
     g.timedDungeonPortalTimer = 0; g.timedDungeonPortalFlagId = -1;
@@ -1365,7 +1396,7 @@ export default function App() {
         frameRef={frameRef}
         showHpNumbers={showHpNumbers}
         killParticles={killParticles}
-        heroClass={String(upgrades.heroSkin || 'warlord')}
+        heroClass={String(upgrades.heroSkin || gameRef.current?.heroClass || 'warlord')}
         modalTick={modalTick}
         shopTick={shopTick}
         cameraMode={cameraMode}
@@ -1426,6 +1457,7 @@ export default function App() {
         showRelics={showRelics}
         setShowRelics={setShowRelics}
         backpack={backpack}
+        setBackpack={setBackpack}
         achievementProgress={achievementProgress}
         onClaimAchievement={claimAchievement}
         onUseConsumable={useConsumable}
@@ -1487,6 +1519,38 @@ export default function App() {
         onTutorialAdvance={tutorialActions.advanceDialogue}
         onTutorialNameSubmit={tutorialActions.submitName}
       />
+      {/* Offline income modal */}
+      {offlineIncome !== null && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 100, fontFamily: '"Press Start 2P", "Courier New", monospace',
+        }}>
+          <div style={{
+            background: '#2a2a4e', border: '3px solid #ffd700', borderRadius: '8px',
+            padding: '24px', textAlign: 'center', maxWidth: '360px', width: '90%',
+          }}>
+            <div style={{ fontSize: '33px', marginBottom: '12px' }}>{'\u{1F3E0}'}</div>
+            <div style={{ color: '#ffd700', fontSize: '14px', marginBottom: '8px' }}>WELCOME BACK!</div>
+            <div style={{ color: '#a89cc8', fontSize: '11px', lineHeight: '1.6', marginBottom: '16px' }}>
+              Your workers kept earning while you were away...
+            </div>
+            <div style={{ color: '#ffdd44', fontSize: '19px', marginBottom: '6px' }}>
+              +{offlineIncome.toLocaleString()} gold
+            </div>
+            <div style={{ color: '#888', fontSize: '9px', marginBottom: '20px' }}>
+              (30% idle rate)
+            </div>
+            <button onClick={claimOfflineIncome} style={{
+              padding: '12px 32px', fontSize: '14px', fontFamily: 'inherit', fontWeight: 'bold',
+              background: '#ffd700', color: '#333', border: '2px solid #b8960e',
+              borderRadius: '4px', cursor: 'pointer',
+            }}>
+              CONTINUE
+            </button>
+          </div>
+        </div>
+      )}
       {/* Regalia loot notification */}
       {regaliaNotif && !hideNotifications && (
         <div style={{
@@ -1643,28 +1707,25 @@ export default function App() {
                   March through zones, capture flags, defeat bosses, and grow your army.
                 </div>
               </button>
-              <button onClick={() => { if (backpack.challengeKey > 0) setGameScreen('challengeSelect'); }} style={{
+              <button disabled style={{
                 padding: '20px 14px', background: 'linear-gradient(180deg, #3a2a2e 0%, #2a1a1e 100%)',
-                border: `3px solid ${backpack.challengeKey > 0 ? '#ff6644' : '#555'}`, borderRadius: 10,
-                cursor: backpack.challengeKey > 0 ? 'pointer' : 'not-allowed',
+                border: '3px solid #555', borderRadius: 10,
+                cursor: 'not-allowed',
                 width: 180, textAlign: 'center', fontFamily: F,
-                opacity: backpack.challengeKey > 0 ? 1 : 0.5, position: 'relative',
+                opacity: 0.5, position: 'relative',
               }}>
-                {backpack.challengeKey === 0 && (
-                  <div style={{
-                    position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)',
-                    borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexDirection: 'column', gap: 4,
-                  }}>
-                    <span style={{ fontSize: 20 }}>{'\u{1F512}'}</span>
-                    <span style={{ color: '#888', fontSize: 10, fontFamily: F }}>LOCKED</span>
-                    <span style={{ color: '#666', fontSize: 8, fontFamily: F }}>Find a Challenge Key</span>
-                  </div>
-                )}
+                <div style={{
+                  position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)',
+                  borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexDirection: 'column', gap: 4,
+                }}>
+                  <span style={{ fontSize: 20 }}>{'\u{1F6A7}'}</span>
+                  <span style={{ color: '#888', fontSize: 10, fontFamily: F }}>COMING SOON</span>
+                </div>
                 <div style={{ fontSize: 33, marginBottom: 8 }}>{'\u{1F525}'}</div>
                 <div style={{ color: COLORS.gold, fontSize: 14, marginBottom: 4, fontWeight: 'bold' }}>Challenge Run</div>
                 <div style={{ color: '#ff6644', fontSize: 10, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
-                  {backpack.challengeKey > 0 ? `${backpack.challengeKey} KEY${backpack.challengeKey > 1 ? 'S' : ''}` : 'NO KEYS'}
+                  DISABLED
                 </div>
                 <div style={{ color: '#ccc', fontSize: 10, lineHeight: 1.5 }}>
                   Activate modifiers for unique rewards.
@@ -1712,14 +1773,14 @@ export default function App() {
                 {/* Side icon buttons */}
                 <div style={{ position: 'absolute', top: 80, right: 6, display: 'flex', flexDirection: 'column', gap: 5, pointerEvents: 'auto', zIndex: 1 }}>
                   <button onClick={() => setShowAchievements(prev => !prev)} style={{ background: 'rgba(20,15,30,0.85)', border: '1.5px solid #6a4a9a', borderRadius: 6, width: 34, height: 34, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: 0, fontSize: 18, filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }}>
-                    {'\u{1F3C6}'}
+                    <TrophyIconHTML size={20} />
                     {getUnclaimedCount(achievementProgress) > 0 && (
                       <span style={{ position: 'absolute', top: -4, right: -4, background: '#ff4444', color: '#fff', fontSize: 8, fontFamily: 'inherit', fontWeight: 'bold', borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #fff' }}>{getUnclaimedCount(achievementProgress)}</span>
                     )}
                   </button>
                   {totalConsumables(backpack) > 0 && (
                     <button onClick={() => setShowBackpack(prev => !prev)} style={{ background: 'rgba(20,15,30,0.85)', border: '1.5px solid #6a4a9a', borderRadius: 6, width: 34, height: 34, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 0, fontSize: 18, filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }}>
-                      {'\u{1F392}'}
+                      <BackpackIconHTML size={20} />
                       <span style={{ fontSize: 7, color: '#aaa', fontFamily: 'inherit', lineHeight: 1, marginTop: -2 }}>{totalConsumables(backpack)}</span>
                     </button>
                   )}

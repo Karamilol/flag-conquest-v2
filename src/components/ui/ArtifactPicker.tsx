@@ -2,6 +2,7 @@ import { COLORS } from '../../constants';
 import type { Artifact } from '../../types';
 import { ARTIFACT_PARTNER, ARTIFACT_BY_ID, PAIR_BY_ID, CATEGORY_COLORS, CATEGORY_LABELS } from '../../artifacts';
 import { SpriteIcon } from '../sprites/SpriteIcon';
+import { TrophyIconHTML } from '../sprites/GameIcons';
 import type { ArtifactCategory } from '../../artifacts';
 
 const RARITY_COLORS: Record<string, string> = {
@@ -33,7 +34,7 @@ export function ArtifactPicker({ artifacts, ownedArtifactIds, onSelect, heroClas
       zIndex: 30, padding: '8px 10px',
     }}>
       <div style={{ color: COLORS.gold, fontSize: '13px', marginBottom: '3px', textAlign: 'center' }}>
-        {'\u{1F3C6}'} ARTIFACT FOUND!
+        <TrophyIconHTML size={14} /> ARTIFACT FOUND!
       </div>
       <div style={{ color: COLORS.text, fontSize: '11px', marginBottom: '10px', textAlign: 'center' }}>
         Choose an artifact:

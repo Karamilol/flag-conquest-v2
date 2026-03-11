@@ -166,6 +166,13 @@ export interface TickState {
   activeCurse: string | null;
   curseRewards: string[];
   pendingPortalChoice: import('../types').PortalChoiceData[] | null;
+  portalSpawnX: number;
+  selectedPortalIndex: number | null;
+  fracturedMap: import('../types').FracturedMap | null;
+  pendingShrinePrompt: boolean;
+  shrineFlagId: number | null;
+  pendingDungeonGatePrompt: boolean;
+  dungeonGateFlagId: number | null;
 
   // Dev tools
   devGodMode?: boolean;
@@ -352,7 +359,15 @@ export function dealDamageToAlly(ts: TickState, ally: { x: number; y: number; he
   }
   const baseAllyDef = (ally.defense || 0) + defBonus + attritionDef;
   const totalAllyDef = Math.floor(baseAllyDef * (1 + regaliaDefPct / 100));
-  const dmg = Math.max(1, Math.floor((rawDmg - totalAllyDef) * intimidateMult * shieldWallMult * smokeScreenMult * manaShieldMult * protectionMult * juggernautMult));
+  // Shrine: absorb shield (1-hit absorb from halberd break offering)
+  if (((ally as any).shrineAbsorb || 0) > 0) {
+    (ally as any).shrineAbsorb--;
+    ts.particles.push(makeParticle(ally.x + 10, ally.y, '🛡️ ABSORB!', '#88ccff'));
+    return 0;
+  }
+  // Shrine: flat damage reduction (halberd small/big offering)
+  const shrineDRMult = (ally as any).shrineDR ? (1 - (ally as any).shrineDR) : 1;
+  const dmg = Math.max(1, Math.floor((rawDmg - totalAllyDef) * intimidateMult * shieldWallMult * smokeScreenMult * manaShieldMult * protectionMult * juggernautMult * shrineDRMult));
   ally.health -= dmg;
   ally.lastDamageTime = ts.frame;
   ts.particles.push(makeParticle(ally.x + 10, ally.y, `-${dmg}${suffix}`, color));

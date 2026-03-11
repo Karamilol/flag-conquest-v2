@@ -614,16 +614,17 @@ function handleCrystalBoltHit(ts: TickState, p: { x: number; y: number; targetX:
 }
 
 /** Ally arrow collision — apply damage when arrow reaches target area */
-function handleAllyArrowHit(ts: TickState, p: { x: number; y: number; targetX: number; damage: number; crit?: boolean }): boolean {
+function handleAllyArrowHit(ts: TickState, p: { x: number; y: number; targetX: number; damage: number; crit?: boolean; pierce?: number; aoeRadius?: number }): boolean {
   if (p.x < p.targetX - 10) return true;  // still in flight
   if (p.x > p.targetX + 50) return false; // overshot
 
   const hitX = p.targetX;
-  const hitRadius = 25;
-  let hit = false;
+  const hitRadius = p.aoeRadius || 25;
+  let hitCount = 0;
+  const maxHits = p.aoeRadius ? 999 : 1 + (p.pierce || 0); // AoE hits all, pierce adds extra
 
   const applyHit = (enemy: { x: number; health: number; lastDamageTime?: number; defense?: number }) => {
-    if (hit) return;
+    if (hitCount >= maxHits) return;
     if (Math.abs(enemy.x - hitX) > hitRadius) return;
     let dmg = p.damage;
     if (enemy.defense) dmg = Math.max(1, dmg - enemy.defense);
@@ -635,23 +636,23 @@ function handleAllyArrowHit(ts: TickState, p: { x: number; y: number; targetX: n
     } else {
       ts.particles.push(makeParticle(enemy.x + 12, GROUND_Y - 30, `-${dmg}`, '#7f7'));
     }
-    hit = true;
+    hitCount++;
   };
 
   for (const e of ts.enemies) applyHit(e);
-  if (!hit) for (const a of ts.enemyArchers) applyHit(a);
-  if (!hit) for (const w of ts.enemyWraiths) applyHit(w as any);
-  if (!hit) for (const hd of ts.enemyHounds) { if (!(hd.lungeTimer && hd.lungeTimer > 0)) applyHit(hd); }
-  if (!hit) for (const l of ts.enemyLichs) applyHit(l);
-  if (!hit) for (const sa of ts.enemyShadowAssassins) { if (sa.stealthTimer <= 0) applyHit(sa); }
-  if (!hit) for (const fc of ts.enemyFlameCallers) applyHit(fc);
-  if (!hit) for (const cs of ts.enemyCorruptedSentinels) applyHit(cs as any);
-  if (!hit) for (const dr of ts.enemyDungeonRats) applyHit(dr);
-  if (!hit) for (const fi of ts.enemyFireImps) applyHit(fi);
-  if (!hit) for (const ck of ts.enemyCursedKnights) applyHit(ck as any);
-  if (!hit && ts.boss && ts.boss.health > 0) applyHit(ts.boss);
+  if (hitCount < maxHits) for (const a of ts.enemyArchers) applyHit(a);
+  if (hitCount < maxHits) for (const w of ts.enemyWraiths) applyHit(w as any);
+  if (hitCount < maxHits) for (const hd of ts.enemyHounds) { if (!(hd.lungeTimer && hd.lungeTimer > 0)) applyHit(hd); }
+  if (hitCount < maxHits) for (const l of ts.enemyLichs) applyHit(l);
+  if (hitCount < maxHits) for (const sa of ts.enemyShadowAssassins) { if (sa.stealthTimer <= 0) applyHit(sa); }
+  if (hitCount < maxHits) for (const fc of ts.enemyFlameCallers) applyHit(fc);
+  if (hitCount < maxHits) for (const cs of ts.enemyCorruptedSentinels) applyHit(cs as any);
+  if (hitCount < maxHits) for (const dr of ts.enemyDungeonRats) applyHit(dr);
+  if (hitCount < maxHits) for (const fi of ts.enemyFireImps) applyHit(fi);
+  if (hitCount < maxHits) for (const ck of ts.enemyCursedKnights) applyHit(ck as any);
+  if (hitCount < maxHits && ts.boss && ts.boss.health > 0) applyHit(ts.boss);
 
-  return !hit; // false = consumed, true = keep alive (missed)
+  return hitCount === 0; // false = consumed (hit something), true = keep alive (missed)
 }
 
 function handleHeroArrowHit(ts: TickState, p: { x: number; y: number; targetX: number; damage: number }): boolean {

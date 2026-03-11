@@ -326,3 +326,9 @@
   transform-box: fill-box;
   transform-origin: top left;
 }
+
+/* === TUTORIAL GLOW === */
+@keyframes tutorialGlow {
+  0%, 100% { box-shadow: 0 0 6px #ffcc44, 0 0 12px #ffcc4444; }
+  50% { box-shadow: 0 0 12px #ffcc44, 0 0 24px #ffcc4488; }
+}

@@ -1,4 +1,4 @@
-import type { GameState, Flag, Chest, Banner, Barricade, IceWall, Boss } from '../types';
+import type { GameState, Flag, Chest, Banner, Barricade, IceWall, Boss, CrystalTurret, IceTurret } from '../types';
 import { GROUND_Y, VIEWPORT_W, VIEWPORT_H, GAME_HEIGHT, FLAG_HEIGHT, COLORS } from '../constants';
 import {
   initBossSpriteCache, BOSS_VB, BOSS_IDLE_FRAME_COUNT,
@@ -298,6 +298,209 @@ function drawFlag(ctx: CanvasRenderingContext2D, flag: Flag, camX: number, frame
     ctx.strokeRect(sx - 8, gy - poleH - 6, 28, poleH + 8);
     ctx.globalAlpha = 1;
   }
+
+  // === LAYER 6: Shrine structure ===
+  if (flag.shrineUnitType) {
+    drawShrine(ctx, sx, gy, flag.shrineUnitType, frame);
+  }
+}
+
+/** Draw a shrine structure unique to each unit type */
+function drawShrine(ctx: CanvasRenderingContext2D, sx: number, gy: number, unitType: string, frame: number): void {
+  const bx = sx - 22; // left of flag pole (shifted for larger size)
+  const by = gy;       // ground level
+  const glow = 0.4 + Math.sin(frame * 0.05) * 0.15;
+  const S = 2.0; // 0.7x building size ≈ 2x current pixel coords
+
+  // Scale everything around the ground-center anchor
+  ctx.save();
+  ctx.translate(bx + 2, by);
+  ctx.scale(S, S);
+  ctx.translate(-(bx + 2), -by);
+
+  // Shared: stone pedestal base
+  ctx.fillStyle = '#4a4a50';
+  ctx.fillRect(bx - 6, by - 4, 16, 4);
+  ctx.fillStyle = '#5a5a62';
+  ctx.fillRect(bx - 5, by - 5, 14, 2);
+
+  if (unitType === 'soldier') {
+    // Crossed swords on stone
+    ctx.strokeStyle = '#aaa';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(bx - 2, by - 18); ctx.lineTo(bx + 6, by - 6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx + 6, by - 18); ctx.lineTo(bx - 2, by - 6); ctx.stroke();
+    // Sword handles
+    ctx.fillStyle = '#8a6a3a';
+    ctx.fillRect(bx - 3, by - 20, 3, 4);
+    ctx.fillRect(bx + 5, by - 20, 3, 4);
+    // Crossguards
+    ctx.fillStyle = '#cc9944';
+    ctx.fillRect(bx - 4, by - 17, 5, 1.5);
+    ctx.fillRect(bx + 3, by - 17, 5, 1.5);
+    // Glow
+    ctx.globalAlpha = glow * 0.3;
+    ctx.fillStyle = '#ff6644';
+    ctx.beginPath(); ctx.arc(bx + 2, by - 12, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  } else if (unitType === 'archer') {
+    // Bow embedded in stone
+    ctx.strokeStyle = '#8a6a3a';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(bx + 2, by - 12, 10, -1.2, 1.2); ctx.stroke();
+    // Bowstring
+    ctx.strokeStyle = '#ccc';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(bx + 2 + Math.cos(-1.2) * 10, by - 12 + Math.sin(-1.2) * 10);
+    ctx.lineTo(bx + 2 + Math.cos(1.2) * 10, by - 12 + Math.sin(1.2) * 10);
+    ctx.stroke();
+    // Arrow embedded in ground
+    ctx.fillStyle = '#aa8844';
+    ctx.fillRect(bx + 8, by - 8, 1, 6);
+    ctx.fillStyle = '#888';
+    ctx.beginPath(); ctx.moveTo(bx + 8.5, by - 9); ctx.lineTo(bx + 7, by - 7); ctx.lineTo(bx + 10, by - 7); ctx.closePath(); ctx.fill();
+    // Glow
+    ctx.globalAlpha = glow * 0.3;
+    ctx.fillStyle = '#44cc44';
+    ctx.beginPath(); ctx.arc(bx + 2, by - 12, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  } else if (unitType === 'halberd') {
+    // Crossed halberds
+    ctx.strokeStyle = '#8a8a8a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(bx, by - 22); ctx.lineTo(bx + 2, by - 5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx + 6, by - 22); ctx.lineTo(bx + 4, by - 5); ctx.stroke();
+    // Halberd blades
+    ctx.fillStyle = '#aaa';
+    ctx.beginPath(); ctx.moveTo(bx - 1, by - 22); ctx.lineTo(bx - 4, by - 18); ctx.lineTo(bx + 1, by - 16); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(bx + 7, by - 22); ctx.lineTo(bx + 10, by - 18); ctx.lineTo(bx + 5, by - 16); ctx.closePath(); ctx.fill();
+    // Altar stone
+    ctx.fillStyle = '#555';
+    ctx.fillRect(bx - 3, by - 6, 12, 3);
+    // Glow
+    ctx.globalAlpha = glow * 0.25;
+    ctx.fillStyle = '#cc8844';
+    ctx.beginPath(); ctx.arc(bx + 3, by - 14, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  } else if (unitType === 'knight') {
+    // Kneeling knight statue silhouette
+    ctx.fillStyle = '#6a6a70';
+    // Body (kneeling)
+    ctx.fillRect(bx, by - 16, 6, 10);
+    // Head
+    ctx.fillStyle = '#7a7a80';
+    ctx.beginPath(); ctx.arc(bx + 3, by - 18, 3, 0, Math.PI * 2); ctx.fill();
+    // Helmet visor
+    ctx.fillStyle = '#444';
+    ctx.fillRect(bx + 1, by - 19, 4, 1.5);
+    // Shield resting on ground
+    ctx.fillStyle = '#8a7a44';
+    ctx.fillRect(bx + 6, by - 12, 3, 8);
+    ctx.fillStyle = '#aa9944';
+    ctx.fillRect(bx + 6.5, by - 10, 2, 4);
+    // Glow
+    ctx.globalAlpha = glow * 0.3;
+    ctx.fillStyle = '#ffd700';
+    ctx.beginPath(); ctx.arc(bx + 3, by - 12, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  } else if (unitType === 'wizard') {
+    // Arcane obelisk
+    ctx.fillStyle = '#3a3a5a';
+    ctx.beginPath(); ctx.moveTo(bx, by - 5); ctx.lineTo(bx + 2, by - 22); ctx.lineTo(bx + 5, by - 22); ctx.lineTo(bx + 7, by - 5); ctx.closePath(); ctx.fill();
+    // Rune lines
+    ctx.strokeStyle = '#6688cc';
+    ctx.lineWidth = 0.8;
+    ctx.globalAlpha = glow;
+    ctx.beginPath(); ctx.moveTo(bx + 2, by - 18); ctx.lineTo(bx + 5, by - 18); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx + 1.5, by - 14); ctx.lineTo(bx + 5.5, by - 14); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx + 1, by - 10); ctx.lineTo(bx + 6, by - 10); ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Lightning spark at top
+    ctx.globalAlpha = glow;
+    ctx.fillStyle = '#44ccff';
+    ctx.beginPath(); ctx.arc(bx + 3.5, by - 24, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = glow * 0.4;
+    ctx.beginPath(); ctx.arc(bx + 3.5, by - 24, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  } else if (unitType === 'cleric') {
+    // Holy reliquary — small ornate box with cross
+    ctx.fillStyle = '#5a4a3a';
+    ctx.fillRect(bx - 1, by - 14, 10, 10);
+    ctx.fillStyle = '#7a6a4a';
+    ctx.fillRect(bx, by - 13, 8, 8);
+    // Cross
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(bx + 3, by - 12, 2, 6);
+    ctx.fillRect(bx + 1.5, by - 10, 5, 2);
+    // Holy light
+    ctx.globalAlpha = glow * 0.5;
+    ctx.fillStyle = '#fff8cc';
+    ctx.beginPath(); ctx.arc(bx + 4, by - 9, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = glow * 0.2;
+    ctx.beginPath(); ctx.arc(bx + 4, by - 9, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  } else if (unitType === 'conjurer') {
+    // Dark obelisk with floating crystal shards
+    ctx.fillStyle = '#2a2a3a';
+    ctx.beginPath(); ctx.moveTo(bx, by - 5); ctx.lineTo(bx + 1, by - 20); ctx.lineTo(bx + 6, by - 20); ctx.lineTo(bx + 7, by - 5); ctx.closePath(); ctx.fill();
+    // Eerie purple veins
+    ctx.strokeStyle = '#8844cc';
+    ctx.lineWidth = 0.6;
+    ctx.globalAlpha = glow;
+    ctx.beginPath(); ctx.moveTo(bx + 2, by - 17); ctx.lineTo(bx + 4, by - 12); ctx.lineTo(bx + 3, by - 8); ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Floating crystal shards
+    const float1 = Math.sin(frame * 0.06) * 3;
+    const float2 = Math.sin(frame * 0.06 + 2) * 3;
+    ctx.fillStyle = '#55ddcc';
+    ctx.globalAlpha = glow + 0.2;
+    // Shard 1
+    ctx.beginPath(); ctx.moveTo(bx - 3, by - 18 + float1); ctx.lineTo(bx - 1.5, by - 22 + float1); ctx.lineTo(bx, by - 18 + float1); ctx.closePath(); ctx.fill();
+    // Shard 2
+    ctx.beginPath(); ctx.moveTo(bx + 7, by - 16 + float2); ctx.lineTo(bx + 8.5, by - 20 + float2); ctx.lineTo(bx + 10, by - 16 + float2); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+  } else if (unitType === 'bombard') {
+    // Smoking crater with bomb
+    // Crater
+    ctx.fillStyle = '#2a1a0a';
+    ctx.beginPath(); ctx.ellipse(bx + 3, by - 2, 8, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#3a2a1a';
+    ctx.beginPath(); ctx.ellipse(bx + 3, by - 3, 6, 2, 0, 0, Math.PI * 2); ctx.fill();
+    // Bomb (round with fuse)
+    ctx.fillStyle = '#333';
+    ctx.beginPath(); ctx.arc(bx + 3, by - 8, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(bx + 3, by - 8, 3.5, 0, Math.PI * 2); ctx.fill();
+    // Fuse
+    ctx.strokeStyle = '#aa8844';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(bx + 5, by - 12); ctx.quadraticCurveTo(bx + 8, by - 15, bx + 6, by - 17); ctx.stroke();
+    // Fuse spark
+    ctx.globalAlpha = glow;
+    ctx.fillStyle = '#ff8844';
+    ctx.beginPath(); ctx.arc(bx + 6, by - 17, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffcc44';
+    ctx.beginPath(); ctx.arc(bx + 6, by - 17, 1, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+    // Smoke wisps
+    ctx.globalAlpha = 0.15 + Math.sin(frame * 0.08) * 0.1;
+    ctx.fillStyle = '#888';
+    ctx.beginPath(); ctx.arc(bx + 4 + Math.sin(frame * 0.03) * 2, by - 20, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bx + 1 + Math.sin(frame * 0.04 + 1) * 2, by - 23, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.restore(); // end scale transform
+
+  // Shrine label (drawn at normal scale so text isn't huge)
+  ctx.fillStyle = '#ffd700';
+  ctx.globalAlpha = glow * 0.8;
+  ctx.font = '7px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('SHRINE', bx + 2, by - 22 * S - 8);
+  ctx.textAlign = 'left';
+  ctx.globalAlpha = 1;
 }
 
 // ── Chests ─────────────────────────────────────────────────────────
@@ -993,11 +1196,53 @@ function drawGemChest(ctx: CanvasRenderingContext2D, chest: Chest, ox: number, o
 }
 
 // ── Main chest dispatch ──────────────────────────────────────────
+// Glow color per chest type
+function chestGlowColor(type: string): string {
+  if (type.endsWith('Legendary')) return '#FFD700';
+  if (type.endsWith('Rare')) return '#4a9fff';
+  if (type === 'shard') return '#44ee88';
+  if (type === 'regalia') return '#ff66aa';
+  if (type === 'consumable') return '#88cc44';
+  if (type === 'gem') return '#cc66ff';
+  // gold or common relics/artifacts
+  return '#DAA520';
+}
+
 function drawChest(ctx: CanvasRenderingContext2D, chest: Chest, camX: number, _frame: number): void {
   const ox = chest.x - camX;
   const oy = chest.y + WORLD_Y_OFFSET;
 
   ctx.save();
+
+  // === Reward glow — pulsing radial behind every chest ===
+  const glowColor = chestGlowColor(chest.type);
+  const pulse = 0.12 + Math.sin(chest.age * 0.08) * 0.06;
+  const outerPulse = 0.06 + Math.sin(chest.age * 0.06) * 0.03;
+  const cx = ox + 10;
+  const cy = oy + 14;
+
+  // Outer soft glow
+  const outerGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, 22);
+  outerGrad.addColorStop(0, glowColor);
+  outerGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = outerGrad;
+  ctx.globalAlpha = outerPulse;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, 22, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Inner bright glow
+  const innerGrad = ctx.createRadialGradient(cx, cy, 1, cx, cy, 12);
+  innerGrad.addColorStop(0, '#fff');
+  innerGrad.addColorStop(0.3, glowColor);
+  innerGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = innerGrad;
+  ctx.globalAlpha = pulse;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, 14, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.globalAlpha = 1;
 
   if (chest.type.startsWith('relic')) {
     drawRelicChest(ctx, chest, ox, oy);
@@ -1112,6 +1357,205 @@ function drawIceWall(ctx: CanvasRenderingContext2D, wall: IceWall, camX: number,
   ctx.fillRect(sx, sy - h - 6, w, 3);
   ctx.fillStyle = '#66aadd';
   ctx.fillRect(sx, sy - h - 6, w * hpFrac, 3);
+}
+
+// ── Crystal Turret (conjurer ally turret) ─────────────────────────
+function drawCrystalTurret(ctx: CanvasRenderingContext2D, t: CrystalTurret, camX: number, frame: number): void {
+  const sx = t.x - camX;
+  const sy = t.y + WORLD_Y_OFFSET;
+  const hoverY = Math.sin(frame * 0.06 + t.x * 0.1) * 3;
+  const tilt = Math.sin(frame * 0.04 + t.x * 0.05) * 0.14; // radians
+  const hpFrac = t.health / t.maxHealth;
+  const lifeRatio = t.duration / t.maxDuration;
+  const fadeOp = lifeRatio < 0.2 ? 0.5 + lifeRatio * 2.5 : 1.0;
+  const corePulse = 0.6 + Math.sin(frame * 0.12) * 0.2;
+  const isFiring = t.attackCooldown < 12;
+
+  ctx.save();
+  ctx.globalAlpha = fadeOp;
+
+  // Duration warning flicker
+  if (lifeRatio < 0.2 && Math.floor(frame * 0.15) % 2 === 0) {
+    ctx.globalAlpha = fadeOp * 0.7;
+  }
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(sx + 8, sy, 7, 2.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Arcane ground circle
+  ctx.fillStyle = '#55ddcc';
+  ctx.globalAlpha = fadeOp * (0.06 + Math.sin(frame * 0.08) * 0.03);
+  ctx.beginPath();
+  ctx.ellipse(sx + 8, sy, 10, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = fadeOp;
+
+  // Crystal body — translate up by hover, apply tilt
+  ctx.save();
+  ctx.translate(sx + 8, sy - 16 + hoverY);
+  ctx.rotate(tilt);
+
+  // Outer stone shell
+  ctx.fillStyle = '#44aa88';
+  ctx.beginPath();
+  ctx.moveTo(0, -8);
+  ctx.lineTo(-6, 2);
+  ctx.lineTo(-5, 10);
+  ctx.lineTo(0, 14);
+  ctx.lineTo(5, 10);
+  ctx.lineTo(6, 2);
+  ctx.closePath();
+  ctx.fill();
+
+  // Mid crystal layer
+  ctx.fillStyle = '#55ddcc';
+  ctx.beginPath();
+  ctx.moveTo(0, -6);
+  ctx.lineTo(-4, 2);
+  ctx.lineTo(-3, 9);
+  ctx.lineTo(0, 12);
+  ctx.lineTo(3, 9);
+  ctx.lineTo(4, 2);
+  ctx.closePath();
+  ctx.fill();
+
+  // Inner bright core
+  ctx.globalAlpha = fadeOp * corePulse;
+  ctx.fillStyle = '#88ffee';
+  ctx.beginPath();
+  ctx.moveTo(0, -3);
+  ctx.lineTo(-2, 3);
+  ctx.lineTo(-1, 7);
+  ctx.lineTo(0, 9);
+  ctx.lineTo(1, 7);
+  ctx.lineTo(2, 3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = fadeOp;
+
+  // Amber accent chips
+  ctx.fillStyle = '#ff8844';
+  ctx.globalAlpha = fadeOp * 0.7;
+  ctx.fillRect(-4, 0, 2, 2);
+  ctx.globalAlpha = fadeOp * 0.6;
+  ctx.fillRect(2, 4, 2, 2);
+  ctx.globalAlpha = fadeOp;
+
+  // Top glint (every 4th cycle)
+  if (Math.floor(frame * 0.02) % 4 === 0) {
+    ctx.fillStyle = '#fff';
+    ctx.globalAlpha = fadeOp * 0.6;
+    ctx.beginPath();
+    ctx.arc(0, -6, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = fadeOp;
+  }
+
+  ctx.restore();
+
+  // Orbiting energy motes
+  ctx.fillStyle = '#88ffee';
+  ctx.globalAlpha = fadeOp * 0.4;
+  ctx.beginPath();
+  ctx.arc(sx + 8 + Math.sin(frame * 0.1) * 10, sy - 14 + hoverY + Math.cos(frame * 0.1) * 6, 1.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#ff8844';
+  ctx.globalAlpha = fadeOp * 0.35;
+  ctx.beginPath();
+  ctx.arc(sx + 8 + Math.sin(frame * 0.1 + 3.14) * 9, sy - 14 + hoverY + Math.cos(frame * 0.1 + 3.14) * 5, 1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = fadeOp;
+
+  // Firing flash
+  if (isFiring) {
+    const firePhase = t.attackCooldown / 12;
+    if (firePhase < 0.5) {
+      ctx.fillStyle = '#88ffee';
+      ctx.globalAlpha = fadeOp * 0.4 * (1 - firePhase);
+      ctx.beginPath();
+      ctx.arc(sx + 8, sy - 24 + hoverY, 6 * (1 - firePhase), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = fadeOp;
+    }
+  }
+
+  // HP bar
+  ctx.fillStyle = '#333';
+  ctx.fillRect(sx, sy - 34 + hoverY, 16, 3);
+  ctx.fillStyle = '#55ddcc';
+  ctx.fillRect(sx, sy - 34 + hoverY, 16 * hpFrac, 3);
+
+  ctx.restore();
+}
+
+// ── Ice Turret (boss-summoned enemy turret) ───────────────────────
+function drawIceTurret(ctx: CanvasRenderingContext2D, t: IceTurret, camX: number, frame: number): void {
+  const sx = t.x - camX;
+  const sy = t.y + WORLD_Y_OFFSET;
+  const hpFrac = t.health / t.maxHealth;
+  const shimmer = 0.7 + Math.sin(frame * 0.07 + t.x * 0.04) * 0.15;
+  const pulse = Math.sin(frame * 0.1) * 0.1;
+  const lifeRatio = t.duration / t.maxDuration;
+  const fadeOp = lifeRatio < 0.2 ? 0.5 + lifeRatio * 2.5 : 1.0;
+
+  ctx.save();
+  ctx.globalAlpha = fadeOp * shimmer;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(sx + 6, sy, 8, 2.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ice crystal body — sharp angular shape
+  ctx.fillStyle = '#66bbee';
+  ctx.beginPath();
+  ctx.moveTo(sx + 6, sy - 22);   // top point
+  ctx.lineTo(sx - 2, sy - 8);
+  ctx.lineTo(sx, sy);
+  ctx.lineTo(sx + 12, sy);
+  ctx.lineTo(sx + 14, sy - 8);
+  ctx.closePath();
+  ctx.fill();
+
+  // Inner bright layer
+  ctx.fillStyle = '#99ddff';
+  ctx.globalAlpha = fadeOp * (0.6 + pulse);
+  ctx.beginPath();
+  ctx.moveTo(sx + 6, sy - 18);
+  ctx.lineTo(sx + 1, sy - 7);
+  ctx.lineTo(sx + 3, sy - 1);
+  ctx.lineTo(sx + 9, sy - 1);
+  ctx.lineTo(sx + 11, sy - 7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = fadeOp * shimmer;
+
+  // Highlight streak
+  ctx.fillStyle = '#cceeFF';
+  ctx.globalAlpha = fadeOp * 0.4;
+  ctx.fillRect(sx + 3, sy - 18, 2, 12);
+  ctx.globalAlpha = fadeOp * shimmer;
+
+  // Core glow
+  ctx.fillStyle = '#ddeeff';
+  ctx.globalAlpha = fadeOp * (0.3 + pulse);
+  ctx.beginPath();
+  ctx.arc(sx + 6, sy - 10, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = fadeOp;
+
+  // HP bar
+  ctx.fillStyle = '#333';
+  ctx.fillRect(sx - 1, sy - 28, 14, 3);
+  ctx.fillStyle = '#44ccee';
+  ctx.fillRect(sx - 1, sy - 28, 14 * hpFrac, 3);
+
+  ctx.restore();
 }
 
 // ── Boss ──────────────────────────────────────────────────────────
@@ -1464,6 +1908,102 @@ function drawTimedDungeonPortal(ctx: CanvasRenderingContext2D, x: number, camX: 
   ctx.setLineDash([]);
 }
 
+// ── Dungeon Gate (on captured flags) ─────────────────────────────
+function drawDungeonGate(
+  ctx: CanvasRenderingContext2D, x: number, camX: number, frame: number,
+  gateType: 'artifact' | 'regalia', locked: boolean,
+): void {
+  const sx = x - camX;
+  const gy = GROUND_Y + WORLD_Y_OFFSET;
+  const baseY = gy;
+  const isArtifact = gateType === 'artifact';
+  const mainColor = isArtifact ? '#aa44ff' : '#ff6633';
+  const darkColor = isArtifact ? '#6622aa' : '#aa3311';
+  const glowColor = isArtifact ? 'rgba(170,68,255,0.3)' : 'rgba(255,102,51,0.3)';
+  const pulse = 0.8 + Math.sin(frame * 0.06) * 0.2;
+
+  // Ground glow
+  ctx.save();
+  ctx.globalAlpha = 0.15 * pulse;
+  ctx.fillStyle = mainColor;
+  ctx.beginPath(); ctx.ellipse(sx, baseY, 28, 8, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // Stone archway - left pillar
+  ctx.fillStyle = '#555';
+  ctx.fillRect(sx - 18, baseY - 48, 8, 48);
+  ctx.fillStyle = '#444';
+  ctx.fillRect(sx - 18, baseY - 48, 8, 3);
+
+  // Right pillar
+  ctx.fillStyle = '#555';
+  ctx.fillRect(sx + 10, baseY - 48, 8, 48);
+  ctx.fillStyle = '#444';
+  ctx.fillRect(sx + 10, baseY - 48, 8, 3);
+
+  // Arch top (lintel)
+  ctx.fillStyle = '#666';
+  ctx.fillRect(sx - 20, baseY - 52, 40, 7);
+  ctx.fillStyle = '#555';
+  ctx.fillRect(sx - 18, baseY - 55, 36, 5);
+
+  // Inner portal glow
+  ctx.save();
+  ctx.globalAlpha = locked ? 0.15 : 0.5 * pulse;
+  ctx.fillStyle = locked ? '#333' : mainColor;
+  ctx.fillRect(sx - 10, baseY - 45, 20, 45);
+  ctx.restore();
+
+  // Rune accents on pillars
+  ctx.save();
+  ctx.globalAlpha = 0.6 * pulse;
+  ctx.fillStyle = locked ? '#666' : mainColor;
+  // Left pillar runes
+  ctx.fillRect(sx - 16, baseY - 38, 4, 2);
+  ctx.fillRect(sx - 16, baseY - 28, 4, 2);
+  ctx.fillRect(sx - 16, baseY - 18, 4, 2);
+  // Right pillar runes
+  ctx.fillRect(sx + 12, baseY - 38, 4, 2);
+  ctx.fillRect(sx + 12, baseY - 28, 4, 2);
+  ctx.fillRect(sx + 12, baseY - 18, 4, 2);
+  ctx.restore();
+
+  if (locked) {
+    // Lock icon
+    ctx.save();
+    ctx.fillStyle = '#aa8844';
+    ctx.fillRect(sx - 5, baseY - 28, 10, 10);
+    ctx.fillStyle = '#886622';
+    ctx.strokeStyle = '#aa8844';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(sx, baseY - 30, 5, Math.PI, 0);
+    ctx.stroke();
+    ctx.restore();
+  } else {
+    // Swirling energy particles inside
+    for (let i = 0; i < 3; i++) {
+      const angle = (frame * 3 + i * 120) * Math.PI / 180;
+      const px = sx + Math.cos(angle) * 6;
+      const py = baseY - 22 + Math.sin(angle) * 12;
+      ctx.save();
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = mainColor;
+      ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // Label
+  ctx.save();
+  ctx.font = '7px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = locked ? '#888' : mainColor;
+  ctx.globalAlpha = 0.9;
+  ctx.fillText(locked ? '🔒 SEALED' : (isArtifact ? 'ARTIFACT GATE' : 'REGALIA GATE'), sx, baseY - 60);
+  ctx.restore();
+}
+
 // ── Mining Camp (wave dungeon) ────────────────────────────────────
 function drawMiningCamp(
   ctx: CanvasRenderingContext2D,
@@ -1798,6 +2338,206 @@ function drawEnemyPortal(
   ctx.setLineDash([]);
 }
 
+// ── Fractured World Portal Arches ─────────────────────────────────
+const PORTAL_ARCH_SPACING = 80; // px between portal centers
+const ARCH_W = 48; // full width of the arch
+const ARCH_H = 75; // total height from ground
+
+const DIFF_ARCH_COLORS: Record<string, { stone: string; glow: string; inner: string; label: string }> = {
+  easy:   { stone: '#3a6a3a', glow: '#4aff4a', inner: '#1a3a1a', label: 'STABLE' },
+  medium: { stone: '#6a5a2a', glow: '#ffcc44', inner: '#3a2a0a', label: 'WARPED' },
+  hard:   { stone: '#6a2a2a', glow: '#ff4444', inner: '#3a0a0a', label: 'VOLATILE' },
+};
+
+function drawFracturedPortal(
+  ctx: CanvasRenderingContext2D,
+  x: number, camX: number, frame: number,
+  difficulty: string, hasCurse: boolean, isSelected: boolean,
+  portalIndex: number,
+): void {
+  const sx = x - camX;
+  const gy = GROUND_Y + WORLD_Y_OFFSET;
+  const cfg = DIFF_ARCH_COLORS[difficulty] || DIFF_ARCH_COLORS.easy;
+  const glowColor = hasCurse ? '#ff2244' : cfg.glow;
+  const stoneColor = hasCurse ? '#4a1a1a' : cfg.stone;
+  const innerColor = hasCurse ? '#1a0008' : cfg.inner;
+  const pulse = 0.85 + Math.sin(frame * 0.06 + portalIndex * 2) * 0.15;
+  const shimmer = Math.sin(frame * 0.08 + portalIndex) * 0.5 + 0.5;
+
+  // ── Ground shadow ──
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = glowColor;
+  ctx.beginPath();
+  ctx.ellipse(sx, gy + 2, ARCH_W * 0.8, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // ── Stone pillars ──
+  const pillarW = 8;
+  const pillarH = ARCH_H - 12;
+  const leftPillarX = sx - ARCH_W / 2;
+  const rightPillarX = sx + ARCH_W / 2 - pillarW;
+
+  // Left pillar
+  ctx.fillStyle = stoneColor;
+  ctx.fillRect(leftPillarX, gy - pillarH, pillarW, pillarH);
+  // Pillar highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(leftPillarX + 1, gy - pillarH + 2, 2, pillarH - 4);
+
+  // Right pillar
+  ctx.fillStyle = stoneColor;
+  ctx.fillRect(rightPillarX, gy - pillarH, pillarW, pillarH);
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(rightPillarX + 1, gy - pillarH + 2, 2, pillarH - 4);
+
+  // ── Stone arch (curved top) ──
+  ctx.save();
+  ctx.fillStyle = stoneColor;
+  ctx.beginPath();
+  ctx.moveTo(leftPillarX, gy - pillarH);
+  ctx.quadraticCurveTo(sx, gy - ARCH_H - 8, rightPillarX + pillarW, gy - pillarH);
+  ctx.lineTo(rightPillarX + pillarW - 3, gy - pillarH + 5);
+  ctx.quadraticCurveTo(sx, gy - ARCH_H + 2, leftPillarX + 3, gy - pillarH + 5);
+  ctx.closePath();
+  ctx.fill();
+  // Arch highlight
+  ctx.globalAlpha = 0.12;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(leftPillarX + 2, gy - pillarH + 2);
+  ctx.quadraticCurveTo(sx, gy - ARCH_H - 4, rightPillarX + pillarW - 2, gy - pillarH + 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // ── Pillar base stones ──
+  ctx.fillStyle = stoneColor;
+  ctx.fillRect(leftPillarX - 2, gy - 5, pillarW + 4, 6);
+  ctx.fillRect(rightPillarX - 2, gy - 5, pillarW + 4, 6);
+
+  // ── Rune marks on pillars ──
+  ctx.save();
+  ctx.globalAlpha = 0.4 + shimmer * 0.4;
+  ctx.fillStyle = glowColor;
+  // Left pillar runes
+  for (let i = 0; i < 3; i++) {
+    const ry = gy - 15 - i * 14;
+    ctx.fillRect(leftPillarX + 2, ry, 4, 2);
+  }
+  // Right pillar runes
+  for (let i = 0; i < 3; i++) {
+    const ry = gy - 15 - i * 14;
+    ctx.fillRect(rightPillarX + 2, ry, 4, 2);
+  }
+  ctx.restore();
+
+  // ── Inner portal void ──
+  const portalCenterY = gy - ARCH_H / 2 + 4;
+  const innerW = ARCH_W / 2 - pillarW / 2 - 2;
+  const innerH = pillarH * 0.65;
+
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = innerColor;
+  ctx.beginPath();
+  ctx.ellipse(sx, portalCenterY, innerW * pulse, innerH / 2 * pulse, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // ── Swirling magic inside portal ──
+  for (let i = 0; i < 6; i++) {
+    const angle = (frame * 0.04 + i * Math.PI / 3 + portalIndex) % (Math.PI * 2);
+    const r = innerW * 0.6 * pulse;
+    const px = sx + Math.cos(angle) * r;
+    const py = portalCenterY + Math.sin(angle) * r * 0.55;
+    ctx.save();
+    ctx.globalAlpha = 0.3 + Math.sin(frame * 0.1 + i * 1.5) * 0.2;
+    ctx.fillStyle = glowColor;
+    ctx.beginPath();
+    ctx.arc(px, py, 2 - i * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── Outer glow ring ──
+  ctx.save();
+  ctx.globalAlpha = 0.2 + shimmer * 0.15;
+  ctx.strokeStyle = glowColor;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 4]);
+  ctx.lineDashOffset = frame * 0.7 + portalIndex * 20;
+  ctx.beginPath();
+  ctx.ellipse(sx, portalCenterY, innerW + 2, innerH / 2 + 2, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // ── Selection highlight ──
+  if (isSelected) {
+    ctx.save();
+    ctx.globalAlpha = 0.15 + Math.sin(frame * 0.1) * 0.1;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(leftPillarX - 4, gy - ARCH_H - 2, ARCH_W + 8, ARCH_H + 6);
+    ctx.restore();
+  }
+
+  // ── Floating particles above arch ──
+  for (let i = 0; i < 3; i++) {
+    const a = (frame * 0.025 + i * 2.09 + portalIndex * 1.5) % (Math.PI * 2);
+    const pr = 12 + Math.sin(frame * 0.04 + i) * 4;
+    const px = sx + Math.cos(a) * pr;
+    const py = gy - ARCH_H - 4 + Math.sin(a) * 5 - Math.abs(Math.sin(frame * 0.03 + i)) * 6;
+    ctx.save();
+    ctx.globalAlpha = 0.4 + Math.sin(frame * 0.08 + i * 2) * 0.3;
+    ctx.fillStyle = glowColor;
+    ctx.beginPath();
+    ctx.arc(px, py, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── Difficulty label ──
+  ctx.save();
+  ctx.globalAlpha = 0.8;
+  ctx.fillStyle = glowColor;
+  ctx.font = 'bold 5px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  const label = hasCurse ? '\u26A7 CURSED' : cfg.label;
+  ctx.fillText(label, sx, gy - ARCH_H - 10);
+  ctx.restore();
+
+  // ── Curse visual: dripping effect ──
+  if (hasCurse) {
+    for (let i = 0; i < 4; i++) {
+      const dx = leftPillarX + 4 + i * (ARCH_W / 4);
+      const dripLen = 4 + Math.sin(frame * 0.05 + i * 1.7) * 3;
+      const dy = gy - ARCH_H + 15 + i * 3;
+      ctx.save();
+      ctx.globalAlpha = 0.5 + Math.sin(frame * 0.06 + i) * 0.2;
+      ctx.fillStyle = '#ff2244';
+      ctx.fillRect(dx, dy, 1.5, dripLen);
+      ctx.restore();
+    }
+  }
+}
+
+/** Get world X position for the i-th fractured portal (0-indexed) */
+export function getFracturedPortalX(spawnX: number, portalCount: number, index: number): number {
+  const totalWidth = (portalCount - 1) * PORTAL_ARCH_SPACING;
+  const startX = spawnX - totalWidth / 2;
+  return startX + index * PORTAL_ARCH_SPACING;
+}
+
+/** Hit-test radius for fractured portal click detection */
+export const FRACTURED_PORTAL_RADIUS = 35;
+/** Center Y of portal arch for click detection (in viewport coords) */
+export function getFracturedPortalCenterY(): number {
+  return GROUND_Y + WORLD_Y_OFFSET - ARCH_H / 2 + 4;
+}
+
 // ── Master draw function ──────────────────────────────────────────
 export function drawWorldObjects(
   ctx: CanvasRenderingContext2D,
@@ -1835,6 +2575,20 @@ export function drawWorldObjects(
   for (const wall of (game.iceWalls || [])) {
     if (wall.x > cullLeft && wall.x < cullRight) {
       drawIceWall(ctx, wall, camX, frame);
+    }
+  }
+
+  // Crystal turrets (conjurer ally turrets)
+  for (const ct of (game.crystalTurrets || [])) {
+    if (ct.x > cullLeft && ct.x < cullRight) {
+      drawCrystalTurret(ctx, ct, camX, frame);
+    }
+  }
+
+  // Ice turrets (boss-summoned enemy turrets)
+  for (const it of (game.iceTurrets || [])) {
+    if (it.x > cullLeft && it.x < cullRight) {
+      drawIceTurret(ctx, it, camX, frame);
     }
   }
 
@@ -1891,6 +2645,17 @@ export function drawWorldObjects(
       const portalX = portalFlag.x + 40;
       if (portalX > cullLeft && portalX < cullRight) {
         drawTimedDungeonPortal(ctx, portalX, camX, frame, (game as any).timedDungeonPortalTimer);
+      }
+    }
+  }
+
+  // Dungeon gates on flags (visible always, clickable only when captured)
+  if (!game.inDungeon) {
+    for (const flag of game.flags) {
+      if (!flag.dungeonGateType) continue;
+      const gateX = flag.x + 40;
+      if (gateX > cullLeft && gateX < cullRight) {
+        drawDungeonGate(ctx, gateX, camX, frame, flag.dungeonGateType, !!flag.dungeonGateLocked);
       }
     }
   }

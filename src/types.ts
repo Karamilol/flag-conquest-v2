@@ -10,6 +10,28 @@ export interface PortalChoiceData {
   curse: string | null;
 }
 
+/** A single node on the fractured world map */
+export interface MapNode {
+  tier: number;
+  index: number; // index within this tier's nodes
+  difficulty: PortalDifficulty;
+  biome: BiomeId;
+  modifiers: string[];
+  curse: string | null;
+  connections: number[]; // indices of nodes in the NEXT tier this connects to
+}
+
+/** Full pre-generated fractured world map for a run */
+export interface FracturedMap {
+  tiers: MapNode[][]; // tiers[0] = [node], tiers[1] = [node, node, ...], etc.
+  chosenPath: (number | null)[]; // index into each tier's nodes array, null = not visited yet
+  currentTier: number; // which tier the player is currently in (0-indexed)
+  /** Allegiance Shrine gift chosen this run — small/big offering (null = none yet) */
+  chosenShrine: string | null;
+  /** Broken shrine this run — break choice, allows another shrine to spawn */
+  brokenShrine: string | null;
+}
+
 // ---- Entity Types ----
 
 export interface Hero {
@@ -62,6 +84,12 @@ export interface Flag {
   buildingType?: string;
   buildingTimer?: number;
   ruinsTriggered?: boolean;
+  /** Allegiance Shrine unit type (e.g. 'soldier', 'archer') */
+  shrineUnitType?: string;
+  /** Dungeon gate on this flag — 'artifact' (wave) or 'regalia' (timed) */
+  dungeonGateType?: 'artifact' | 'regalia';
+  /** Whether the dungeon gate is locked (needs key) or unlocked (free to enter) */
+  dungeonGateLocked?: boolean;
 }
 
 export interface Enemy {
@@ -541,6 +569,28 @@ export interface Ally {
   critChance?: number;            // Accumulated crit chance from all sources
   strikeBackStacks?: number;      // Strike Back synergy stacks
   strikeBackTimer?: number;       // Strike Back synergy timer
+  // Shrine combat fields
+  shrineCleave?: boolean;         // Soldier big: attacks cleave nearby
+  shrinePierce?: number;          // Archer big: arrows pierce N enemies
+  shrineCritBonus?: number;       // Archer small/big: +crit damage mult
+  shrineDR?: number;              // Halberd small/big: flat damage reduction %
+  shrineSpearThrow?: boolean;     // Halberd big: throw spear from range
+  shrineCharge?: boolean;         // Knight big: charge on spawn, stun enemies
+  shrineChargeUsed?: boolean;     // Knight big: charge already triggered
+  shrineAbsorb?: number;          // Halberd break: 1-hit absorb shield
+  shrineLightningCounter?: number; // Wizard big: fires lightning every 6 attacks
+  shrineCritChance?: number;      // Wizard small/big: +crit chance
+  shrineNoHeal?: boolean;         // Cleric break: can only attack, no healing
+  shrineHealMult?: number;        // Cleric small: +healing power multiplier
+  shrineHealTargets?: number;     // Cleric big: heal multiple allies at once
+  shrineSuicideBomber?: boolean;  // Bombard break: runs at enemies and detonates
+  shrineDeathExplosion?: boolean; // Bombard break: magic/melee explode on death
+  shrineMegaBomb?: boolean;       // Bombard big: chance for 2x damage/AoE bomb
+  shrineEchoStrike?: boolean;     // Conjurer break: 3% chance to strike twice
+  shrineMaxTurrets?: number;      // Conjurer break: limit turret count
+  shrineTurretSpeedMult?: number; // Conjurer small: turret spawn speed multiplier
+  shrineFloatingTurrets?: boolean;// Conjurer big: turrets follow owner, kite behavior
+  shrineAllyRegen?: boolean;      // Cleric break: melee/ranged regen 1% HP/3s
   // Wendigo fear
   fearTimer?: number;             // When > 0, ally flees backward
   // Pet companion
@@ -617,6 +667,7 @@ export interface Projectile {
   markOnHit?: boolean;
   chainTargets?: Array<{x: number, y: number}>;  // chain lightning visual arcs
   delayFrames?: number;                            // meteor strike delay before impact
+  pierce?: number;                                  // shrine archer: pierce through N enemies
 }
 
 export interface Banner {
@@ -933,6 +984,17 @@ export interface GameState {
   pendingPortalChoice: PortalChoiceData[] | null;
   currentBiome: import('./constants').Biome;
   cameraMinX: number;
+  portalSpawnX: number; // world X where fractured portals spawn (boss death position)
+  selectedPortalIndex: number | null; // index into pendingPortalChoice for detail view
+  fracturedMap: FracturedMap | null; // pre-generated map for this run
+  /** When true, the Shrine prompt modal is shown */
+  pendingShrinePrompt: boolean;
+  /** Flag ID of the shrine that triggered the prompt */
+  shrineFlagId: number | null;
+  /** When true, the Dungeon Gate prompt modal is shown */
+  pendingDungeonGatePrompt: boolean;
+  /** Flag ID of the dungeon gate that triggered the prompt */
+  dungeonGateFlagId: number | null;
   // Dev tools
   devSpawnsDisabled?: boolean;
   devPaused?: boolean;

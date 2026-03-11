@@ -2,6 +2,7 @@ import { COLORS } from '../../constants';
 import { RELIC_SETS, getRelicLevel } from '../../relics';
 import type { RelicCollection } from '../../relics';
 import { SpriteIcon } from '../sprites/SpriteIcon';
+import { RelicIconHTML } from '../sprites/GameIcons';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#888',
@@ -42,7 +43,7 @@ export function RelicPicker({ relics, onSelect, relicCollection }: Props) {
       zIndex: 30, padding: '8px 10px',
     }}>
       <div style={{ color: '#FFD700', fontSize: '13px', marginBottom: '3px', textAlign: 'center' }}>
-        {'\u{1F3FA}'} RELIC DROP!
+        <RelicIconHTML size={14} /> RELIC DROP!
       </div>
       <div style={{ color: COLORS.text, fontSize: '11px', marginBottom: '10px', textAlign: 'center' }}>
         Choose a relic:

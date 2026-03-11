@@ -1,6 +1,13 @@
 import { COLORS } from '../../constants';
 import { CLASS_DEFS } from '../../classes';
 import type { HeroClassId } from '../../classes';
+import { WarlordIconHTML, RangerIconHTML, MageIconHTML, SwordsIconHTML } from '../sprites/GameIcons';
+
+const CLASS_ICON_MAP: Record<HeroClassId, (size: number) => JSX.Element> = {
+  warlord: (s) => <WarlordIconHTML size={s} />,
+  ranger: (s) => <RangerIconHTML size={s} />,
+  mage: (s) => <MageIconHTML size={s} />,
+};
 
 interface Props {
   onSelect: (classId: HeroClassId) => void;
@@ -15,7 +22,7 @@ export function ClassPicker({ onSelect, highestZone = 0 }: Props) {
       zIndex: 100, padding: '20px', borderRadius: '8px',
     }}>
       <div style={{ color: COLORS.gold, fontSize: '17px', marginBottom: '6px', textAlign: 'center' }}>
-        {'\u2694\uFE0F'} CHOOSE YOUR CLASS
+        <SwordsIconHTML size={18} /> CHOOSE YOUR CLASS
       </div>
       <div style={{ color: COLORS.text, fontSize: '12px', marginBottom: '20px', textAlign: 'center' }}>
         Select a hero to begin your conquest:
@@ -30,7 +37,7 @@ export function ClassPicker({ onSelect, highestZone = 0 }: Props) {
               border: `3px solid ${cls.colors.primary}`, borderRadius: '10px', cursor: 'pointer',
               width: '180px', textAlign: 'center', fontFamily: 'inherit',
             }}>
-              <div style={{ fontSize: '33px', marginBottom: '8px' }}>{locked ? '\u{1F512}' : cls.icon}</div>
+              <div style={{ fontSize: '33px', marginBottom: '8px' }}>{locked ? '\u{1F512}' : CLASS_ICON_MAP[cls.id](36)}</div>
               <div style={{ color: locked ? '#555' : COLORS.gold, fontSize: '14px', marginBottom: '4px', fontWeight: 'bold' }}>{cls.name}</div>
               <div style={{ color: cls.colors.primary, fontSize: '10px', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
                 {atkLabel}

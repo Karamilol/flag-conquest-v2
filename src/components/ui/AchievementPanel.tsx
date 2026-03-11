@@ -1,6 +1,7 @@
 import { COLORS } from '../../constants';
 import { ACHIEVEMENTS, CATEGORY_ORDER, CATEGORY_LABELS, type AchievementProgress } from '../../achievements';
 import { SpriteIcon } from '../sprites/SpriteIcon';
+import { TrophyIconHTML } from '../sprites/GameIcons';
 
 interface Props {
   achievementProgress: AchievementProgress[];
@@ -35,7 +36,7 @@ export function AchievementPanel({ achievementProgress, stats, onClaim, onClose 
     }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-        <span style={{ color: COLORS.gold, fontSize: '12px' }}>{'\u{1F3C6}'} ACHIEVEMENTS</span>
+        <span style={{ color: COLORS.gold, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}><TrophyIconHTML size={14} /> ACHIEVEMENTS</span>
         <button onClick={onClose} style={{ padding: '3px 10px', fontSize: '10px', fontFamily: 'inherit', background: 'rgba(20,15,30,0.85)', color: '#aaa', border: '1px solid rgba(138,74,223,0.3)', borderRadius: '3px', cursor: 'pointer' }}>CLOSE</button>
       </div>
 

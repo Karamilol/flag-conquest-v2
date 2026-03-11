@@ -260,6 +260,13 @@ export function createInitialState(upgrades: PermanentUpgrades, heroClassId: Her
     pendingPortalChoice: null,
     currentBiome: 'forest' as const,
     cameraMinX: 0,
+    portalSpawnX: 0,
+    selectedPortalIndex: null,
+    fracturedMap: null,
+    pendingShrinePrompt: false,
+    shrineFlagId: null,
+    pendingDungeonGatePrompt: false,
+    dungeonGateFlagId: null,
     // Elite mini-boss state
     eliteLastSpawnFrame: -99999,
     activeEliteId: null,

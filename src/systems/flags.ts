@@ -13,8 +13,17 @@ import { getBossPetId, getPetDef } from '../pets';
 import { passiveGoldPerMin, zoneGoldMult } from '../utils/economy';
 import { rollPortals, rollModifiers, getBiome } from '../fracturedMap';
 import type { PortalChoiceData } from '../types';
+import { SHRINE_UNIT_TYPES } from '../modifiers';
 import { rollRegalia, rollBossRegaliaRarity, rollSurveyRegaliaRarity, getBossDropSlot, getRandomSlot, RARITY_COLORS, MOB_RARITY_POOL, buildUnlockFilter } from '../regalias';
 import type { RegaliaRarity } from '../regalias';
+import {
+  modBossGemMult, modBossShardBonus, modNoConsumableDrops,
+  modRelicFavorActive, modArtifactCacheActive,
+  modRelicChoiceBonus, modArtifactChoiceBonus,
+  modGoldStashActive, modTaxCollectorActive,
+  modFreshRecruitsActive, modGuaranteedDungeonActive,
+  modTarnishedActive, modCraftsmanshipActive,
+} from './modifierEffects';
 
 /** Contest duration: 20s base + 2s per zone (in ticks at 60fps) */
 function contestDuration(zone: number, rc?: Record<string, number>, timedDungeon?: boolean): number {
@@ -149,7 +158,7 @@ function collectRelicChest(ts: TickState, chest: ChestData): void {
   if (eligible.length === 0) return;
   const choices: { id: string; name: string; icon: string; rarity: string; desc: string }[] = [];
   const used = new Set<string>();
-  const count = Math.min(3, eligible.length);
+  const count = Math.max(1, Math.min(3 + modRelicChoiceBonus(ts), eligible.length));
   for (let i = 0; i < count; i++) {
     const rarity = rollChestRarity(tier);
     const candidates = eligible.filter(r => r.rarity === rarity && !used.has(r.id));
@@ -181,7 +190,7 @@ function collectArtifactChest(ts: TickState, chest: ChestData): void {
   }
   const choices: Artifact[] = [];
   const pool = [...eligible];
-  const count = Math.min(3, pool.length);
+  const count = Math.max(1, Math.min(3 + modArtifactChoiceBonus(ts), pool.length));
   for (let i = 0; i < count; i++) {
     const rarity = rollChestRarity(tier);
     const byRarity = pool.filter(a => a.rarity === rarity);
@@ -265,9 +274,9 @@ export function processBossDefeat(ts: TickState): void {
   const bossZone = boss.zone || 0;
   const bossReward = Math.floor((100 + bossZone * 50) * zoneGoldMult(ts.currentZone));
   ts.goldEarned += bossReward;
-  const bossGemReward = 6 + bossZone * 4;
+  const bossGemReward = Math.max(0, Math.floor((6 + bossZone * 4) * modBossGemMult(ts)));
   ts.gemsThisRun += bossGemReward;
-  const bossShardReward = 1;
+  const bossShardReward = Math.max(0, 1 + modBossShardBonus(ts));
   ts.shardsThisRun += bossShardReward;
   ts.bossesDefeated += 1;
   // Masterwork Arms (Smithy 6pc): track boss kills for hero scaling
@@ -297,8 +306,14 @@ export function processBossDefeat(ts: TickState): void {
   const relicTierColor = relicTier === 'relicLegendary' ? '#ffd700' : relicTier === 'relicRare' ? '#4a9fff' : '#aaa';
   ts.particles.push(makeParticle(boss.x + 40, boss.y - 50, `🏺 ${relicTierLabel} RELIC CHEST!`, relicTierColor));
 
+  // Relic Favor modifier: bonus relic chest
+  if (modRelicFavorActive(ts)) {
+    ts.chests.push({ id: uid(), x: boss.x + 50, y: GROUND_Y - 22, type: relicTier, value: 0, age: 0 });
+    ts.particles.push(makeParticle(boss.x + 50, boss.y - 40, `🏺 BONUS RELIC!`, '#a855f7'));
+  }
+
   // Roll for consumable — 80% chance — Embargo: no drops
-  const consumableDrop = ts.challengeId === 'embargo' ? null : rollBossConsumable(0.80, ts.dungeonUnlocked);
+  const consumableDrop = (ts.challengeId === 'embargo' || modNoConsumableDrops(ts)) ? null : rollBossConsumable(0.80, ts.dungeonUnlocked);
   if (consumableDrop) {
     const cDef = getConsumableDef(consumableDrop);
     ts.chests.push({ id: uid(), x: boss.x + 60, y: GROUND_Y - 22, type: 'consumable', value: 0, age: 0, consumableId: consumableDrop });
@@ -308,7 +323,11 @@ export function processBossDefeat(ts: TickState): void {
   // Guaranteed regalia drop from boss (cycles sword/shield/necklace)
   {
     const regaliaSlot = getBossDropSlot(ts.bossesDefeated - 1);
-    const regaliaRarity = rollBossRegaliaRarity(bossZone);
+    let regaliaRarity = rollBossRegaliaRarity(bossZone);
+    // Tarnished modifier: bias toward common
+    if (modTarnishedActive(ts)) regaliaRarity = 'common';
+    // Craftsmanship modifier: at least rare
+    if (modCraftsmanshipActive(ts) && regaliaRarity === 'common') regaliaRarity = 'rare';
     const droppedRegalia = rollRegalia(regaliaSlot, bossZone + 1, regaliaRarity, buildUnlockFilter(ts.upgrades));
     const rColor = RARITY_COLORS[regaliaRarity];
     ts.chests.push({ id: uid(), x: boss.x + 80, y: GROUND_Y - 22, type: 'regalia', value: 0, age: 0, regaliaData: droppedRegalia });
@@ -367,18 +386,36 @@ export function processBossDefeat(ts: TickState): void {
   // Fractured World: generate portal choices (non-challenge runs only)
   if (!ts.challengeId) {
     const nextTier = bossZone + 1;
-    const biome = getBiome(nextTier);
-    const difficulties = rollPortals();
-    const portalChoices: PortalChoiceData[] = difficulties.map(diff => {
-      const roll = rollModifiers(diff, nextTier);
-      return { difficulty: diff, biome, modifiers: roll.modifiers, curse: roll.curse };
-    });
+    // Use pre-generated map if available, otherwise roll fresh
+    let portalChoices: PortalChoiceData[];
+    if (ts.fracturedMap && nextTier < ts.fracturedMap.tiers.length) {
+      portalChoices = ts.fracturedMap.tiers[nextTier].map(node => ({
+        difficulty: node.difficulty,
+        biome: node.biome,
+        modifiers: node.modifiers,
+        curse: node.curse,
+      }));
+    } else {
+      const biome = getBiome(nextTier);
+      const difficulties = rollPortals();
+      portalChoices = difficulties.map(diff => {
+        const roll = rollModifiers(diff, nextTier);
+        return { difficulty: diff, biome, modifiers: roll.modifiers, curse: roll.curse };
+      });
+    }
     ts.pendingPortalChoice = portalChoices;
+    ts.portalSpawnX = boss.x + 60; // portals appear ahead of dead boss
+    ts.selectedPortalIndex = null;
     // Spawn artifact chest now (player collects before choosing portal)
     ts.chests.push({ id: uid(), x: boss.x, y: GROUND_Y - 22, type: artifactTier, value: 0, age: 0 });
     const artTierLabel = artifactTier.replace('artifact', '').toUpperCase();
     const artTierColor = artifactTier === 'artifactLegendary' ? '#ffd700' : artifactTier === 'artifactRare' ? '#4a9fff' : '#B8860B';
     ts.particles.push(makeParticle(boss.x, boss.y - 50, `✨ ${artTierLabel} ARTIFACT CHEST! ✨`, artTierColor));
+    // Artifact Cache modifier: bonus artifact chest
+    if (modArtifactCacheActive(ts)) {
+      ts.chests.push({ id: uid(), x: boss.x - 30, y: GROUND_Y - 22, type: artifactTier, value: 0, age: 0 });
+      ts.particles.push(makeParticle(boss.x - 30, boss.y - 40, `✨ BONUS ARTIFACT!`, '#a855f7'));
+    }
     ts.boss = null;
     // Don't advance zone yet — deferred until portal selection
     return;
@@ -402,15 +439,18 @@ export function processBossDefeat(ts: TickState): void {
   const artTierLabel = artifactTier.replace('artifact', '').toUpperCase();
   const artTierColor = artifactTier === 'artifactLegendary' ? '#ffd700' : artifactTier === 'artifactRare' ? '#4a9fff' : '#B8860B';
   ts.particles.push(makeParticle(boss.x, boss.y - 50, `✨ ${artTierLabel} ARTIFACT CHEST! ✨`, artTierColor));
+  // Artifact Cache modifier: bonus artifact chest
+  if (modArtifactCacheActive(ts)) {
+    ts.chests.push({ id: uid(), x: boss.x - 30, y: GROUND_Y - 22, type: artifactTier, value: 0, age: 0 });
+    ts.particles.push(makeParticle(boss.x - 30, boss.y - 40, `✨ BONUS ARTIFACT!`, '#a855f7'));
+  }
   ts.particles.push(makeParticle(boss.x + 200, GROUND_Y - 80, `🚩 ZONE ${nextZone + 1} UNLOCKED! 🚩`, '#4aff4a'));
 
-  // First dungeon: spawn guaranteed portal after second boss defeat (Wild Huntsman, not in challenges)
+  // Unlock dungeons after second boss defeat (Wild Huntsman) — gates spawn on flags in later zones
   if (boss.bossType === 1 && !ts.dungeonUnlocked && !ts.challengeId) {
     ts.dungeonUnlocked = true;
-    ts.dungeonPortalTimer = 1800; // 30 seconds
-    ts.dungeonPortalFlagId = ts.flags[bossFlagIndex !== -1 ? bossFlagIndex : 0].id;
-    ts.particles.push(makeParticle(boss.x, boss.y - 70, '\u{1F7E3} ANCIENT DUNGEON PORTAL! \u{1F7E3}', '#aa44ff'));
-    ts.particles.push(makeParticle(boss.x, boss.y - 90, 'A mysterious gateway has appeared...', '#cc88ff'));
+    ts.particles.push(makeParticle(boss.x, boss.y - 70, '🏛️ DUNGEON GATES UNLOCKED!', '#aa44ff'));
+    ts.particles.push(makeParticle(boss.x, boss.y - 90, 'Ancient gates may now appear on captured flags...', '#cc88ff'));
   }
 }
 
@@ -539,26 +579,14 @@ export function processFlagContest(ts: TickState): void {
           if (!isTimed) ts.gemsThisRun += 1;
           ts.particles.push(makeParticle(fx, GROUND_Y - 40, isTimed ? 'CAPTURED!' : '+1💎', COLORS.gold));
           ts.particles.push(makeParticle(fx, GROUND_Y - 60, 'CAPTURED!', COLORS.flagFriendly));
-          // Dungeon pity trigger (not in challenges, not in dungeons)
-          if (ts.dungeonUnlocked && ts.dungeonPortalTimer <= 0 && ts.timedDungeonPortalTimer <= 0 && !ts.challengeId && !ts.inDungeon) {
-            ts.dungeonPityCounter++;
-            const triggerChance = Math.min(0.10, 0.01 + (ts.dungeonPityCounter - 1) * 0.005);
-            if (Math.random() < triggerChance) {
-              ts.dungeonPityCounter = 0;
-              // 50/50 chance: artifact dungeon or regalia dungeon portal
-              if (Math.random() < 0.5) {
-                ts.dungeonPortalTimer = 1800;
-                ts.dungeonPortalFlagId = flag.id;
-                ts.particles.push(makeParticle(fx, GROUND_Y - 80, '\u{1F7E3} ARTIFACT DUNGEON PORTAL! \u{1F7E3}', '#aa44ff'));
-              } else {
-                ts.timedDungeonPortalTimer = 1800;
-                ts.timedDungeonPortalFlagId = flag.id;
-                ts.particles.push(makeParticle(fx, GROUND_Y - 80, '\u{1F525} REGALIA DUNGEON PORTAL! \u{1F525}', '#ff6633'));
-              }
-            }
-          }
         } else {
           ts.particles.push(makeParticle(fx, GROUND_Y - 60, 'RECLAIMED!', '#aa77ff'));
+        }
+        // Shrine trigger: captured a flag with an Allegiance Shrine
+        if (flag.shrineUnitType && !ts.pendingShrinePrompt) {
+          ts.pendingShrinePrompt = true;
+          ts.shrineFlagId = flag.id;
+          ts.particles.push(makeParticle(fx, GROUND_Y - 80, '🏛️ SHRINE DISCOVERED!', '#ffd700'));
         }
         anyFlagCaptured = true;
         return { ...flag, captured: true, corrupted: false, contested: false, contestTimer: 0, contestLastTouch: undefined };
@@ -596,6 +624,12 @@ export function processFlagContest(ts: TickState): void {
           ts.particles.push(makeParticle(f.x, GROUND_Y - 60, 'AUTO-CAPTURED!', '#44ffaa'));
         } else {
           ts.particles.push(makeParticle(f.x, GROUND_Y - 60, 'RECLAIMED!', '#aa77ff'));
+        }
+        // Shrine trigger on auto-capture
+        if (f.shrineUnitType && !ts.pendingShrinePrompt) {
+          ts.pendingShrinePrompt = true;
+          ts.shrineFlagId = f.id;
+          ts.particles.push(makeParticle(f.x, GROUND_Y - 80, '🏛️ SHRINE DISCOVERED!', '#ffd700'));
         }
         anyFlagCaptured = true;
         return { ...f, captured: true, corrupted: false, contested: false, contestTimer: 0, contestLastTouch: undefined };
@@ -713,6 +747,17 @@ export function processFlagBuildings(ts: TickState): void {
 export function applyPortalChoice(game: import('../types').GameState, portal: PortalChoiceData): void {
   const nextZone = game.currentZone + 1;
 
+  // Record choice on fractured map
+  if (game.fracturedMap && game.pendingPortalChoice) {
+    const chosenIdx = game.pendingPortalChoice.findIndex(
+      p => p.difficulty === portal.difficulty && p.biome === portal.biome && p.modifiers === portal.modifiers
+    );
+    if (chosenIdx >= 0 && nextZone < game.fracturedMap.chosenPath.length) {
+      game.fracturedMap.chosenPath[nextZone] = chosenIdx;
+      game.fracturedMap.currentTier = nextZone;
+    }
+  }
+
   // Apply modifiers
   game.activeModifiers = portal.modifiers;
   game.activeCurse = portal.curse;
@@ -745,6 +790,54 @@ export function applyPortalChoice(game: import('../types').GameState, portal: Po
   }
   game.flags = [...game.flags, ...newFlags];
   game.currentZone = nextZone;
+
+  // Allegiance Shrine: no shrine in zone 1 (player view), guaranteed in zone 2, 10% after
+  // Can spawn again after a break (break doesn't count as gift)
+  // Only picks from unit types actively in the player's roster
+  if (game.fracturedMap && !game.fracturedMap.chosenShrine && nextZone >= 1) {
+    const shrineRoll = nextZone === 1 ? 1.0 : 0.10;
+    if (Math.random() < shrineRoll) {
+      const rosterTypes = [...new Set((game.unitSlots || []).map(s => s.type))];
+      const nonBoss = newFlags.filter(f => !f.isBossFlag);
+      console.log('[SHRINE] nextZone=', nextZone, 'roster=', rosterTypes, 'nonBoss=', nonBoss.length, 'chosenShrine=', game.fracturedMap.chosenShrine);
+      if (nonBoss.length > 0 && rosterTypes.length > 0) {
+        const available = SHRINE_UNIT_TYPES.filter(ut => rosterTypes.includes(ut));
+        if (available.length > 0) {
+          const shrineUnit = available[Math.floor(Math.random() * available.length)];
+          const target = nonBoss[Math.floor(Math.random() * nonBoss.length)];
+          const idx = game.flags.findIndex(f => f.id === target.id);
+          if (idx >= 0) {
+            game.flags[idx] = { ...game.flags[idx], shrineUnitType: shrineUnit };
+            console.log('[SHRINE] Placed', shrineUnit, 'shrine on flag', target.id, 'at index', idx);
+          }
+        }
+      }
+    }
+  } else if (game.fracturedMap) {
+    console.log('[SHRINE] Skipped — chosenShrine=', game.fracturedMap.chosenShrine, 'nextZone=', nextZone);
+  }
+
+  // Dungeon Gate: spawn on a random non-boss flag after dungeon is unlocked
+  // ~20% chance per zone, with pity. 25% chance to spawn already unlocked.
+  if (game.dungeonUnlocked && !game.inDungeon) {
+    const pity = game.dungeonPityCounter || 0;
+    const gateChance = Math.min(0.20 + pity * 0.05, 0.50);
+    if (Math.random() < gateChance) {
+      const nonBossNew = newFlags.filter(f => !f.isBossFlag && !f.shrineUnitType);
+      if (nonBossNew.length > 0) {
+        const gateTarget = nonBossNew[Math.floor(Math.random() * nonBossNew.length)];
+        const gateIdx = game.flags.findIndex(f => f.id === gateTarget.id);
+        if (gateIdx >= 0) {
+          const gateType: 'artifact' | 'regalia' = Math.random() < 0.5 ? 'artifact' : 'regalia';
+          const unlocked = Math.random() < 0.25;
+          game.flags[gateIdx] = { ...game.flags[gateIdx], dungeonGateType: gateType, dungeonGateLocked: !unlocked };
+          game.dungeonPityCounter = 0;
+        }
+      }
+    } else {
+      game.dungeonPityCounter = pity + 1;
+    }
+  }
 
   game.smithingBonusStacks = 0;
   game.heroSkills = { ...game.heroSkills, secondWindAvailable: true, naturesGraceAvailable: true };
@@ -780,6 +873,48 @@ export function applyPortalChoice(game: import('../types').GameState, portal: Po
     { id: Math.random().toString(36).slice(2), x: portalX + 16, y: GROUND_Y - 50, text: `🌀 ZONE ${nextZone + 1}`, color: '#a855f7', age: 0 } as any,
     { id: Math.random().toString(36).slice(2), x: portalX + 16, y: GROUND_Y - 70, text: `🚩 ${portal.difficulty.toUpperCase()} PATH`, color: DIFF_COLORS[portal.difficulty] || '#ccc', age: 0 } as any,
   ];
+
+  // ── Zone entry modifiers ──
+
+  // Gold Stash: bonus gold on zone entry (zone × 3 min of passive income)
+  if (portal.modifiers.includes('goldStash')) {
+    const bonus = Math.floor(passiveGoldPerMin(game as any) * nextZone * 3);
+    if (bonus > 0) {
+      game.goldEarned += bonus;
+      game.particles.push({ id: uid(), x: portalX + 16, y: GROUND_Y - 90, text: `+${bonus}g (Gold Stash)`, color: '#ffd700', age: 0 } as any);
+    }
+  }
+
+  // Tax Collector: lose all gold on zone entry
+  if (portal.modifiers.includes('taxCollector')) {
+    const lost = game.goldEarned;
+    game.goldEarned = 0;
+    game.particles.push({ id: uid(), x: portalX + 16, y: GROUND_Y - 90, text: `-${lost}g (Tax Collector)`, color: '#ff4444', age: 0 } as any);
+  }
+
+  // Fresh Recruits / Lost In The Void: 1 random unlocked unit joins
+  if (portal.modifiers.includes('freshRecruits')) {
+    const unlockedUnits: string[] = (game as any).upgrades?.unlockedUnits || ['soldier'];
+    if (unlockedUnits.length > 0) {
+      const chosen = unlockedUnits[Math.floor(Math.random() * unlockedUnits.length)];
+      const stats = UNIT_STATS[chosen as keyof typeof UNIT_STATS];
+      if (stats) {
+        game.unitSlots.push({ type: chosen, respawnTimer: 0, alive: true });
+        game.particles.push({ id: uid(), x: portalX + 40, y: GROUND_Y - 90, text: `👤 ${(stats as any).name || chosen} JOINS!`, color: '#44ffaa', age: 0 } as any);
+      }
+    }
+  }
+
+  // Guaranteed Dungeon: spawn dungeon portal at start of new zone
+  if (portal.modifiers.includes('guaranteedDungeon') && (game as any).dungeonUnlocked) {
+    // Find first flag in the new zone
+    const newZoneFlags = game.flags.slice(-newFlags.length);
+    if (newZoneFlags.length > 0) {
+      (game as any).dungeonPortalTimer = 1800; // 30s
+      (game as any).dungeonPortalFlagId = newZoneFlags[0].id;
+      game.particles.push({ id: uid(), x: newZoneFlags[0].x, y: GROUND_Y - 80, text: '🟣 DUNGEON GATE!', color: '#aa44ff', age: 0 } as any);
+    }
+  }
 
   // Clear portal choice (unpauses game)
   game.pendingPortalChoice = null;

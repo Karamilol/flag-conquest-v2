@@ -110,3 +110,118 @@ export function getModifierDef(id: string): ModifierDef | undefined {
 export function getCurseDef(id: string): CurseDef | undefined {
   return CURSE_BY_ID.get(id);
 }
+
+// ── Allegiance Shrines ──────────────────────────────────────────────
+//
+// Each shrine is dedicated to a unit type. Three options:
+//   break — desecrate the shrine, debuff that unit, buff others
+//   small — offer gold, moderate buff to that unit
+//   big   — offer gems, small buff + powerful unique mechanic
+//
+// chosenShrine format: "unitType:choice" e.g. "soldier:break", "archer:big"
+
+export interface ShrineOption {
+  id: 'break' | 'small' | 'big';
+  label: string;
+  description: string;
+  cost?: { type: 'gold' | 'gems'; amount: number };
+}
+
+export interface ShrineDef {
+  unitType: string;
+  name: string;
+  icon: string;
+  lore: string;
+  options: ShrineOption[];
+}
+
+export const SHRINE_DEFS: ShrineDef[] = [
+  {
+    unitType: 'soldier', name: "Soldier's Monument", icon: '⚔️',
+    lore: 'A weathered monument stands tall, honoring the nameless soldiers who held the line. Their spirit lingers here still.',
+    options: [
+      { id: 'break', label: 'Break the Statue', description: 'Soldiers lose 50% HP & damage. Ranged and magic units gain +10% HP & damage.' },
+      { id: 'small', label: 'Offer a Small Gift', description: 'Soldiers gain +20% HP and +10% damage.', cost: { type: 'gold', amount: 200 } },
+      { id: 'big', label: 'Make a Grand Offering', description: 'Soldiers gain +20% HP, +10% damage, and their attacks cleave nearby enemies.', cost: { type: 'gems', amount: 8 } },
+    ],
+  },
+  {
+    unitType: 'archer', name: "Ranger's Shrine", icon: '🏹',
+    lore: 'Arrows embedded in ancient stone mark this place. The wind still carries the twang of a thousand bowstrings.',
+    options: [
+      { id: 'break', label: 'Break the Statue', description: 'Archers fire twice as slow and lose half their range. Melee and magic units attack 8% faster.' },
+      { id: 'small', label: 'Offer a Small Gift', description: 'Archers gain +40% critical hit damage.', cost: { type: 'gold', amount: 200 } },
+      { id: 'big', label: 'Make a Grand Offering', description: 'Archers gain +40% crit damage and their arrows pierce through up to 5 enemies.', cost: { type: 'gems', amount: 8 } },
+    ],
+  },
+  {
+    unitType: 'halberd', name: "Halberdier's Altar", icon: '🔱',
+    lore: 'Crossed halberds stand guard over a crumbling altar. The stone still hums with the resolve of those who fought and fell.',
+    options: [
+      { id: 'break', label: 'Break the Statue', description: 'Halberds deal 80% less damage. Ranged and magic units gain a shield that absorbs 1 hit on spawn.' },
+      { id: 'small', label: 'Offer a Small Gift', description: 'Halberds gain 15% flat damage reduction.', cost: { type: 'gold', amount: 200 } },
+      { id: 'big', label: 'Make a Grand Offering', description: 'Halberds gain 15% DR and hurl their spear from range, dealing heavy AoE damage.', cost: { type: 'gems', amount: 8 } },
+    ],
+  },
+  {
+    unitType: 'knight', name: "Knight's Sepulcher", icon: '🛡️',
+    lore: 'A knight in full plate kneels eternally in stone. Even in death, duty endures.',
+    options: [
+      { id: 'break', label: 'Break the Statue', description: 'Knights become fragile — lose all defense and 50% of their HP.' },
+      { id: 'small', label: 'Offer a Small Gift', description: 'Knights gain +20% HP and +0.2 movement speed.', cost: { type: 'gold', amount: 200 } },
+      { id: 'big', label: 'Make a Grand Offering', description: 'Knights gain +20% HP, +0.2 speed, and charge into battle stunning all enemies hit for 3 seconds.', cost: { type: 'gems', amount: 8 } },
+    ],
+  },
+  {
+    unitType: 'wizard', name: "Apprentice's Sanctum", icon: '⚡',
+    lore: 'Arcane symbols pulse faintly across cracked stone. The air tastes of ozone and forgotten incantations.',
+    options: [
+      { id: 'break', label: 'Break the Statue', description: 'Apprentices become old and frail — 0.2 move speed and lose 50% HP. Ranged and melee units gain +3% crit chance.' },
+      { id: 'small', label: 'Offer a Small Gift', description: 'Apprentices gain +10% crit chance and +10% attack speed.', cost: { type: 'gold', amount: 200 } },
+      { id: 'big', label: 'Make a Grand Offering', description: 'Apprentices gain +10% crit chance, +10% attack speed, and fire an arcanist lightning strike every 6 attacks.', cost: { type: 'gems', amount: 8 } },
+    ],
+  },
+  {
+    unitType: 'cleric', name: "Cleric's Reliquary", icon: '✝️',
+    lore: 'Holy light seeps from cracks in a sealed reliquary. Prayers echo from within, unanswered for centuries.',
+    options: [
+      { id: 'break', label: 'Break the Statue', description: 'Clerics lose the ability to heal and can only attack. Melee and ranged allies regenerate 1% HP every 3 seconds.' },
+      { id: 'small', label: 'Offer a Small Gift', description: 'Clerics gain +50% healing power.', cost: { type: 'gold', amount: 200 } },
+      { id: 'big', label: 'Make a Grand Offering', description: 'Clerics heal two allies at once. +50% healing power.', cost: { type: 'gems', amount: 8 } },
+    ],
+  },
+  {
+    unitType: 'conjurer', name: "Conjurer's Obelisk", icon: '🗿',
+    lore: 'A dark obelisk hums with summoning energy. Spectral turrets flicker in and out of existence around its base.',
+    options: [
+      { id: 'break', label: 'Break the Statue', description: 'Conjurers can only have 1 turret. Melee and ranged allies gain a 3% chance to strike twice.' },
+      { id: 'small', label: 'Offer a Small Gift', description: 'Conjurers gain +20% turret spawn speed.', cost: { type: 'gold', amount: 200 } },
+      { id: 'big', label: 'Make a Grand Offering', description: 'Conjurer turrets float and follow their owner. Conjurer kites back from enemies. +3% turret fire speed per turret alive.', cost: { type: 'gems', amount: 8 } },
+    ],
+  },
+  {
+    unitType: 'bombard', name: "Bombard's Crater", icon: '💣',
+    lore: 'A smoldering crater marks where a legendary bombard made her last stand. The ground still trembles.',
+    options: [
+      { id: 'break', label: 'Break the Statue', description: 'Bombard becomes a suicide bomber — runs at enemies and detonates. Magic and melee allies explode on death for 30% max HP.' },
+      { id: 'small', label: 'Offer a Small Gift', description: 'Bombard gains +15% attack range.', cost: { type: 'gold', amount: 200 } },
+      { id: 'big', label: 'Make a Grand Offering', description: 'Bombard gains +15% range and sometimes launches a mega bomb with 2x damage and AoE.', cost: { type: 'gems', amount: 8 } },
+    ],
+  },
+];
+
+const SHRINE_BY_UNIT = new Map<string, ShrineDef>(SHRINE_DEFS.map(s => [s.unitType, s]));
+
+export function getShrineDef(unitType: string): ShrineDef | undefined {
+  return SHRINE_BY_UNIT.get(unitType);
+}
+
+/** Parse a chosenShrine string into unit type and choice */
+export function parseShrineChoice(chosenShrine: string): { unitType: string; choice: 'break' | 'small' | 'big' } | null {
+  const [unitType, choice] = chosenShrine.split(':');
+  if (!unitType || !choice) return null;
+  return { unitType, choice: choice as 'break' | 'small' | 'big' };
+}
+
+/** Unit types that have shrine definitions */
+export const SHRINE_UNIT_TYPES = SHRINE_DEFS.map(s => s.unitType);

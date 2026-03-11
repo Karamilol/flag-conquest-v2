@@ -558,7 +558,8 @@ export class PixiUnitRenderer {
   ): void {
     const cache = initHeroSpriteCache(heroClass);
     const justSwung = hero.isAttacking && hero.attackCooldown < 6;
-    const lungeX = justSwung ? Math.sin((1 - hero.attackCooldown / 5) * Math.PI) * 3 : 0;
+    const isMelee = heroClass === 'warlord';
+    const lungeX = justSwung && isMelee ? Math.sin((1 - hero.attackCooldown / 5) * Math.PI) * 3 : 0;
 
     let spriteUrl: string;
     if (justSwung) {

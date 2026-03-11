@@ -95,11 +95,11 @@ export const RAT_VB_Y = -4;
 export const RAT_VB_W = 37;
 export const RAT_VB_H = 25;
 
-// Fire Imp: hands x=-3.5..21, horns y=-7.5, feet y=22
-export const IMP_VB_X = -5;
-export const IMP_VB_Y = -9;
-export const IMP_VB_W = 28;
-export const IMP_VB_H = 33;
+// Fire Imp: casting wings to x=-6/26, HP text y=-10, horn flames y=-7.5, feet y=22.5
+export const IMP_VB_X = -8;
+export const IMP_VB_Y = -13;
+export const IMP_VB_W = 36;
+export const IMP_VB_H = 40;
 
 // Cursed Knight: shield x=-6, pauldron x=24, helm y=-10, shadow y=33
 export const KNIGHT_VB_X = -8;

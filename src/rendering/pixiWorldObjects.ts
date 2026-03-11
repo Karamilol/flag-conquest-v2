@@ -12,6 +12,7 @@
 import { Container, Sprite, Texture, ImageSource } from 'pixi.js';
 import { VIEWPORT_W, VIEWPORT_H, DISPLAY_W, DISPLAY_H } from '../constants';
 import { drawWorldObjects } from './worldRenderer';
+import { drawDungeonGround, drawTimedDungeonArena } from './environment';
 import type { GameState } from '../types';
 
 export class PixiWorldObjectRenderer {
@@ -69,6 +70,16 @@ export class PixiWorldObjectRenderer {
     // Apply same scale as main Canvas2D: buffer_width / VIEWPORT_W
     // so drawWorldObjects draws in viewport coords at display resolution
     ctx.scale(this.drawScale, this.drawScale);
+
+    // Draw dungeon ground/arena BEFORE world objects (behind flags, chests, etc.)
+    const isDungeon = game.inDungeon || false;
+    const dungeonType = (game as any).dungeonType as string | undefined;
+    if (isDungeon) {
+      drawDungeonGround(ctx, camX, isDungeon, dungeonType);
+      if (dungeonType === 'timed') {
+        drawTimedDungeonArena(ctx, camX, frame);
+      }
+    }
 
     drawWorldObjects(ctx, game, camX, frame);
 

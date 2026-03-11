@@ -1313,6 +1313,44 @@ export function processAllyAI(ts: TickState): void {
       }
     }
 
+    // Shrine knight charge: on first encounter with enemies, dash forward and stun
+    if (a.shrineCharge && !a.shrineChargeUsed) {
+      // Check if any enemy is within 200px ahead
+      let hasNearbyEnemy = false;
+      for (const e of allEnemies) {
+        const d = e.x - a.x;
+        if (d > 0 && d < 200) { hasNearbyEnemy = true; break; }
+      }
+      if (hasNearbyEnemy) {
+        a.shrineChargeUsed = true;
+        const chargeDistance = 80;
+        const oldX = a.x;
+        a.x += chargeDistance;
+        // Stun all enemies in the charge path (oldX to newX + 20)
+        forEachEnemy(ts, (e: any) => {
+          if (e.x >= oldX && e.x <= a.x + 20) {
+            e.stunTimer = 180; // 3 seconds
+          }
+        });
+        ts.particles.push(makeParticle(a.x, a.y - 15, '🛡️ CHARGE!', '#ffcc44'));
+      }
+    }
+
+    // Shrine halberd spear throw: hurl spear when first entering 100px range of enemy
+    if (a.shrineSpearThrow && !a.shrineChargeUsed) {
+      for (const e of allEnemies) {
+        const d = e.x - a.x;
+        if (!e.skipTarget && d > 0 && d < 100) {
+          a.shrineChargeUsed = true; // reuse flag — one throw per life
+          let spearDmg = Math.floor(a.damage * 1.5);
+          spearDmg = Math.floor(spearDmg * modAllyDmgMult(ts) * modMeleeDmgMult(ts));
+          ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 5, targetX: e.x, speed: -12, damage: spearDmg, type: 'allyArrow', aoeRadius: 35 });
+          ts.particles.push(makeParticle(a.x + 20, a.y - 15, '🔱 HURL!', '#cc8844'));
+          break;
+        }
+      }
+    }
+
     const isRanged = a.unitType === 'archer';
     const isWizard = a.unitType === 'wizard';
     const isCleric = a.unitType === 'cleric';
@@ -1349,6 +1387,11 @@ export function processAllyAI(ts: TickState): void {
         a.stillTimer = 0;
       }
       a.lastX = a.x;
+    }
+    // Shrine: ally regen (cleric break — 1% HP every 3s for melee/ranged)
+    if (a.shrineAllyRegen && a.health > 0 && a.health < a.maxHealth && ts.frame % 180 === 0) {
+      const regenAmt = Math.max(1, Math.floor(a.maxHealth * 0.01));
+      a.health = Math.min(a.maxHealth, a.health + regenAmt);
     }
     // Dodge cooldown tick
     if ((a.dodgeCooldown || 0) > 0) a.dodgeCooldown!--;
@@ -1390,13 +1433,15 @@ export function processAllyAI(ts: TickState): void {
       }
     }
 
+
+
     // === Cleric: unified countdown cooldown ===
     if (isCleric) {
       if (a.attackCooldown > 0) a.attackCooldown--;
 
-      // Priority 1: Heal wounded allies (Cursed Lands: no healing)
+      // Priority 1: Heal wounded allies (Cursed Lands: no healing, Shrine break: no healing)
       let target: typeof ts.allies[0] | null = null;
-      if (ts.challengeId !== 'cursedLands' && a.attackCooldown <= 0) {
+      if (ts.challengeId !== 'cursedLands' && !a.shrineNoHeal && a.attackCooldown <= 0) {
         let lowestRatio = 1;
         for (const al of ts.allies) {
           if (al.id !== a.id && al.health < al.maxHealth && Math.abs(al.x - a.x) < attackRange) {
@@ -1406,7 +1451,7 @@ export function processAllyAI(ts: TickState): void {
         }
       }
       if (target && a.attackCooldown <= 0) {
-        let healAmount = Math.floor(a.damage * (1 + (a.healBonus || 0)));
+        let healAmount = Math.floor(a.damage * (1 + (a.healBonus || 0)) * (a.shrineHealMult || 1));
         // Overflowing Grace synergy: overheal converts to bonus HP
         if (tickHasSynergy(ts, 'clericPair') && target.health + healAmount > target.maxHealth) {
           const overheal = (target.health + healAmount) - target.maxHealth;
@@ -1426,6 +1471,22 @@ export function processAllyAI(ts: TickState): void {
         // Sky heal glow visual at target
         ts.projectiles.push({ id: uid(), x: target.x + 10, y: target.y + (target.lane || 0), targetX: target.x + 10, targetY: target.y + (target.lane || 0), speed: 0, damage: 0, type: 'healBeam', duration: 30 });
         ts.particles.push(makeParticle(target.x + 10, target.y - 10, `+${healAmount}`, '#4aff4a'));
+        // Shrine big: heal a second ally at once
+        if ((a.shrineHealTargets || 1) >= 2) {
+          let secondTarget: typeof ts.allies[0] | null = null;
+          let secondLowest = 1;
+          for (const al of ts.allies) {
+            if (al.id !== a.id && al.id !== target.id && al.health < al.maxHealth && Math.abs(al.x - a.x) < attackRange) {
+              const ratio = al.health / al.maxHealth;
+              if (ratio < secondLowest) { secondLowest = ratio; secondTarget = al; }
+            }
+          }
+          if (secondTarget) {
+            secondTarget.health = Math.min(secondTarget.maxHealth, secondTarget.health + healAmount);
+            ts.projectiles.push({ id: uid(), x: secondTarget.x + 10, y: secondTarget.y + (secondTarget.lane || 0), targetX: secondTarget.x + 10, targetY: secondTarget.y + (secondTarget.lane || 0), speed: 0, damage: 0, type: 'healBeam', duration: 30 });
+            ts.particles.push(makeParticle(secondTarget.x + 10, secondTarget.y - 10, `+${healAmount}`, '#4aff4a'));
+          }
+        }
         // Reward: Blessed Aura (Cursed Lands completion) — spread heal (L1=50%, L2=75%, L3=100%)
         const blessedLv = ts.challengeCompletions.cursedLands || 0;
         if (blessedLv > 0) {
@@ -1499,7 +1560,7 @@ export function processAllyAI(ts: TickState): void {
         continue;
       }
 
-      // Priority 2: Attack enemies at 20% damage (single scan of unified array)
+      // Priority 2: Attack enemies (20% damage normally, full damage if shrine break)
       let clericTarget: any = null;
       for (const e of allEnemies) {
         if (e.skipTarget) continue;
@@ -1508,7 +1569,7 @@ export function processAllyAI(ts: TickState): void {
       }
       if (clericTarget && a.attackCooldown <= 0) {
         a.attackCooldown = a.attackRate;
-        let clericDmg = Math.floor(a.damage * 0.2);
+        let clericDmg = Math.floor(a.damage * (a.shrineNoHeal ? 1 : 0.2));
         // Crit roll: base 3% + Glasses (5% per level), Enchanters 4pc (10%), Scouting 5pc first attack (10%), War Shrine (3% per building)
         let clericCrit = false;
         let clericCritChance = 0.03;
@@ -1555,17 +1616,23 @@ export function processAllyAI(ts: TickState): void {
     // Conjurer AI: walks forward, periodically places crystal turrets
     if (a.unitType === 'conjurer') {
       const conjurerStats = UNIT_STATS.conjurer;
-      const maxTurrets = conjurerStats.maxTurrets + (su.conjurer_crystalArray || 0);
+      // Shrine break: limit turrets; otherwise normal cap
+      const maxTurrets = a.shrineMaxTurrets !== undefined ? a.shrineMaxTurrets : conjurerStats.maxTurrets + (su.conjurer_crystalArray || 0);
       let ownerTurrets = 0; for (const t of ts.crystalTurrets) if (t.ownerId === a.id) ownerTurrets++;
 
-      // Placement cooldown
+      // Placement cooldown (shrine: faster spawn rate)
       a.attackCooldown++;
-      if (a.attackCooldown >= a.attackRate && ownerTurrets < maxTurrets) {
+      const effectiveAtkRate = a.shrineTurretSpeedMult ? Math.max(15, Math.floor(a.attackRate * a.shrineTurretSpeedMult)) : a.attackRate;
+      if (a.attackCooldown >= effectiveAtkRate && ownerTurrets < maxTurrets) {
         a.attackCooldown = 0;
         // Turret inherits conjurer stats
         const turretHp = Math.floor(a.maxHealth * conjurerStats.turretHpRatio);
         let turretAtkRate: number = conjurerStats.turretAttackRate;
         if (su.conjurer_arcaneAttunement > 0) turretAtkRate = Math.max(15, Math.floor(turretAtkRate * (1 - su.conjurer_arcaneAttunement * 0.06)));
+        // Shrine big: +3% fire speed per turret alive
+        if (a.shrineFloatingTurrets && ownerTurrets > 0) {
+          turretAtkRate = Math.max(15, Math.floor(turretAtkRate * (1 - ownerTurrets * 0.03)));
+        }
         const turretDuration = conjurerStats.turretDuration + (su.conjurer_sustainedChannel || 0) * 180;
         ts.crystalTurrets.push({
           id: uid(),
@@ -1587,15 +1654,29 @@ export function processAllyAI(ts: TickState): void {
         ts.particles.push(makeParticle(a.x + 12, a.y - 10, '💎 Conjure!', '#55ddcc'));
       }
 
+      // Shrine big: floating turrets follow conjurer
+      if (a.shrineFloatingTurrets) {
+        let offset = -20;
+        for (const t of ts.crystalTurrets) {
+          if (t.ownerId === a.id) {
+            t.x += (a.x + offset - t.x) * 0.15; // smooth follow
+            offset -= 25;
+          }
+        }
+      }
+
       // Movement: wave dungeon or normal
       if (ts.inDungeon && ts.dungeonType !== 'timed') {
         if (ts.dungeonAllyMode === 'advance') a.x += a.speed;
         else if (ts.dungeonAllyMode === 'retreat' && a.x > ts.dungeonArenaLeftX + 90) a.x -= a.speed;
       } else {
-        const keepDist = 200; // stop well behind front line, turrets cover the gap
-        let enemyNearby = false;
-        for (const e of allEnemies) { const d = e.x - a.x; if (d > 0 && d < keepDist) { enemyNearby = true; break; } }
-        if (!enemyNearby) {
+        const keepDist = a.shrineFloatingTurrets ? 250 : 200; // kite further back with floating turrets
+        let closestEnemyDist = Infinity;
+        for (const e of allEnemies) { const d = e.x - a.x; if (d > 0 && d < closestEnemyDist) closestEnemyDist = d; }
+        // Shrine big: kite back when enemies get close
+        if (a.shrineFloatingTurrets && closestEnemyDist < 100 && closestEnemyDist > 0) {
+          a.x -= a.speed * 1.5; // retreat
+        } else if (closestEnemyDist >= keepDist || closestEnemyDist === Infinity) {
           const nextFlag = flags.find(f => !f.captured && f.x > a.x);
           if (nextFlag) a.x += a.speed;
         }
@@ -1606,6 +1687,34 @@ export function processAllyAI(ts: TickState): void {
         if (a.x > wallX) a.x = wallX;
       }
 
+      a.speed = baseSpeed; a.damage = baseDamage; a.attackRate = baseAttackRate;
+      continue;
+    }
+
+    // Shrine: Bombard suicide bomber — runs at enemies and detonates
+    if (a.unitType === 'bombard' && a.shrineSuicideBomber) {
+      // Rush toward nearest enemy
+      let nearestEnemyX = Infinity;
+      for (const e of allEnemies) { if (!e.skipTarget && e.x > a.x) { nearestEnemyX = e.x; break; } }
+      if (nearestEnemyX < Infinity) {
+        a.x += a.speed * 2; // double speed rush
+        // Detonate when close to enemy
+        if (nearestEnemyX - a.x < 30) {
+          const detonateDmg = Math.floor(a.damage * 5);
+          forEachEnemy(ts, (e: any) => {
+            if (Math.abs(e.x - a.x) < 60) {
+              e.health -= detonateDmg;
+              e.lastDamageTime = ts.frame;
+            }
+          });
+          ts.particles.push(makeParticle(a.x, a.y - 20, `💥💣 ${detonateDmg}!`, '#ff4400'));
+          a.health = 0; // die on detonation
+        }
+      } else {
+        // No enemies — advance normally
+        const nextFlag = flags.find(f => !f.captured && f.x > a.x);
+        if (nextFlag) a.x += a.speed;
+      }
       a.speed = baseSpeed; a.damage = baseDamage; a.attackRate = baseAttackRate;
       continue;
     }
@@ -1654,6 +1763,10 @@ export function processAllyAI(ts: TickState): void {
 
           // Blast Radius shard: +4px per level
           const blastBonus = (su.bombard_blastRadius || 0) * 4;
+          // Shrine mega bomb: 25% chance for 2x damage and AoE
+          const isMegaBomb = a.shrineMegaBomb && Math.random() < 0.25;
+          const finalShotDmg = isMegaBomb ? shotDmg * 2 : shotDmg;
+          const megaAoeBonus = isMegaBomb ? bombardStats.aoeRadius : 0;
           // Create arcing projectile — damage applied on LANDING in combat.ts
           ts.projectiles.push({
             id: uid(),
@@ -1664,11 +1777,12 @@ export function processAllyAI(ts: TickState): void {
             targetX: bestX,
             targetY: GROUND_Y - 10,
             speed: -5,
-            damage: shotDmg,
+            damage: finalShotDmg,
             type: 'bombardShot',
             arcHeight: bombardStats.arcHeight,
-            aoeRadius: bombardStats.aoeRadius + blastBonus,
+            aoeRadius: bombardStats.aoeRadius + blastBonus + megaAoeBonus,
           });
+          if (isMegaBomb) ts.particles.push(makeParticle(a.x + 15, a.y - 20, '💣💣 MEGA BOMB!', '#ff6600'));
           if (bombCrit) {
             ts.particles.push(makeCritParticle(a.x + 15, a.y - 10, shotDmg));
           } else {
@@ -1785,7 +1899,7 @@ export function processAllyAI(ts: TickState): void {
         }
         // Crit roll: base 3% + Glasses (5% per level), Enchanters 4pc (10%), Scouting 5pc first attack (10%), War Shrine (3% per building)
         let wizCrit = false;
-        let wizCritChance = 0.03;
+        let wizCritChance = 0.03 + (a.shrineCritChance || 0);
         const glassesLv = getRelicLevel(ts.relicCollection['glasses'] || 0);
         if (glassesLv > 0) wizCritChance += glassesLv * 0.05;
         if (tickHasSetBonus(ts, 'enchantersSet', 4)) wizCritChance += 0.10;
@@ -1829,6 +1943,16 @@ export function processAllyAI(ts: TickState): void {
         }
         // Wizard beam: traveling AOE projectile
         ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 5, targetX: a.x + attackRange, speed: -14, damage: wizDmg, type: 'wizardBeam', crit: wizCrit, startX: a.x, burnRate: hasBurn ? bRate : undefined, burnDuration: hasBurn ? bDuration : undefined });
+        // Shrine: Arcanist lightning strike every 6 attacks
+        if (a.shrineLightningCounter !== undefined) {
+          a.shrineLightningCounter++;
+          if (a.shrineLightningCounter >= 6) {
+            a.shrineLightningCounter = 0;
+            const lightningDmg = Math.floor(wizDmg * 3);
+            ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y - 30, targetX: a.x + attackRange, speed: -18, damage: lightningDmg, type: 'chainLightning', aoeRadius: 40 });
+            ts.particles.push(makeParticle(a.x + 20, a.y - 25, '⚡ ARCANIST!', '#44ccff'));
+          }
+        }
         // Channeled Energy artifact: 3% chance to trigger instant cast on a nearby mage
         if (tickHasArtifact(ts, 'channeledEnergy') && Math.random() < 0.03) {
           const nearbyMage = ts.allies.find(m => m.id !== a.id && m.health > 0 && (m.unitType === 'wizard' || m.unitType === 'cleric') && Math.abs(m.x - a.x) < 80);
@@ -1875,7 +1999,7 @@ export function processAllyAI(ts: TickState): void {
         }
         // Crit roll: base crit + Scouting 5pc Advantage (first attack 10%) + War Shrine (3% per building) + Regalia
         let archerCrit = false;
-        let archerCritChance = a.unitType === 'archer' ? 0.05 : isUnitMagic(a.unitType) ? 0.03 : 0.01;
+        let archerCritChance = (a.unitType === 'archer' ? 0.05 : isUnitMagic(a.unitType) ? 0.03 : 0.01) + (a.shrineCritChance || 0);
         if (tickHasSetBonus(ts, 'scoutingSet', 5) && !a.firstAttackDone) {
           archerCritChance += 0.10;
           a.firstAttackDone = true;
@@ -1885,6 +2009,7 @@ export function processAllyAI(ts: TickState): void {
         const archerCat = isUnitInCategory(a.unitType, 'melee') ? 'melee' : isUnitInCategory(a.unitType, 'ranged') ? 'ranged' : 'magic';
         archerCritChance += (getRegaliaBonus(ts, 'critChance', { target: a.unitType }) + getRegaliaBonus(ts, 'catCritChance', { category: archerCat }) + getRegaliaBonus(ts, 'armyCritChance')) / 100;
         let archerCritMult = 1.5;
+        if (a.shrineCritBonus) archerCritMult += a.shrineCritBonus;
         const archerCritDmgBonus = getRegaliaBonus(ts, 'critDamage', { target: a.unitType });
         if (archerCritDmgBonus > 0) archerCritMult += archerCritDmgBonus / 100;
         if (archerCritChance > 0 && Math.random() < archerCritChance) {
@@ -1903,8 +2028,14 @@ export function processAllyAI(ts: TickState): void {
           const shardDouble = su.archer_doubleTap > 0 && Math.random() < su.archer_doubleTap * 0.1;
           if (artifactDouble || shardDouble) shotCount = 2;
         }
-        ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 10, targetX: tX, speed: -8, damage: aimDmg, type: 'allyArrow', crit: archerCrit });
-        if (shotCount > 1) ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 14, targetX: tX, speed: -8, damage: aimDmg, type: 'allyArrow', crit: archerCrit });
+        const shrPierce = a.shrinePierce || 0;
+        ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 10, targetX: tX, speed: -8, damage: aimDmg, type: 'allyArrow', crit: archerCrit, ...(shrPierce > 0 && { pierce: shrPierce }) });
+        if (shotCount > 1) ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 14, targetX: tX, speed: -8, damage: aimDmg, type: 'allyArrow', crit: archerCrit, ...(shrPierce > 0 && { pierce: shrPierce }) });
+        // Shrine echo strike: 3% chance to fire an extra shot (conjurer break)
+        if (a.shrineEchoStrike && Math.random() < 0.03) {
+          ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 6, targetX: tX, speed: -9, damage: aimDmg, type: 'allyArrow', crit: archerCrit, ...(shrPierce > 0 && { pierce: shrPierce }) });
+          ts.particles.push(makeParticle(a.x + 20, a.y - 10, '⚡ ECHO!', '#55ddcc'));
+        }
         // Piercing Shots synergy: 20% chance arrow chains to a second enemy for 50% damage
         if (tickHasSynergy(ts, 'rangedPair') && Math.random() < 0.20) {
           const primaryId = rangedRef?.id ?? -1;
@@ -1956,7 +2087,7 @@ export function processAllyAI(ts: TickState): void {
           }
           // Crit roll: base crit + Scouting 5pc Advantage (first attack 10%) + War Shrine (3% per building) + Regalia
           let meleeCrit = false;
-          let meleeCritChance = 0.01;
+          let meleeCritChance = 0.01 + (a.shrineCritChance || 0);
           if (tickHasSetBonus(ts, 'scoutingSet', 5) && !a.firstAttackDone) {
             meleeCritChance += 0.10;
             a.firstAttackDone = true;
@@ -1983,9 +2114,19 @@ export function processAllyAI(ts: TickState): void {
           } else {
             ts.particles.push(makeParticle(target.x + (isBoss ? 32 : 12), target.y - 10, `-${dmg}`, '#7af'));
           }
+          // Shrine echo strike: 3% chance to hit twice (conjurer break)
+          if (a.shrineEchoStrike && Math.random() < 0.03) {
+            target.health -= dmg; target.lastDamageTime = ts.frame;
+            if (isBoss) ts.boss = boss;
+            ts.particles.push(makeParticle(target.x + (isBoss ? 32 : 16), target.y - 16, `⚡-${dmg}`, '#55ddcc'));
+          }
           // Depth of Attack: knights hit nearby enemies (AOE radius 40)
           if (a.unitType === 'knight' && tickHasArtifact(ts, 'depthOfAttack')) {
             halberdCleave(a.x, targetId, meleeDmg, 40, ts);
+          }
+          // Shrine cleave: soldiers with shrine buff hit nearby enemies (radius 25)
+          if (a.unitType === 'soldier' && a.shrineCleave) {
+            halberdCleave(a.x, targetId, meleeDmg, 25, ts);
           }
           // Halberd cleave: hit all nearby enemies
           if (a.unitType === 'halberd') {
