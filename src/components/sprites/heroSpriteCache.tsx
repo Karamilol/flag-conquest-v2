@@ -40,20 +40,28 @@ const goldLight = '#e8c85e';
 const leather = '#5a4a3a';
 const leatherDark = '#3a2a1a';
 
-// --- Ranger Colors (royal blue/silver — distinct from green enemy archers) ---
-const rHood = '#1a2a4a';
-const rHoodDark = '#0e1a33';
-const rHoodLight = '#2a3a5a';
-const rCloak = '#1e3050';
-const rCloakDark = '#142040';
-const rLeather = '#4a3a2a';
-const rLeatherDark = '#2a1a0a';
-const rLeatherLight = '#6a5a4a';
-const rBowWood = '#6a3a1a';
-const rBowLight = '#8a5a30';
-const rString = '#ddd';
+// --- Ranger Colors (heroic blue/gold — ornate marksman) ---
+const rCape = '#1a3366';
+const rCapeDark = '#0e1f44';
+const rCapeLight = '#2a4488';
+const rArmor = '#2a4477';
+const rArmorDark = '#1a3055';
+const rArmorLight = '#3a5599';
+const rLeather = '#5a4030';
+const rLeatherDark = '#3a2818';
+const rLeatherLight = '#7a6050';
+const rGold = '#c8a832';
+const rGoldLight = '#e8cc55';
+const rGoldDark = '#9a7a1a';
+const rBowWood = '#5a2a0a';
+const rBowLight = '#7a4a20';
+const rBowGold = '#c8a832';
+const rString = '#eee';
 const rSkin = '#e8c0a0';
-const rMetal = '#aabbcc';
+const rSkinDark = '#c8a080';
+const rHair = '#4a3020';
+const rMetal = '#99aacc';
+const rMetalLight = '#bbccee';
 
 // ============================================================
 // WARLORD BODY
@@ -250,7 +258,7 @@ function WarlordBody({ weaponAngle, capeSkew, shieldRot, eyeScaleY, plumeSkew, s
 }
 
 // ============================================================
-// RANGER BODY — detailed forest ranger with ornate longbow
+// RANGER BODY — heroic royal marksman with ornate gilded bow
 // ============================================================
 
 interface RangerProps {
@@ -262,177 +270,234 @@ interface RangerProps {
 }
 
 function RangerBody({ stringPull, capeSkew, eyeScaleY, showArrow, releaseFlash }: RangerProps) {
-  const capeTransform = capeSkew !== 0 ? `translate(18, 8) skewX(${capeSkew}) translate(-18, -8)` : undefined;
-  const eyeTransform = eyeScaleY !== 1 ? `translate(14, 2) scale(1, ${eyeScaleY}) translate(-14, -2)` : undefined;
+  const capeTransform = capeSkew !== 0 ? `translate(14, 8) skewX(${capeSkew}) translate(-14, -8)` : undefined;
+  const eyeTransform = eyeScaleY !== 1 ? `translate(12, 0) scale(1, ${eyeScaleY}) translate(-12, 0)` : undefined;
 
   // Bow geometry
   const bowX = 26;
-  const bowTopY = 0;
-  const bowBotY = 24;
+  const bowTopY = -1;
+  const bowBotY = 25;
   const stringMidX = bowX - stringPull;
   const stringMidY = 12;
 
   return (
     <g>
       {/* Shadow */}
-      <ellipse cx={14} cy={34} rx={12} ry={3.5} fill="rgba(0,0,0,0.25)" />
+      <ellipse cx={14} cy={34} rx={13} ry={3.5} fill="rgba(0,0,0,0.3)" />
 
-      {/* Cloak tail */}
+      {/* Cape — flowing, heroic */}
       <g transform={capeTransform}>
-        <polygon points="4,8 0,32 -2,34 6,10" fill={rCloakDark} />
-        <polygon points="5,8 1,31 0,33 6,10" fill={rCloak} opacity={0.7} />
-        <polygon points="1,30 -2,34 0,33 2,31" fill={rCloakDark} opacity={0.6} />
+        <polygon points="6,6 2,30 -1,33 0,34 4,32 8,8" fill={rCape} />
+        <polygon points="7,6 3,29 1,32 2,33 5,31 9,8" fill={rCapeLight} opacity={0.4} />
+        <polygon points="3,28 0,33 1,34 4,31" fill={rCapeDark} opacity={0.5} />
+        {/* Gold trim on cape edge */}
+        <line x1={2} y1={30} x2={-1} y2={33} stroke={rGold} strokeWidth={0.8} opacity={0.5} />
       </g>
 
-      {/* Quiver on back */}
-      <rect x={-2} y={2} width={5} height={16} fill="#4a3a2a" rx={1} />
-      <rect x={2} y={2} width={1} height={16} fill={rLeatherDark} rx={0.5} />
-      {/* Quiver strap */}
-      <line x1={0} y1={2} x2={12} y2={8} stroke={rLeather} strokeWidth={1.5} />
-      <line x1={0} y1={2} x2={12} y2={8} stroke={rLeatherLight} strokeWidth={0.5} opacity={0.4} />
-      {/* Arrow shafts */}
-      <line x1={-1} y1={2} x2={-1.5} y2={-5} stroke={rBowWood} strokeWidth={1} />
-      <line x1={0.5} y1={2} x2={0} y2={-6} stroke={rBowWood} strokeWidth={1} />
-      <line x1={2} y1={2} x2={2} y2={-4.5} stroke={rBowWood} strokeWidth={1} />
-      {/* Fletchings */}
-      <polygon points="-2,-5 -1.5,-5 -1,-7 -2,-6.5" fill="#888" opacity={0.7} />
-      <polygon points="0,-6 0.5,-6 1,-8 0,-7.5" fill="#888" opacity={0.7} />
-      <polygon points="1.5,-4.5 2,-4.5 2.5,-6.5 1.5,-6" fill="#888" opacity={0.7} />
+      {/* Quiver on back — ornate leather with gold trim */}
+      <rect x={-1} y={1} width={6} height={17} fill={rLeather} rx={1} />
+      <rect x={-1} y={1} width={6} height={1.5} fill={rGold} rx={0.5} />
+      <rect x={-1} y={16.5} width={6} height={1.5} fill={rGold} rx={0.5} />
+      <rect x={4} y={1} width={1} height={17} fill={rLeatherDark} rx={0.5} />
+      {/* Quiver strap — gold-buckled */}
+      <line x1={1} y1={2} x2={12} y2={7} stroke={rLeather} strokeWidth={2} />
+      <line x1={1} y1={2} x2={12} y2={7} stroke={rLeatherLight} strokeWidth={0.5} opacity={0.3} />
+      <circle cx={7} cy={5} r={1.2} fill={rGold} />
+      {/* Arrow shafts — golden tips visible */}
+      <line x1={0} y1={1} x2={-0.5} y2={-6} stroke="#8a6a3a" strokeWidth={1.2} />
+      <line x1={2} y1={1} x2={1.5} y2={-7} stroke="#8a6a3a" strokeWidth={1.2} />
+      <line x1={3.5} y1={1} x2={3.5} y2={-5} stroke="#8a6a3a" strokeWidth={1.2} />
+      {/* Gold arrowheads */}
+      <polygon points="-1,-6 0,-6 0.5,-8 -0.5,-7.5" fill={rGold} />
+      <polygon points="1,-7 2,-7 2.5,-9 1,-8.5" fill={rGold} />
+      <polygon points="3,-5 4,-5 4.5,-7 3,-6.5" fill={rGold} />
+      {/* Blue fletchings */}
+      <rect x={-0.5} y={-2} width={1.5} height={2} fill={rCape} opacity={0.6} />
+      <rect x={1.5} y={-3} width={1.5} height={2} fill={rCape} opacity={0.6} />
 
-      {/* Back Leg */}
+      {/* Back Leg — armored boot */}
       <g>
-        <rect x={7} y={20} width={5} height={6} fill={rCloakDark} />
-        <rect x={6} y={25} width={6} height={3} fill={rLeather} rx={1} />
+        <rect x={7} y={20} width={5} height={5} fill={rArmor} />
+        <rect x={7} y={21} width={5} height={1} fill={rGold} opacity={0.4} />
+        {/* Armored greave */}
+        <rect x={6} y={24} width={6} height={4} fill={rMetal} rx={1} />
+        <rect x={6} y={24} width={6} height={1} fill={rMetalLight} opacity={0.3} />
         <rect x={6} y={27} width={7} height={2} fill={rLeatherDark} rx={1} />
-        <line x1={6} y1={26} x2={12} y2={25} stroke={rLeatherLight} strokeWidth={0.5} opacity={0.4} />
+        {/* Gold knee guard */}
+        <rect x={7} y={23.5} width={4} height={2} fill={rGold} rx={0.5} />
       </g>
 
-      {/* Torso — layered leather with silver trim */}
+      {/* Torso — breastplate over leather */}
       <g>
-        <rect x={4} y={6} width={16} height={14} fill={rCloak} rx={1} />
-        <rect x={5} y={7} width={14} height={12} fill={rLeather} opacity={0.6} />
-        {/* Silver trim on collar */}
-        <rect x={4} y={6} width={16} height={1.5} fill={rMetal} opacity={0.5} rx={0.5} />
-        {/* Chest emblem — small blue diamond */}
-        <polygon points="12,10 14,12 12,14 10,12" fill="#3388cc" opacity={0.7} />
-        <polygon points="12,10.5 13.5,12 12,13.5 10.5,12" fill="#44aaff" opacity={0.4} />
-        {/* Stitching */}
-        <line x1={12} y1={7} x2={12} y2={19} stroke={rLeatherDark} strokeWidth={0.8} opacity={0.4} />
-        {/* Leather texture */}
-        <rect x={6} y={9} width={5} height={1} fill={rLeatherLight} opacity={0.15} />
-        <rect x={6} y={12} width={5} height={1} fill={rLeatherLight} opacity={0.15} />
-        <rect x={13} y={10} width={5} height={1} fill={rLeatherLight} opacity={0.15} />
-        <rect x={13} y={13} width={5} height={1} fill={rLeatherLight} opacity={0.15} />
-        {/* Belt */}
-        <rect x={3} y={18} width={18} height={2.5} fill={rLeather} />
-        <rect x={3} y={18} width={18} height={0.5} fill={rMetal} opacity={0.3} />
-        <rect x={10} y={18} width={4} height={2.5} fill={rMetal} rx={0.5} />
+        {/* Base tunic */}
+        <rect x={4} y={6} width={16} height={14} fill={rArmor} rx={1} />
+        {/* Leather under-layer */}
+        <rect x={5} y={7} width={14} height={12} fill={rLeather} opacity={0.4} />
+        {/* Breastplate center */}
+        <rect x={6} y={7} width={12} height={10} fill={rArmor} rx={1} />
+        <rect x={7} y={8} width={10} height={8} fill={rArmorLight} opacity={0.25} />
+        {/* Gold trim — collar */}
+        <rect x={4} y={5.5} width={16} height={2} fill={rGold} rx={0.5} />
+        <rect x={5} y={6} width={14} height={1} fill={rGoldLight} opacity={0.3} />
+        {/* Chest emblem — golden eagle/crest */}
+        <polygon points="12,9 14.5,12 12,15 9.5,12" fill={rGold} />
+        <polygon points="12,9.8 13.8,12 12,14.2 10.2,12" fill={rGoldLight} opacity={0.5} />
+        <circle cx={12} cy={12} r={1.2} fill={rArmor} />
+        {/* Belt — ornate */}
+        <rect x={3} y={18} width={18} height={3} fill={rLeather} />
+        <rect x={3} y={18} width={18} height={0.8} fill={rGold} opacity={0.6} />
+        <rect x={3} y={20.2} width={18} height={0.8} fill={rGold} opacity={0.4} />
+        {/* Belt buckle — large gold */}
+        <rect x={9} y={18} width={6} height={3} fill={rGold} rx={0.5} />
+        <rect x={10} y={18.5} width={4} height={2} fill={rGoldDark} rx={0.5} />
+        <circle cx={12} cy={19.5} r={0.8} fill={rGoldLight} />
         {/* Belt pouches */}
-        <rect x={5} y={18.5} width={3} height={2} fill={rLeatherDark} rx={0.5} />
-        <rect x={16} y={18.5} width={3} height={2} fill={rLeatherDark} rx={0.5} />
+        <rect x={4} y={18.5} width={3} height={2.5} fill={rLeatherDark} rx={0.5} />
+        <rect x={17} y={18.5} width={3} height={2.5} fill={rLeatherDark} rx={0.5} />
       </g>
 
-      {/* Front Leg */}
+      {/* Front Leg — armored boot */}
       <g>
-        <rect x={13} y={20} width={5} height={6} fill={rCloak} />
-        <rect x={13} y={21} width={5} height={2.5} fill={rLeather} rx={0.5} />
-        <rect x={12} y={25} width={6} height={3} fill={rLeather} rx={1} />
+        <rect x={13} y={20} width={5} height={5} fill={rArmor} />
+        <rect x={13} y={21} width={5} height={1} fill={rGold} opacity={0.4} />
+        {/* Armored greave */}
+        <rect x={12} y={24} width={6} height={4} fill={rMetal} rx={1} />
+        <rect x={12} y={24} width={6} height={1} fill={rMetalLight} opacity={0.3} />
         <rect x={12} y={27} width={7} height={2} fill={rLeatherDark} rx={1} />
-        <rect x={17} y={28} width={2} height={1} fill={rLeatherDark} rx={0.5} />
+        {/* Gold knee guard */}
+        <rect x={13} y={23.5} width={4} height={2} fill={rGold} rx={0.5} />
+        {/* Boot toe */}
+        <rect x={17} y={28} width={2} height={1.5} fill={rMetal} rx={0.5} />
       </g>
+
+      {/* Shoulder pauldron (front) */}
+      <rect x={16} y={4} width={6} height={4} fill={rMetal} rx={1} />
+      <rect x={16} y={4} width={6} height={1.5} fill={rMetalLight} opacity={0.4} rx={0.5} />
+      <rect x={17} y={7} width={4} height={1} fill={rGold} rx={0.5} />
 
       {/* Draw Arm (right — pulls string) */}
       <g>
-        <rect x={16} y={5} width={5} height={4} fill={rCloak} rx={1} />
-        <rect x={16} y={8} width={4} height={5} fill={rCloak} />
-        <rect x={17} y={11} width={4} height={3} fill={rLeather} rx={0.5} />
+        <rect x={17} y={7} width={4} height={5} fill={rArmor} />
+        {/* Bracer */}
+        <rect x={17} y={11} width={4} height={3} fill={rMetal} rx={0.5} />
+        <rect x={17} y={11} width={4} height={0.8} fill={rGold} opacity={0.5} />
         {showArrow ? (
           <rect x={stringMidX - 1} y={stringMidY - 1} width={3} height={3} fill={rLeatherDark} rx={0.5} />
         ) : (
-          <rect x={17} y={14} width={3} height={2} fill={rSkin} rx={0.5} />
+          <rect x={18} y={14} width={3} height={2} fill={rSkin} rx={0.5} />
         )}
       </g>
 
+      {/* Shoulder pauldron (back) */}
+      <rect x={2} y={4} width={6} height={4} fill={rMetal} rx={1} />
+      <rect x={2} y={4} width={6} height={1.5} fill={rMetalLight} opacity={0.4} rx={0.5} />
+      <rect x={3} y={7} width={4} height={1} fill={rGold} rx={0.5} />
+
       {/* Bow Arm (left) */}
       <g>
-        <rect x={4} y={5} width={5} height={4} fill={rCloak} rx={1} />
-        <rect x={2} y={8} width={5} height={5} fill={rCloakDark} />
-        {/* Bracer */}
-        <rect x={1} y={11} width={5} height={3} fill={rLeather} rx={0.5} />
-        <rect x={1} y={12} width={5} height={0.8} fill={rLeatherLight} opacity={0.3} />
-        {/* Metal stud */}
-        <circle cx={3.5} cy={12.5} r={0.6} fill={rMetal} />
-        {/* Hand */}
+        <rect x={3} y={7} width={4} height={5} fill={rArmor} />
+        {/* Bracer — ornate */}
+        <rect x={1} y={11} width={5} height={3} fill={rMetal} rx={0.5} />
+        <rect x={1} y={11} width={5} height={0.8} fill={rGold} opacity={0.5} />
+        <circle cx={3.5} cy={12.5} r={0.6} fill={rGold} />
+        {/* Hand gripping bow */}
         <rect x={0} y={10} width={3} height={4} fill={rSkin} rx={0.5} />
       </g>
 
-      {/* Longbow — curved limbs */}
+      {/* Gilded Recurve Bow — ornate with gold inlay */}
       <path
-        d={`M${bowX},${bowTopY} C${bowX + 6},${bowTopY + 6} ${bowX + 6},${bowBotY - 6} ${bowX},${bowBotY}`}
-        fill="none" stroke={rBowWood} strokeWidth={2.5} strokeLinecap="round"
+        d={`M${bowX},${bowTopY} C${bowX + 7},${bowTopY + 7} ${bowX + 7},${bowBotY - 7} ${bowX},${bowBotY}`}
+        fill="none" stroke={rBowWood} strokeWidth={3} strokeLinecap="round"
       />
+      {/* Gold inlay on bow limbs */}
       <path
-        d={`M${bowX},${bowTopY + 1} C${bowX + 5},${bowTopY + 6} ${bowX + 5},${bowBotY - 6} ${bowX},${bowBotY - 1}`}
-        fill="none" stroke={rBowLight} strokeWidth={0.8} opacity={0.4}
+        d={`M${bowX},${bowTopY + 1} C${bowX + 6},${bowTopY + 7} ${bowX + 6},${bowBotY - 7} ${bowX},${bowBotY - 1}`}
+        fill="none" stroke={rBowGold} strokeWidth={1} opacity={0.6}
       />
-      {/* Grip wrap */}
-      <rect x={bowX - 1} y={10} width={4} height={4} fill={rLeather} rx={1} />
-      <line x1={bowX - 1} y1={11} x2={bowX + 3} y2={10.5} stroke={rLeatherDark} strokeWidth={0.5} opacity={0.5} />
-      <line x1={bowX - 1} y1={12.5} x2={bowX + 3} y2={12} stroke={rLeatherDark} strokeWidth={0.5} opacity={0.5} />
-      {/* Nock tips */}
-      <circle cx={bowX} cy={bowTopY} r={1} fill={rBowWood} />
-      <circle cx={bowX} cy={bowBotY} r={1} fill={rBowWood} />
-      {/* Decorative tip wraps */}
-      <rect x={bowX - 1} y={bowTopY - 1} width={2} height={2} fill={rLeatherDark} rx={0.5} />
-      <rect x={bowX - 1} y={bowBotY - 1} width={2} height={2} fill={rLeatherDark} rx={0.5} />
+      {/* Recurve tips */}
+      <circle cx={bowX + 1} cy={bowTopY - 1} r={1.5} fill={rGold} />
+      <circle cx={bowX + 1} cy={bowBotY + 1} r={1.5} fill={rGold} />
+      {/* Grip — gold-wrapped */}
+      <rect x={bowX - 1} y={10} width={5} height={5} fill={rLeather} rx={1} />
+      <rect x={bowX - 1} y={10} width={5} height={1} fill={rGold} opacity={0.5} />
+      <rect x={bowX - 1} y={14} width={5} height={1} fill={rGold} opacity={0.5} />
 
       {/* Bowstring */}
-      <line x1={bowX} y1={bowTopY} x2={stringMidX} y2={stringMidY} stroke={rString} strokeWidth={0.8} />
-      <line x1={stringMidX} y1={stringMidY} x2={bowX} y2={bowBotY} stroke={rString} strokeWidth={0.8} />
+      <line x1={bowX + 1} y1={bowTopY} x2={stringMidX} y2={stringMidY} stroke={rString} strokeWidth={0.8} />
+      <line x1={stringMidX} y1={stringMidY} x2={bowX + 1} y2={bowBotY} stroke={rString} strokeWidth={0.8} />
 
-      {/* Arrow nocked */}
+      {/* Arrow nocked — gold-tipped */}
       {showArrow && (
         <g>
-          <line x1={stringMidX} y1={stringMidY} x2={bowX + 14} y2={12} stroke={rBowWood} strokeWidth={1.5} />
-          <polygon points={`${bowX + 14},10.5 ${bowX + 14},13.5 ${bowX + 17},12`} fill={rMetal} />
-          <polygon points={`${stringMidX - 1},11 ${stringMidX - 1},13 ${stringMidX + 2},12`} fill="#777" opacity={0.6} />
+          <line x1={stringMidX} y1={stringMidY} x2={bowX + 14} y2={12} stroke="#8a6a3a" strokeWidth={1.5} />
+          {/* Gold arrowhead */}
+          <polygon points={`${bowX + 14},10 ${bowX + 14},14 ${bowX + 18},12`} fill={rGold} />
+          <polygon points={`${bowX + 14},10.8 ${bowX + 14},13.2 ${bowX + 17},12`} fill={rGoldLight} opacity={0.5} />
+          {/* Fletching */}
+          <polygon points={`${stringMidX - 1},11 ${stringMidX - 1},13 ${stringMidX + 2},12`} fill={rCape} opacity={0.7} />
         </g>
       )}
 
-      {/* Release flash */}
+      {/* Release flash — golden burst */}
       {releaseFlash && (
-        <circle cx={bowX + 14} cy={12} r={5} fill="#ffaa00" opacity={0.5} />
+        <g>
+          <circle cx={bowX + 14} cy={12} r={6} fill={rGoldLight} opacity={0.3} />
+          <circle cx={bowX + 14} cy={12} r={3} fill="#fff" opacity={0.5} />
+        </g>
       )}
 
-      {/* Head */}
+      {/* Head — visible face, no hood */}
       <g>
-        {/* Face in shadow */}
-        <rect x={5} y={-1} width={14} height={8} fill={rHoodDark} rx={1} />
-        <rect x={7} y={2} width={10} height={4} fill={rSkin} opacity={0.3} rx={1} />
+        {/* Neck */}
+        <rect x={8} y={3} width={8} height={4} fill={rSkin} />
 
-        {/* Hood */}
-        <polygon points="3,-7 21,-7 23,1 19,5 3,5 1,1" fill={rHood} />
-        <polygon points="5,-7 19,-7 17,-9 7,-9" fill={rHoodDark} />
-        {/* Hood front overhang */}
-        <polygon points="3,-1 21,-1 19,3 5,3" fill={rHood} opacity={0.85} />
-        <rect x={3} y={-1} width={18} height={1.5} fill={rHoodDark} rx={0.5} />
-        {/* Hood folds */}
-        <line x1={5} y1={-6} x2={4} y2={2} stroke={rHoodDark} strokeWidth={0.8} opacity={0.5} />
-        <line x1={19} y1={-6} x2={20} y2={2} stroke={rHoodDark} strokeWidth={0.8} opacity={0.5} />
-        {/* Hood top highlight */}
-        <rect x={8} y={-8} width={8} height={2} fill={rHoodLight} opacity={0.2} rx={1} />
+        {/* Face */}
+        <rect x={5} y={-4} width={14} height={10} fill={rSkin} rx={1} />
+        {/* Jaw shadow */}
+        <rect x={6} y={3} width={12} height={2} fill={rSkinDark} opacity={0.3} rx={0.5} />
 
-        {/* Eyes under hood — ice blue, distinct from enemy yellow */}
+        {/* Hair */}
+        <rect x={4} y={-6} width={16} height={4} fill={rHair} rx={1} />
+        <rect x={3} y={-5} width={4} height={6} fill={rHair} rx={0.5} />
+        <rect x={17} y={-5} width={4} height={6} fill={rHair} rx={0.5} />
+
+        {/* Eyes — determined, blue */}
         <g transform={eyeTransform}>
-          <rect x={6} y={1} width={3} height={2} fill="#44aaff" rx={0.5} />
-          <rect x={15} y={1} width={3} height={2} fill="#44aaff" rx={0.5} />
-          <rect x={6} y={1} width={3} height={2} fill="#66ccff" opacity={0.3} rx={0.5} />
-          <rect x={15} y={1} width={3} height={2} fill="#66ccff" opacity={0.3} rx={0.5} />
+          <rect x={7} y={-1} width={3} height={2.5} fill="#fff" rx={0.5} />
+          <rect x={14} y={-1} width={3} height={2.5} fill="#fff" rx={0.5} />
+          <rect x={8} y={-0.5} width={2} height={2} fill="#2266aa" rx={0.5} />
+          <rect x={15} y={-0.5} width={2} height={2} fill="#2266aa" rx={0.5} />
+          <rect x={8.5} y={0} width={1} height={1} fill="#112244" />
+          <rect x={15.5} y={0} width={1} height={1} fill="#112244" />
+          {/* Eyebrows — determined */}
+          <rect x={6} y={-2.5} width={4} height={1} fill={rHair} rx={0.3} />
+          <rect x={14} y={-2.5} width={4} height={1} fill={rHair} rx={0.3} />
         </g>
 
-        {/* Face wrap / mask */}
-        <rect x={5} y={4} width={14} height={2.5} fill={rHoodDark} rx={1} />
-        <line x1={5} y1={5} x2={19} y2={5} stroke={rHood} strokeWidth={0.5} opacity={0.3} />
+        {/* Nose */}
+        <rect x={11} y={0} width={2} height={2.5} fill={rSkinDark} opacity={0.25} rx={0.5} />
+        {/* Mouth — slight smirk */}
+        <rect x={9} y={3} width={5} height={0.8} fill={rSkinDark} opacity={0.4} rx={0.3} />
+
+        {/* Feathered Tricorn Hat */}
+        {/* Hat brim */}
+        <polygon points="2,-6 22,-6 24,-4 0,-4" fill={rArmor} />
+        <polygon points="3,-6 21,-6 23,-4.5 1,-4.5" fill={rArmorLight} opacity={0.3} />
+        {/* Gold brim edge */}
+        <rect x={1} y={-4.5} width={22} height={1} fill={rGold} rx={0.3} />
+        {/* Hat crown */}
+        <rect x={5} y={-10} width={14} height={5} fill={rArmor} rx={1} />
+        <rect x={6} y={-9} width={12} height={3} fill={rArmorLight} opacity={0.2} />
+        {/* Gold hat band */}
+        <rect x={5} y={-6} width={14} height={1.5} fill={rGold} rx={0.3} />
+        <rect x={5} y={-5.5} width={14} height={0.5} fill={rGoldLight} opacity={0.3} />
+        {/* Hat buckle/emblem */}
+        <rect x={10} y={-7} width={4} height={2} fill={rGold} rx={0.5} />
+        <circle cx={12} cy={-6} r={0.8} fill={rGoldLight} />
+        {/* Feather plume — sweeping upward */}
+        <path d="M19,-6 Q22,-10 24,-16 Q23,-15 21,-12 Q20,-10 19,-8" fill="#cc3333" />
+        <path d="M19,-6.5 Q21,-9 23,-14" fill="none" stroke="#ff5555" strokeWidth={0.6} opacity={0.5} />
+        <path d="M19,-7 Q22,-11 23.5,-15.5 Q22,-14 20,-11" fill="#aa2222" opacity={0.6} />
       </g>
     </g>
   );
