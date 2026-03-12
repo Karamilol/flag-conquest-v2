@@ -88,9 +88,9 @@ export function goldDropMult(level: number): number {
   return 1 + pct;
 }
 
-/** Zone-based kill gold multiplier — quadratic scaling to reward pushing. */
-export function zoneKillGoldMult(zone: number): number {
-  return 1 + zone * (zone - 1) * 5;
+/** Flag-based kill gold multiplier — quadratic scaling to reward pushing further into a run. */
+export function zoneKillGoldMult(flagsCaptured: number): number {
+  return 1 + flagsCaptured * flagsCaptured * 0.14;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

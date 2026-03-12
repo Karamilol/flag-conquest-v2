@@ -236,24 +236,24 @@ export function RangerIconHTML({ size = 18 }: { size?: number }) {
 export function RangerIconGuts() {
   return (
     <>
-      {/* Bow stave */}
-      <path d="M10,3 Q2,16 10,29" fill="none" stroke="#7a5a3a" strokeWidth={2.8} strokeLinecap="round" />
-      <path d="M10,3 Q3,16 10,29" fill="none" stroke="#9a7a5a" strokeWidth={1.2} opacity={0.4} strokeLinecap="round" />
+      {/* Bow stave — curves right, opens toward target */}
+      <path d="M20,3 Q30,16 20,29" fill="none" stroke="#7a5a3a" strokeWidth={2.8} strokeLinecap="round" />
+      <path d="M20,3 Q29,16 20,29" fill="none" stroke="#9a7a5a" strokeWidth={1.2} opacity={0.4} strokeLinecap="round" />
       {/* Bow grip wrap */}
-      <rect x={8} y={13} width={4} height={6} rx={1.5} fill="#5a4a3a" opacity={0.7} />
-      {/* Bowstring — pulled back to nock point */}
-      <line x1={10} y1={3} x2={16} y2={16} stroke="#c8c8c8" strokeWidth={0.7} />
-      <line x1={10} y1={29} x2={16} y2={16} stroke="#c8c8c8" strokeWidth={0.7} />
-      {/* Arrow shaft — nocked at string pull point, extending through bow */}
-      <line x1={16} y1={16} x2={30} y2={16} stroke="#7a6a4a" strokeWidth={1.5} />
-      {/* Arrow head */}
+      <rect x={18} y={13} width={4} height={6} rx={1.5} fill="#5a4a3a" opacity={0.7} />
+      {/* Bowstring — pulled back left to nock point */}
+      <line x1={20} y1={3} x2={14} y2={16} stroke="#c8c8c8" strokeWidth={0.7} />
+      <line x1={20} y1={29} x2={14} y2={16} stroke="#c8c8c8" strokeWidth={0.7} />
+      {/* Arrow shaft — nocked at pull point, shooting right through bow */}
+      <line x1={14} y1={16} x2={30} y2={16} stroke="#7a6a4a" strokeWidth={1.5} />
+      {/* Arrow head — pointing right */}
       <polygon points="30,16 26,13 26,19" fill="#b8b8c8" />
       <polygon points="29,16 27,14 27,18" fill="#d0d0e0" opacity={0.5} />
       {/* Arrow fletching at nock */}
-      <polygon points="18,16 16,13.5 16,16" fill="#cc3333" opacity={0.8} />
-      <polygon points="18,16 16,18.5 16,16" fill="#cc3333" opacity={0.8} />
+      <polygon points="16,16 14,13.5 14,16" fill="#cc3333" opacity={0.8} />
+      <polygon points="16,16 14,18.5 14,16" fill="#cc3333" opacity={0.8} />
       {/* Nock point */}
-      <circle cx={16} cy={16} r={0.8} fill="#5a4a3a" />
+      <circle cx={14} cy={16} r={0.8} fill="#5a4a3a" />
     </>
   );
 }

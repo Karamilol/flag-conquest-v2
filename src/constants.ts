@@ -1,3 +1,5 @@
+export const GAME_VERSION = 'v0.3.6c';
+
 // Pixel art color palette - earthy fantasy
 export const COLORS = {
   bg: '#1a1a2e',
@@ -52,7 +54,7 @@ export const UNIT_STATS = {
     attackRange: 220,
   },
   enemyWraith: {
-    health: 125,
+    health: 188,
     damage: 10,
     speed: 0.25,
     attackRate: 80,
@@ -150,7 +152,7 @@ export const UNIT_STATS = {
   archer: {
     name: 'Archer',
     category: 'ranged' as const,
-    health: 15,
+    health: 17,
     damage: 12,
     speed: 0.50,
     attackRate: 110,

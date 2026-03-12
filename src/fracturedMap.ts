@@ -54,7 +54,7 @@ interface ModifierRollResult {
  *
  * Easy:   0-1 positive, 0 negative
  * Medium: 1-2 positive, 1 negative
- * Hard:   2-3 positive, 1-2 negative
+ * Hard:   2-3 positive, 2 negative
  *
  * Curse: ~10% chance, independent of difficulty.
  * Tier 0: no modifiers (tutorial zone).
@@ -76,7 +76,7 @@ export function rollModifiers(difficulty: PortalDifficulty, tier: number): Modif
       break;
     case 'hard':
       posCount = randInt(2, 3);
-      negCount = randInt(1, 2);
+      negCount = 2;
       break;
   }
 

@@ -107,6 +107,12 @@ export class PixiProjectileRenderer {
         case 'crystalBolt':
           this.drawCrystalBolt(sx, sy);
           break;
+        case 'longbowShot':
+          this.drawLongbowShot(sx, sy);
+          break;
+        case 'spearThrow':
+          this.drawSpearThrow(sx, sy, (p as any)._arcAngle ?? 0);
+          break;
         case 'bombardShot':
           this.drawBombardShot(sx, sy);
           break;
@@ -320,6 +326,64 @@ export class PixiProjectileRenderer {
     g.fill({ color: 0xffffff, alpha: 0.6 });
     g.circle(x, y, 2);
     g.fill();
+  }
+
+  // ── Longbow Shot (arching overwatch arrow) ─────────────────────
+  private drawLongbowShot(x: number, y: number): void {
+    const g = this.getGfx(y);
+    // Shaft — same green as allyArrow
+    g.stroke({ color: 0x5a8b5a, width: 2 });
+    g.moveTo(x, y);
+    g.lineTo(x - 15, y);
+    g.stroke();
+    // Head — same bright green triangle as allyArrow
+    g.fill({ color: 0x77ff77 });
+    g.moveTo(x + 6, y);
+    g.lineTo(x, y - 3);
+    g.lineTo(x, y + 3);
+    g.closePath();
+    g.fill();
+  }
+
+  // ── Spear Throw (halberd shrine big: hurled spear, arcing) ─────
+  private drawSpearThrow(x: number, y: number, angle: number): void {
+    const g = this.getGfx(y);
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    const px = -s; // perpendicular
+    const py = c;
+
+    // Wooden shaft — extends backward from tip
+    g.stroke({ color: 0x7a4e28, width: 3 });
+    g.moveTo(x, y);
+    g.lineTo(x - 32 * c, y - 32 * s);
+    g.stroke();
+    // Darker grain stripe for depth
+    g.stroke({ color: 0x5a3618, width: 1 });
+    g.moveTo(x - 4 * c + 0.8 * px, y - 4 * s + 0.8 * py);
+    g.lineTo(x - 28 * c + 0.8 * px, y - 28 * s + 0.8 * py);
+    g.stroke();
+
+    // Butt cap
+    g.fill({ color: 0x3a2010 });
+    g.circle(x - 32 * c, y - 32 * s, 2.5);
+    g.fill();
+
+    // Iron spearhead
+    const tipFwd = 11;
+    const tipBase = 4;
+    g.fill({ color: 0xb8bcc8 });
+    g.moveTo(x + tipFwd * c, y + tipFwd * s);
+    g.lineTo(x + tipBase * px, y + tipBase * py);
+    g.lineTo(x - 4 * c, y - 4 * s);
+    g.lineTo(x - tipBase * px, y - tipBase * py);
+    g.closePath();
+    g.fill();
+    // Highlight glint
+    g.stroke({ color: 0xffffff, alpha: 0.55, width: 1 });
+    g.moveTo(x + tipFwd * c, y + tipFwd * s);
+    g.lineTo(x + 2 * c + 1.5 * px, y + 2 * s + 1.5 * py);
+    g.stroke();
   }
 
   // ── Bombard Shot ───────────────────────────────────────────────

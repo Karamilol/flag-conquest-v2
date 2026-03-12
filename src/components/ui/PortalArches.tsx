@@ -6,6 +6,8 @@ import type { PortalChoiceData } from '../../types';
 import { getModifierDef, getCurseDef } from '../../modifiers';
 import { BIOME_COLORS } from '../../biomeUtils';
 import type { Biome } from '../../constants';
+import type { Regalia, RegaliaSlot } from '../../regalias';
+import { RARITY_COLORS, SLOT_ICONS, getModDisplayText } from '../../regalias';
 
 const AUTO_PORTAL_KEY = 'flag-conquest-auto-portal';
 type AutoPortalPref = 'off' | 'easy' | 'medium' | 'hard';
@@ -285,12 +287,99 @@ function BiomeScene({ biome, difficulty, hasCurse }: { biome: string; difficulty
   );
 }
 
+const SLOTS: RegaliaSlot[] = ['sword', 'shield', 'necklace'];
+
+function EquippedRegaliaStrip({ equipped }: { equipped: Record<RegaliaSlot, Regalia | null> }) {
+  const [hovered, setHovered] = useState<RegaliaSlot | null>(null);
+
+  return (
+    <div style={{
+      position: 'absolute', bottom: '13%', left: '50%', transform: 'translateX(-50%)',
+      display: 'flex', alignItems: 'center', gap: 6, pointerEvents: 'auto', zIndex: 25,
+    }}>
+      <span style={{
+        fontSize: 6, fontFamily: '"Press Start 2P", monospace',
+        color: '#666', marginRight: 2, whiteSpace: 'nowrap',
+      }}>GEAR:</span>
+      {SLOTS.map(slot => {
+        const reg = equipped[slot];
+        const rarityColor = reg ? RARITY_COLORS[reg.rarity] : '#333';
+        const isHov = hovered === slot;
+        return (
+          <div
+            key={slot}
+            style={{ position: 'relative' }}
+            onMouseEnter={() => setHovered(slot)}
+            onMouseLeave={() => setHovered(null)}
+          >
+            <div style={{
+              width: 22, height: 22,
+              border: `1.5px solid ${reg ? rarityColor : '#333'}`,
+              borderRadius: 3,
+              background: reg
+                ? `linear-gradient(135deg, ${rarityColor}18, ${rarityColor}08)`
+                : 'rgba(10,8,20,0.6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11,
+              boxShadow: reg ? `0 0 6px ${rarityColor}55` : 'none',
+              opacity: reg ? 1 : 0.4,
+              cursor: reg ? 'default' : 'default',
+              transition: 'box-shadow 0.15s',
+              ...(isHov && reg ? { boxShadow: `0 0 10px ${rarityColor}88` } : {}),
+            }}>
+              {SLOT_ICONS[slot]}
+            </div>
+
+            {/* Hover tooltip */}
+            {isHov && reg && (
+              <div style={{
+                position: 'absolute', bottom: '110%', left: '50%',
+                transform: 'translateX(-50%)',
+                width: 160, padding: '6px 8px',
+                background: 'linear-gradient(180deg, rgba(12,8,25,0.97) 0%, rgba(6,4,14,0.97) 100%)',
+                border: `1.5px solid ${rarityColor}55`,
+                borderRadius: 6,
+                boxShadow: `0 0 10px ${rarityColor}33, 0 4px 12px rgba(0,0,0,0.7)`,
+                zIndex: 40, pointerEvents: 'none',
+              }}>
+                <div style={{
+                  color: rarityColor, fontSize: 6,
+                  fontFamily: '"Press Start 2P", monospace',
+                  marginBottom: 2, lineHeight: 1.4,
+                }}>
+                  {reg.name}
+                </div>
+                <div style={{
+                  color: rarityColor, fontSize: 5, opacity: 0.7, marginBottom: 4,
+                  textTransform: 'uppercase', letterSpacing: '0.5px',
+                }}>
+                  {reg.rarity} · Lv{reg.level} · Zone {reg.zone}
+                </div>
+                <div style={{ width: '100%', height: 1, background: `${rarityColor}22`, marginBottom: 4 }} />
+                {reg.modifiers.map((m, i) => (
+                  <div key={i} style={{
+                    color: '#ccc', fontSize: 5.5, marginBottom: 2,
+                    lineHeight: 1.3,
+                  }}>
+                    · {getModDisplayText(m, reg.level)}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 interface Props {
   portals: PortalChoiceData[];
   onSelect: (portal: PortalChoiceData) => void;
+  equippedRegalias?: Record<RegaliaSlot, Regalia | null>;
 }
 
-export function PortalArches({ portals, onSelect }: Props) {
+export function PortalArches({ portals, onSelect, equippedRegalias }: Props) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [autoPref, setAutoPref] = useState<AutoPortalPref>(loadAutoPortalPref);
   const [timer, setTimer] = useState(AUTO_TIMER_SECONDS);
@@ -594,6 +683,11 @@ export function PortalArches({ portals, onSelect }: Props) {
           50% { transform: translateY(-5px); }
         }
       `}</style>
+
+      {/* Equipped regalia strip */}
+      {equippedRegalias && (
+        <EquippedRegaliaStrip equipped={equippedRegalias} />
+      )}
 
       {/* Auto-select preference bar */}
       <div style={{

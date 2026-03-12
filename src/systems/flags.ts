@@ -1,4 +1,4 @@
-import { COLORS, GROUND_Y, BUILDING_DEFS, UNIT_STATS } from '../constants';
+import { COLORS, GROUND_Y, ENEMY_SIZE, BUILDING_DEFS, UNIT_STATS } from '../constants';
 import { ARTIFACT_DEFS, getEligibleArtifacts as getEligibleArtifactDefs } from '../artifacts';
 import { makeParticle, uid, formatNumber } from '../utils/helpers';
 import { generateZoneFlags } from '../state';
@@ -85,7 +85,7 @@ export function processChestCollection(ts: TickState): void {
 
   ts.chests = ts.chests.filter(chest => {
     chest.age++;
-    if (!collected && Math.abs(hero.x - chest.x) < 40) {
+    if (!collected && (chest.pendingClickCollect || Math.abs(hero.x - chest.x) < 40)) {
       collectChest(ts, chest);
       collected = true;
       return false;
@@ -215,11 +215,19 @@ function collectRegaliaChest(ts: TickState, chest: ChestData): void {
   }
 }
 
+function collectConjured(ts: TickState, chest: ChestData): void {
+  const lookingAheadMult = tickHasSynergy(ts, 'econPair2') ? 1.20 : 1;
+  const goldValue = Math.floor(chest.value * lookingAheadMult);
+  ts.goldEarned += goldValue;
+  ts.particles.push(makeParticle(chest.x, chest.y - 20, `✨ +${formatNumber(goldValue)}g`, '#7ec8e3'));
+}
+
 const CHEST_HANDLERS: Record<string, (ts: TickState, chest: ChestData) => void> = {
   gold: collectGold,
   gem: collectGem,
   shard: collectShard,
   consumable: collectConsumableChest,
+  conjured: collectConjured,
   relicCommon: collectRelicChest,
   relicRare: collectRelicChest,
   relicLegendary: collectRelicChest,
@@ -449,6 +457,7 @@ export function processBossDefeat(ts: TickState): void {
   // Unlock dungeons after second boss defeat (Wild Huntsman) — gates spawn on flags in later zones
   if (boss.bossType === 1 && !ts.dungeonUnlocked && !ts.challengeId) {
     ts.dungeonUnlocked = true;
+    ts.dungeonPityCounter = 999; // guarantee a gate in the very next zone
     ts.particles.push(makeParticle(boss.x, boss.y - 70, '🏛️ DUNGEON GATES UNLOCKED!', '#aa44ff'));
     ts.particles.push(makeParticle(boss.x, boss.y - 90, 'Ancient gates may now appear on captured flags...', '#cc88ff'));
   }
@@ -747,6 +756,24 @@ export function processFlagBuildings(ts: TickState): void {
 export function applyPortalChoice(game: import('../types').GameState, portal: PortalChoiceData): void {
   const nextZone = game.currentZone + 1;
 
+  // Auto-collect gold/gem/shard chests; keep everything else for the new zone
+  if (game.chests && game.chests.length > 0) {
+    game.chests = (game.chests as any[]).filter((chest: any) => {
+      if (chest.type === 'gold' || chest.type === 'conjured') {
+        game.goldEarned += chest.value || 0;
+        return false;
+      } else if (chest.type === 'gem') {
+        (game as any).gemsThisRun = ((game as any).gemsThisRun || 0) + Math.max(1, chest.value || 1);
+        return false;
+      } else if (chest.type === 'shard') {
+        (game as any).shardsThisRun = ((game as any).shardsThisRun || 0) + Math.max(1, chest.value || 1);
+        return false;
+      }
+      // artifact, relic, regalia, consumable — keep for next zone
+      return true;
+    });
+  }
+
   // Record choice on fractured map
   if (game.fracturedMap && game.pendingPortalChoice) {
     const chosenIdx = game.pendingPortalChoice.findIndex(
@@ -798,8 +825,7 @@ export function applyPortalChoice(game: import('../types').GameState, portal: Po
     const shrineRoll = nextZone === 1 ? 1.0 : 0.10;
     if (Math.random() < shrineRoll) {
       const rosterTypes = [...new Set((game.unitSlots || []).map(s => s.type))];
-      const nonBoss = newFlags.filter(f => !f.isBossFlag);
-      console.log('[SHRINE] nextZone=', nextZone, 'roster=', rosterTypes, 'nonBoss=', nonBoss.length, 'chosenShrine=', game.fracturedMap.chosenShrine);
+      const nonBoss = newFlags.filter(f => !f.isBossFlag && !f.buildingType);
       if (nonBoss.length > 0 && rosterTypes.length > 0) {
         const available = SHRINE_UNIT_TYPES.filter(ut => rosterTypes.includes(ut));
         if (available.length > 0) {
@@ -808,13 +834,10 @@ export function applyPortalChoice(game: import('../types').GameState, portal: Po
           const idx = game.flags.findIndex(f => f.id === target.id);
           if (idx >= 0) {
             game.flags[idx] = { ...game.flags[idx], shrineUnitType: shrineUnit };
-            console.log('[SHRINE] Placed', shrineUnit, 'shrine on flag', target.id, 'at index', idx);
           }
         }
       }
     }
-  } else if (game.fracturedMap) {
-    console.log('[SHRINE] Skipped — chosenShrine=', game.fracturedMap.chosenShrine, 'nextZone=', nextZone);
   }
 
   // Dungeon Gate: spawn on a random non-boss flag after dungeon is unlocked
@@ -861,6 +884,13 @@ export function applyPortalChoice(game: import('../types').GameState, portal: Po
     x: portalX + 10 + Math.random() * 30,
   }));
 
+  // Teleport uncollected loot chests to new zone (near hero)
+  if (game.chests && game.chests.length > 0) {
+    for (const chest of game.chests as any[]) {
+      chest.x = portalX + 60 + Math.random() * 120;
+    }
+  }
+
   // Snap camera to new position
   game.cameraX = Math.max(game.cameraMinX, portalX - 100);
 
@@ -876,9 +906,9 @@ export function applyPortalChoice(game: import('../types').GameState, portal: Po
 
   // ── Zone entry modifiers ──
 
-  // Gold Stash: bonus gold on zone entry (zone × 3 min of passive income)
+  // Gold Stash: bonus gold on zone entry (~10 min of passive income)
   if (portal.modifiers.includes('goldStash')) {
-    const bonus = Math.floor(passiveGoldPerMin(game as any) * nextZone * 3);
+    const bonus = Math.floor(passiveGoldPerMin(game.runUpgrades) * 10);
     if (bonus > 0) {
       game.goldEarned += bonus;
       game.particles.push({ id: uid(), x: portalX + 16, y: GROUND_Y - 90, text: `+${bonus}g (Gold Stash)`, color: '#ffd700', age: 0 } as any);
@@ -921,6 +951,167 @@ export function applyPortalChoice(game: import('../types').GameState, portal: Po
 }
 
 const DIFF_COLORS: Record<string, string> = { easy: '#4aff4a', medium: '#ffcc44', hard: '#ff4444' };
+
+/**
+ * Trigger shrine desecration: spawn thematic enemies at/near the shrine flag.
+ * Called from GameView.tsx when the player chooses 'break' on a shrine.
+ */
+export function triggerShrineDesecration(
+  game: import('../types').GameState,
+  shrineUnitType: string,
+  shrineX: number,
+): void {
+  const z = Math.pow(1.15, game.currentZone);
+  const sx = shrineX + 15; // spawn slightly right of shrine
+
+  const spread = (i: number, gap = 20) => sx + i * gap;
+
+  switch (shrineUnitType) {
+    case 'soldier': {
+      // 5 ghost soldiers march out
+      for (let i = 0; i < 5; i++) {
+        const hp = Math.floor(UNIT_STATS.enemy.health * z * 2);
+        (game.enemies as any[]).push({
+          id: uid(), x: spread(i), y: GROUND_Y - ENEMY_SIZE,
+          health: hp, maxHealth: hp,
+          damage: Math.floor(UNIT_STATS.enemy.damage * z * 1.5),
+          speed: UNIT_STATS.enemy.speed,
+          attackRate: UNIT_STATS.enemy.attackRate,
+          attackRange: UNIT_STATS.enemy.attackRange,
+          frame: 0, attackCooldown: 15, lane: (i % 3) - 1,
+        });
+      }
+      game.particles.push(makeParticle(shrineX, GROUND_Y - 60, '💀 GHOST SOLDIERS!', '#aaccaa') as any);
+      break;
+    }
+    case 'archer': {
+      // 4 ghost archers materialise
+      for (let i = 0; i < 4; i++) {
+        const hp = Math.floor(UNIT_STATS.enemyArcher.health * z * 2.5);
+        (game.enemyArchers as any[]).push({
+          id: uid(), x: spread(i, 22), y: GROUND_Y - 22,
+          health: hp, maxHealth: hp,
+          damage: Math.floor(UNIT_STATS.enemyArcher.damage * z * 1.5),
+          speed: UNIT_STATS.enemyArcher.speed,
+          attackRate: UNIT_STATS.enemyArcher.attackRate,
+          attackRange: UNIT_STATS.enemyArcher.attackRange,
+          frame: 0, attackCooldown: 20, lane: (i % 3) - 1,
+        });
+      }
+      game.particles.push(makeParticle(shrineX, GROUND_Y - 60, '👻 GHOST ARCHERS!', '#aaddcc') as any);
+      break;
+    }
+    case 'halberd': {
+      // 3 ghostly cursed knights (stand-in for halberds)
+      for (let i = 0; i < 3; i++) {
+        const hp = Math.floor(UNIT_STATS.cursedKnight.health * z * 2.5);
+        (game.enemyCursedKnights as any[]).push({
+          id: uid(), x: spread(i, 26), y: GROUND_Y - ENEMY_SIZE,
+          health: hp, maxHealth: hp,
+          damage: Math.floor(UNIT_STATS.cursedKnight.damage * z * 2),
+          defense: UNIT_STATS.cursedKnight.defense,
+          speed: UNIT_STATS.cursedKnight.speed,
+          attackRate: UNIT_STATS.cursedKnight.attackRate,
+          attackRange: UNIT_STATS.cursedKnight.attackRange,
+          frame: 0, attackCooldown: 15, lane: (i % 3) - 1,
+          reflectTimer: 0, reflectCooldown: 9999,
+        });
+      }
+      game.particles.push(makeParticle(shrineX, GROUND_Y - 60, '🔱 GHOSTLY HALBERDS!', '#ccaaff') as any);
+      break;
+    }
+    case 'knight': {
+      // 5 wraiths pour from the tomb
+      for (let i = 0; i < 5; i++) {
+        const hp = Math.floor(UNIT_STATS.enemyWraith.health * z * 1.8);
+        (game.enemyWraiths as any[]).push({
+          id: uid(), x: spread(i, 18), y: GROUND_Y - 35,
+          health: hp, maxHealth: hp,
+          damage: Math.floor(UNIT_STATS.enemyWraith.damage * z * 1.5),
+          defense: UNIT_STATS.enemyWraith.defense,
+          speed: UNIT_STATS.enemyWraith.speed,
+          attackRate: UNIT_STATS.enemyWraith.attackRate,
+          attackRange: UNIT_STATS.enemyWraith.attackRange,
+          frame: 0, attackCooldown: 20, lane: (i % 3) - 1,
+          stealthTimer: 0, lungeTimer: 0,
+        });
+      }
+      game.particles.push(makeParticle(shrineX, GROUND_Y - 60, '👻 WRAITHS EMERGE!', '#bb88ff') as any);
+      break;
+    }
+    case 'wizard': {
+      // 12 rats pour out endlessly
+      for (let i = 0; i < 12; i++) {
+        const hp = Math.floor(UNIT_STATS.dungeonRat.health * z * 1.5);
+        (game.enemyDungeonRats as any[]).push({
+          id: uid(), x: spread(i, 14), y: GROUND_Y - 18,
+          health: hp, maxHealth: hp,
+          damage: Math.floor(UNIT_STATS.dungeonRat.damage * z),
+          speed: UNIT_STATS.dungeonRat.speed + Math.random() * 0.3,
+          attackRate: UNIT_STATS.dungeonRat.attackRate,
+          attackRange: UNIT_STATS.dungeonRat.attackRange,
+          frame: 0, attackCooldown: 10, lane: (i % 5) - 2,
+        });
+      }
+      game.particles.push(makeParticle(shrineX, GROUND_Y - 60, '🐀 THE RATS COME!', '#aa8833') as any);
+      break;
+    }
+    case 'cleric': {
+      // 8 skeletons crawl from the grave (isLichSkeleton drives the skeleton sprite)
+      for (let i = 0; i < 8; i++) {
+        const hp = Math.floor(UNIT_STATS.enemy.health * z * 1.2);
+        (game.enemies as any[]).push({
+          id: uid(), x: spread(i, 16), y: GROUND_Y - ENEMY_SIZE,
+          health: hp, maxHealth: hp,
+          damage: Math.floor(UNIT_STATS.enemy.damage * z),
+          speed: UNIT_STATS.enemy.speed * 0.85,
+          attackRate: UNIT_STATS.enemy.attackRate + 10,
+          attackRange: UNIT_STATS.enemy.attackRange,
+          frame: 0, attackCooldown: 15, lane: (i % 5) - 2,
+          isLichSkeleton: true,
+        });
+      }
+      game.particles.push(makeParticle(shrineX, GROUND_Y - 60, '💀 THE DEAD RISE!', '#88ff88') as any);
+      break;
+    }
+    case 'conjurer': {
+      // 4 cursed knight guardians protect the obelisk
+      for (let i = 0; i < 4; i++) {
+        const hp = Math.floor(UNIT_STATS.cursedKnight.health * z * 2);
+        (game.enemyCursedKnights as any[]).push({
+          id: uid(), x: spread(i, 22), y: GROUND_Y - ENEMY_SIZE,
+          health: hp, maxHealth: hp,
+          damage: Math.floor(UNIT_STATS.cursedKnight.damage * z * 1.5),
+          defense: UNIT_STATS.cursedKnight.defense + 1,
+          speed: UNIT_STATS.cursedKnight.speed,
+          attackRate: UNIT_STATS.cursedKnight.attackRate,
+          attackRange: UNIT_STATS.cursedKnight.attackRange,
+          frame: 0, attackCooldown: 15, lane: (i % 3) - 1,
+          reflectTimer: 0, reflectCooldown: 9999,
+        });
+      }
+      game.particles.push(makeParticle(shrineX, GROUND_Y - 60, '💎 CRYSTAL GUARDIANS!', '#55ddcc') as any);
+      break;
+    }
+    case 'bombard': {
+      // 5 ghostly fire imps scorch the ground
+      for (let i = 0; i < 5; i++) {
+        const hp = Math.floor(UNIT_STATS.fireImp.health * z * 2);
+        (game.enemyFireImps as any[]).push({
+          id: uid(), x: spread(i, 20), y: GROUND_Y - 22,
+          health: hp, maxHealth: hp,
+          damage: Math.floor(UNIT_STATS.fireImp.damage * z * 1.5),
+          speed: UNIT_STATS.fireImp.speed,
+          attackRange: UNIT_STATS.fireImp.attackRange,
+          frame: 0, castTimer: 0, castTargetX: 0, castTargetY: 0,
+          isCasting: false, castCooldown: 0, lane: (i % 3) - 1,
+        });
+      }
+      game.particles.push(makeParticle(shrineX, GROUND_Y - 60, '🔥 FIRE IMPS!', '#ff6622') as any);
+      break;
+    }
+  }
+}
 
 export function processParticles(ts: TickState): void {
   let write = 0;

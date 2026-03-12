@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import type { GameState, CameraMode, Artifact, UnitSlot } from '../../types';
 import type { KeyBindings } from '../../keybindings';
 import { displayKey } from '../../keybindings';
-import { DISPLAY_W, DISPLAY_H, UNIT_STATS } from '../../constants';
+import { DISPLAY_W, DISPLAY_H, UNIT_STATS, GAME_VERSION } from '../../constants';
 import { formatNumber } from '../../utils/helpers';
 import { SpriteIcon } from '../sprites/SpriteIcon';
 import { getSkillDef } from '../../skills';
@@ -471,7 +471,7 @@ const BottomBar = memo(({
     color: '#fff', cursor: 'pointer',
     fontFamily: F, display: 'flex',
     alignItems: 'center', justifyContent: 'center',
-    padding: 0,
+    padding: 0, userSelect: 'none', WebkitUserSelect: 'none',
   };
 
   const activeSkills = skills.filter(s => !s.isPassive);
@@ -602,7 +602,7 @@ const BottomBar = memo(({
       })}
 
       {/* ◀ arrow */}
-      <button onClick={onMovePrev} style={{
+      <button onPointerDown={(e) => { e.stopPropagation(); onMovePrev(); }} style={{
         ...base, position: 'absolute',
         left: leftArrowX, width: 30, fontSize: 13,
         ...(tutorialHighlightBack ? {
@@ -623,7 +623,7 @@ const BottomBar = memo(({
       )}
 
       {/* ▶ arrow */}
-      <button onClick={onMoveNext} style={{
+      <button onPointerDown={(e) => { e.stopPropagation(); onMoveNext(); }} style={{
         ...base, position: 'absolute',
         left: rightArrowX, width: 30, fontSize: 13,
         ...(tutorialHighlightForward ? {
@@ -831,6 +831,14 @@ export default function GameHUD(props: GameHUDProps) {
           </div>
         );
       })()}
+
+      {/* Version tag */}
+      <div style={{
+        position: 'absolute', bottom: 2, right: 4,
+        color: 'rgba(255,255,255,0.15)', fontSize: 6,
+        fontFamily: F, letterSpacing: '0.5px',
+        pointerEvents: 'none', userSelect: 'none',
+      }}>{GAME_VERSION}</div>
     </div>
   );
 }

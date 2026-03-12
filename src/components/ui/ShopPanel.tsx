@@ -9,7 +9,7 @@ import { getAncientEffect, getAncientRelicLevel } from '../../ancientRelics';
 import { goldUpgradeCost, goldDropUpgradeCost, heroUpgradeCost, heroTotalHp, heroTotalDmg, unitHpMult, unitDmgMult, goldDropMult, slimesCost, forestsCost, deliveryCost, smithCost, barricadeCost, enchantingCost, militiaCost, territoryCost, huntingSlimesIncome, scoutingForestsPayout, deliveringResourcesPayout, smithingSwordsPayout, reinforcingBarricadesPayout, enchantingScrollsPayout, trainingMilitiaPayout, expandingTerritoriesPayout, getTier, prestigeShardReward } from '../../utils/economy';
 import { formatNumber } from '../../utils/helpers';
 import { computeFullUnitStats, type UnitType, type StatBonus } from '../../utils/unitStats';
-import { type RegaliaSlot, type Regalia, LEVEL_MULTS } from '../../regalias';
+import { type RegaliaSlot, type Regalia, LEVEL_MULTS, RARITY_COLORS, SLOT_ICONS, getModDisplayText } from '../../regalias';
 // Modifier cost helpers (inline since we have GameState, not TickState)
 function getModUnitCostMult(mods: string[]): number {
   let m = 1;
@@ -185,6 +185,7 @@ function UnitBonusBreakdown({ bonuses }: { bonuses: StatBonus[] }) {
 
 function UnitsTab({ game, upgrades, shardUpgrades, challengeCompletions, relicCollection, ancientRelicsOwned, ancientRelicCopies = {}, buyRunUpgrade, buyRunUpgradeMulti, purchaseMode, onRoll, discount = 1, equippedRegalias, tutorialHighlights }: { game: GameState; upgrades: PermanentUpgrades; shardUpgrades: ShardUpgrades; challengeCompletions: ChallengeCompletions; relicCollection: RelicCollection; ancientRelicsOwned: string[]; ancientRelicCopies?: Record<string, number>; buyRunUpgrade: (t: string, c: number) => void; buyRunUpgradeMulti: (t: string, totalCost: number, levels: number) => void; purchaseMode: PurchaseMode; onRoll: () => void; discount?: number; equippedRegalias?: Record<RegaliaSlot, Regalia | null>; tutorialHighlights?: { roll?: boolean; heroUpgrade?: boolean } }) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [hoveredSlot, setHoveredSlot] = useState<RegaliaSlot | null>(null);
   const hasExpanded = useRef(false);
   const doExpand = (key: string) => { hasExpanded.current = true; setExpanded(expanded === key ? null : key); };
   const heroLevel = game.runUpgrades?.hero || 0;
@@ -416,6 +417,50 @@ function UnitsTab({ game, upgrades, shardUpgrades, challengeCompletions, relicCo
               <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px', fontWeight: 'bold', color: COLORS.heroBlue, marginBottom: '2px' }}>
                 {'\u{1F9B8}'} Hero <span style={{ color: COLORS.textDim, fontWeight: 'normal', marginLeft: '4px' }}>Lv.{heroLevel}</span>
                 {heroTier > 0 && <span style={{ color: '#ffd700', fontSize: '10px', marginLeft: '4px' }}>T{heroTier}</span>}
+                {/* Regalia slot strip */}
+                <div style={{ display: 'flex', gap: 3, marginLeft: 6, position: 'relative' }}>
+                  {(['sword', 'shield', 'necklace'] as RegaliaSlot[]).map(slot => {
+                    const reg = equippedRegalias?.[slot] ?? null;
+                    const bc = reg ? RARITY_COLORS[reg.rarity] : 'rgba(138,74,223,0.3)';
+                    return (
+                      <div key={slot} style={{ position: 'relative' }}>
+                        <div
+                          onMouseEnter={() => setHoveredSlot(slot)}
+                          onMouseLeave={() => setHoveredSlot(null)}
+                          style={{
+                            width: 18, height: 18, borderRadius: 3,
+                            border: `1px solid ${bc}`,
+                            background: reg ? 'rgba(0,0,0,0.5)' : 'rgba(10,5,20,0.5)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 10, cursor: reg ? 'help' : 'default',
+                            boxShadow: reg ? `0 0 5px ${bc}88` : 'none',
+                            opacity: reg ? 1 : 0.45,
+                          }}
+                        >
+                          {SLOT_ICONS[slot]}
+                        </div>
+                        {hoveredSlot === slot && reg && (
+                          <div style={{
+                            position: 'absolute', top: 22, left: '50%', transform: 'translateX(-50%)',
+                            background: 'rgba(10,5,25,0.97)', border: `1px solid ${bc}`,
+                            borderRadius: 4, padding: '5px 7px', zIndex: 999,
+                            minWidth: 130, maxWidth: 200, pointerEvents: 'none',
+                            boxShadow: `0 0 10px ${bc}66`,
+                          }}>
+                            <div style={{ fontSize: 9, fontWeight: 'bold', color: bc, marginBottom: 3, whiteSpace: 'nowrap' }}>
+                              {reg.name} <span style={{ color: '#888', fontWeight: 'normal', textTransform: 'uppercase' }}>{reg.rarity}</span>
+                            </div>
+                            {reg.modifiers.map((m, i) => (
+                              <div key={i} style={{ fontSize: 8, color: '#cce', lineHeight: 1.5 }}>
+                                {getModDisplayText(m, reg.level)}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
                 {heroHasBonuses && <span style={{ fontSize: '11px', color: '#4aff4a', marginLeft: 'auto' }}>{heroIsExpanded ? '\u25B2' : '\u25BC'}</span>}
               </div>
               <div style={{ fontSize: '10px', color: COLORS.text, opacity: 0.85 }}>

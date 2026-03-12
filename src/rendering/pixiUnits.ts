@@ -371,7 +371,7 @@ export class PixiUnitRenderer {
         : selectIdleFrame(ratCache, frame, dr.x);
       this.drawCachedEnemy(dr, camX, frame, showHpNumbers, url,
         RAT_VB_X, RAT_VB_Y, RAT_VB_W, RAT_VB_H,
-        '#aa6633', -6, 16, isColosseum);
+        '#aa6633', -12, 22, isColosseum);
     }
 
     // Fire Imps
@@ -637,6 +637,17 @@ export class PixiUnitRenderer {
       this.effectGfx.stroke();
       this.effectGfx.fill({ color: 0xffd700, alpha: 0.07 });
       this.effectGfx.ellipse(dx + 10 * totalScale, dy + 5 * totalScale, 10 * totalScale, 14 * totalScale);
+      this.effectGfx.fill();
+    }
+
+    // Shrine absorb shield (halberd desecration — 1-hit absorb)
+    if (((ally as any).shrineAbsorb || 0) > 0) {
+      const pulse = 0.5 + 0.5 * Math.sin(frame * 0.15);
+      this.effectGfx.stroke({ color: 0x44aaff, width: 2, alpha: 0.55 + 0.3 * pulse });
+      this.effectGfx.ellipse(dx + 10 * totalScale, dy + 4 * totalScale, 13 * totalScale, 17 * totalScale);
+      this.effectGfx.stroke();
+      this.effectGfx.fill({ color: 0x88ccff, alpha: 0.08 + 0.05 * pulse });
+      this.effectGfx.ellipse(dx + 10 * totalScale, dy + 4 * totalScale, 11 * totalScale, 15 * totalScale);
       this.effectGfx.fill();
     }
 

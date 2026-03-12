@@ -284,7 +284,7 @@ function processHeroChainLightning(ts: TickState, baseAtkCD: number, attackRange
   }
 
   // Aiming delay
-  const aimingDelay = 48;
+  const aimingDelay = 24;
   hero.aimingTimer = (hero.aimingTimer || 0) + 1;
   if (hero.aimingTimer < aimingDelay) return;
 
@@ -614,21 +614,27 @@ function handleCrystalBoltHit(ts: TickState, p: { x: number; y: number; targetX:
 }
 
 /** Ally arrow collision — apply damage when arrow reaches target area */
-function handleAllyArrowHit(ts: TickState, p: { x: number; y: number; targetX: number; damage: number; crit?: boolean; pierce?: number; aoeRadius?: number }): boolean {
-  if (p.x < p.targetX - 10) return true;  // still in flight
-  if (p.x > p.targetX + 50) return false; // overshot
-
-  const hitX = p.targetX;
-  const hitRadius = p.aoeRadius || 25;
+function handleAllyArrowHit(ts: TickState, p: any): boolean {
+  // Arrows check for hits at their current position (not just targetX)
+  // They keep flying until culled by processProjectileMovement
+  const hitX = p.x;
+  const hitRadius = p.aoeRadius || 20;
   let hitCount = 0;
   const maxHits = p.aoeRadius ? 999 : 1 + (p.pierce || 0); // AoE hits all, pierce adds extra
 
-  const applyHit = (enemy: { x: number; health: number; lastDamageTime?: number; defense?: number }) => {
+  // Pierce tracking: avoid double-hitting the same enemy across frames.
+  // Uses enemy IDs (stable across ticks) not object refs (cloned each tick by copyArray).
+  if (!p._piercedIds) p._piercedIds = new Set<number>();
+  const pierced: Set<number> = p._piercedIds;
+
+  const applyHit = (enemy: { x: number; health: number; lastDamageTime?: number; defense?: number; id?: number }) => {
     if (hitCount >= maxHits) return;
+    const eid = enemy.id ?? -1;
+    if (eid >= 0 && pierced.has(eid)) return; // already pierced through this enemy
     if (Math.abs(enemy.x - hitX) > hitRadius) return;
     let dmg = p.damage;
     if (enemy.defense) dmg = Math.max(1, dmg - enemy.defense);
-    if (ts.boss && enemy === ts.boss) dmg = absorbBossShield(ts.boss, dmg);
+    if (ts.boss && (enemy as any) === ts.boss) dmg = absorbBossShield(ts.boss, dmg);
     enemy.health -= dmg;
     enemy.lastDamageTime = ts.frame;
     if (p.crit) {
@@ -636,6 +642,7 @@ function handleAllyArrowHit(ts: TickState, p: { x: number; y: number; targetX: n
     } else {
       ts.particles.push(makeParticle(enemy.x + 12, GROUND_Y - 30, `-${dmg}`, '#7f7'));
     }
+    if (eid >= 0) pierced.add(eid);
     hitCount++;
   };
 
@@ -652,7 +659,11 @@ function handleAllyArrowHit(ts: TickState, p: { x: number; y: number; targetX: n
   if (hitCount < maxHits) for (const ck of ts.enemyCursedKnights) applyHit(ck as any);
   if (hitCount < maxHits && ts.boss && ts.boss.health > 0) applyHit(ts.boss);
 
-  return hitCount === 0; // false = consumed (hit something), true = keep alive (missed)
+  if (hitCount > 0 && p.pierce && p.pierce > 0) {
+    // Keep arrow alive until all pierce hits are used up (position culling handles the rest)
+    return pierced.size < maxHits;
+  }
+  return hitCount === 0; // true = keep alive (missed), false = consumed (hit something)
 }
 
 function handleHeroArrowHit(ts: TickState, p: { x: number; y: number; targetX: number; damage: number }): boolean {
@@ -732,12 +743,24 @@ export function processProjectileMovement(ts: TickState): void {
     } else if (p.type === 'meteorStrike') {
       p.delayFrames = (p.delayFrames ?? 0) - 1;
       p.duration = (p.duration ?? 60) - 1;
-    } else if (p.type === 'bombardShot' && p.startX !== undefined) {
+    } else if ((p.type === 'bombardShot' || p.type === 'longbowShot' || p.type === 'spearThrow') && p.startX !== undefined) {
       p.x -= p.speed;
       const totalDist = p.targetX - p.startX;
       const t = totalDist !== 0 ? Math.min(1, Math.max(0, (p.x - p.startX) / totalDist)) : 1;
-      const arcH = p.arcHeight || 85;
+      const arcH = p.arcHeight || (p.type === 'longbowShot' ? 55 : 85);
       p.y = (p.startY ?? GROUND_Y - 10) + arcH * 4 * t * (t - 1);
+      if (p.type === 'spearThrow' && totalDist !== 0) {
+        (p as any)._arcAngle = Math.atan2(arcH * 4 * (2 * t - 1) / totalDist, 1);
+      }
+    } else if (p.type === 'crystalBolt' && p.startX !== undefined && p.startY !== undefined && p.targetY !== undefined) {
+      const dx = p.targetX - p.startX;
+      const dy = p.targetY - p.startY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 0) {
+        const spd = 9; // px per frame toward target
+        p.x += (dx / dist) * spd;
+        p.y += (dy / dist) * spd;
+      }
     } else {
       p.x -= p.speed;
     }
@@ -748,8 +771,8 @@ export function processProjectileMovement(ts: TickState): void {
     } else if (p.type === 'arrow') {
       alive = p.x > p.targetX - 100 && p.x > 0 && p.x < 100000;
     } else if (p.type === 'allyArrow') {
-      alive = p.x < p.targetX + 100 && p.x > 0;
-    } else if (p.type === 'bombardShot') {
+      alive = p.x < p.targetX + 280 && p.x > 0;
+    } else if (p.type === 'bombardShot' || p.type === 'longbowShot' || p.type === 'spearThrow') {
       alive = p.x < p.targetX + 10;
     } else {
       alive = p.x > 0 && p.x < 100000;
@@ -771,6 +794,52 @@ export function processProjectileHits(ts: TickState): void {
     if (p.type === 'wizardBeam') return handleWizardBeamHit(ts, p);
     if (p.type === 'fireball') return handleFireballHit(ts, p);
     if (p.type === 'crystalBolt') return handleCrystalBoltHit(ts, p);
+
+    // Longbow shot: precision hit on landing, pierce-capable
+    if (p.type === 'longbowShot') {
+      if (p.x < p.targetX - 5) return true; // still in flight
+      const maxHits = 1 + ((p as any).pierce || 0);
+      let hitCount = 0;
+      forEachEnemy(ts, (enemy: any) => {
+        if (hitCount >= maxHits) return;
+        if (enemy.stealthTimer !== undefined && enemy.stealthTimer > 0) return;
+        if (Math.abs(enemy.x - p.targetX) > 25) return;
+        let dmg = p.damage;
+        if ((enemy.markedTimer || 0) > 0) dmg = Math.floor(dmg * 1.3);
+        if (enemy.defense) dmg = Math.max(1, dmg - enemy.defense);
+        if (enemy === ts.boss) dmg = absorbBossShield(ts.boss!, dmg);
+        enemy.health -= dmg;
+        enemy.lastDamageTime = ts.frame;
+        hitCount++;
+        if (p.crit) {
+          ts.particles.push(makeCritParticle(enemy.x, (enemy.y || GROUND_Y - 15) - 12, dmg));
+        } else {
+          ts.particles.push(makeParticle(enemy.x, (enemy.y || GROUND_Y - 15) - 12, `-${dmg}`, '#d4a84b'));
+        }
+      });
+      return false; // always remove on arrival
+    }
+
+    // Spear throw: pierces all enemies along its arc each frame
+    if (p.type === 'spearThrow') {
+      if (!p._piercedIds) (p as any)._piercedIds = new Set<number>();
+      const pierced: Set<number> = (p as any)._piercedIds;
+      forEachEnemy(ts, (enemy: any) => {
+        if (enemy.health <= 0) return;
+        if (enemy.stealthTimer !== undefined && enemy.stealthTimer > 0) return;
+        const eid = enemy.id ?? -1;
+        if (eid >= 0 && pierced.has(eid)) return;
+        if (Math.abs(enemy.x - p.x) > 18) return;
+        let dmg = p.damage;
+        if (enemy.defense) dmg = Math.max(1, dmg - enemy.defense);
+        if (enemy === ts.boss) dmg = absorbBossShield(ts.boss!, dmg);
+        enemy.health -= dmg;
+        enemy.lastDamageTime = ts.frame;
+        if (eid >= 0) pierced.add(eid);
+        ts.particles.push(makeParticle(enemy.x, (enemy.y || GROUND_Y - 15) - 12, `-${dmg}`, '#cc8844'));
+      });
+      return true; // alive until arc ends (cull handled by alive check above)
+    }
 
     // Bombard shot: AOE splash damage on landing
     if (p.type === 'bombardShot') {

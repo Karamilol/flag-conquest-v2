@@ -19,6 +19,7 @@ import { modKillGoldMult, modPassiveIncomeMult, modVoidTouchedMult, modHealingWe
 
 /** Process passive income tiers and hero HP regen */
 export function processEconomy(ts: TickState): void {
+  if (ts.pendingPortalChoice) return; // post-boss looting phase — no passive income
   if (ts.inDungeon && ts.dungeonType !== 'timed') {
     // Wave dungeon: skip all income ticks, only process hero regen
     const { hero } = ts;
@@ -279,14 +280,14 @@ export function processEconomy(ts: TickState): void {
           barricadeHp *= 2;
           barricadeDef += 2;
         }
-        ts.barricades.push({ id: uid(), x: portalX + 150, y: GROUND_Y - 30, health: barricadeHp, maxHealth: barricadeHp, defense: barricadeDef });
+        ts.barricades.push({ id: uid(), x: portalX + 150, y: GROUND_Y, health: barricadeHp, maxHealth: barricadeHp, defense: barricadeDef });
         ts.particles.push(makeParticle(portalX + 150, GROUND_Y - 50, hasWatchtowerPlus ? 'Watchtower+!' : 'Watchtower!', '#8B6914'));
       }
       // Watchtower+ without Hold The Line: spawn a basic watchtower
       if (hasWatchtowerPlus && !tickHasArtifact(ts, 'holdTheLine') && ts.barricades.length < 1) {
         const portalX = ts.flags[ts.portalFlagIndex]?.x || 80;
         const wtHp = Math.floor(hero.maxHealth * 3);
-        ts.barricades.push({ id: uid(), x: portalX + 150, y: GROUND_Y - 30, health: wtHp, maxHealth: wtHp, defense: 2 });
+        ts.barricades.push({ id: uid(), x: portalX + 150, y: GROUND_Y, health: wtHp, maxHealth: wtHp, defense: 2 });
         ts.particles.push(makeParticle(portalX + 150, GROUND_Y - 50, 'Watchtower+!', '#8B6914'));
       }
     }
@@ -723,9 +724,24 @@ export function trySpawnChest(ts: TickState, x: number, y: number): void {
 
 /** Remove dead enemies and award gold */
 export function processDeathRewards(ts: TickState): void {
+  if (ts.pendingPortalChoice) {
+    // Post-boss phase: still remove dead enemies but award no gold
+    ts.enemies = ts.enemies.filter(e => e.health > 0);
+    ts.enemyArchers = ts.enemyArchers.filter(e => e.health > 0);
+    ts.enemyWraiths = ts.enemyWraiths.filter(e => (e as any).health > 0);
+    ts.enemyHounds = ts.enemyHounds.filter(e => e.health > 0);
+    ts.enemyLichs = ts.enemyLichs.filter(e => e.health > 0);
+    ts.enemyShadowAssassins = ts.enemyShadowAssassins.filter(e => e.health > 0);
+    ts.enemyFlameCallers = ts.enemyFlameCallers.filter(e => e.health > 0);
+    ts.enemyCorruptedSentinels = ts.enemyCorruptedSentinels.filter(e => (e as any).health > 0);
+    ts.enemyDungeonRats = ts.enemyDungeonRats.filter(e => e.health > 0);
+    ts.enemyFireImps = ts.enemyFireImps.filter(e => e.health > 0);
+    ts.enemyCursedKnights = ts.enemyCursedKnights.filter(e => (e as any).health > 0);
+    return;
+  }
   const gdLevel = ts.runUpgrades?.goldBonus || 0;
   const gdMult = goldDropMult(gdLevel);
-  const zkMult = zoneKillGoldMult(ts.currentZone) * modKillGoldMult(ts);
+  const zkMult = zoneKillGoldMult(ts.flagsCaptured) * modKillGoldMult(ts);
   // Challenge: Horde Mode / Embargo — no gold from kills
   const noKillGold = ts.challengeId === 'hordeMode' || ts.challengeId === 'embargo';
   // Reward: Scavenger's Bounty (Famine completion) — kill gold bonus (L1=25%, L2=37.5%, L3=50%)

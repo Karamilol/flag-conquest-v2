@@ -1,4 +1,5 @@
 import type { GameState, Flag, Chest, Banner, Barricade, IceWall, Boss, CrystalTurret, IceTurret } from '../types';
+import { RARITY_COLORS as REGALIA_RARITY_COLORS } from '../regalias';
 import { GROUND_Y, VIEWPORT_W, VIEWPORT_H, GAME_HEIGHT, FLAG_HEIGHT, COLORS } from '../constants';
 import {
   initBossSpriteCache, BOSS_VB, BOSS_IDLE_FRAME_COUNT,
@@ -307,198 +308,618 @@ function drawFlag(ctx: CanvasRenderingContext2D, flag: Flag, camX: number, frame
 
 /** Draw a shrine structure unique to each unit type */
 function drawShrine(ctx: CanvasRenderingContext2D, sx: number, gy: number, unitType: string, frame: number): void {
-  const bx = sx - 22; // left of flag pole (shifted for larger size)
-  const by = gy;       // ground level
+  const cx = sx - 4; // horizontal center of shrine
+  const by = gy + 9; // anchor — 2x scale makes pedestal flush with ground
   const glow = 0.4 + Math.sin(frame * 0.05) * 0.15;
-  const S = 2.0; // 0.7x building size ≈ 2x current pixel coords
+  const S = 2.0;
 
-  // Scale everything around the ground-center anchor
   ctx.save();
-  ctx.translate(bx + 2, by);
+  ctx.translate(cx, by);
   ctx.scale(S, S);
-  ctx.translate(-(bx + 2), -by);
+  ctx.translate(-cx, -by);
 
-  // Shared: stone pedestal base
-  ctx.fillStyle = '#4a4a50';
-  ctx.fillRect(bx - 6, by - 4, 16, 4);
-  ctx.fillStyle = '#5a5a62';
-  ctx.fillRect(bx - 5, by - 5, 14, 2);
+  // ── Shared: 3-step stone base ─────────────────────────────────────
+  // Bottom step (widest)
+  ctx.fillStyle = '#3a3a42';
+  ctx.fillRect(cx - 10, by - 3, 20, 3);
+  ctx.fillStyle = '#2a2a30';
+  ctx.fillRect(cx - 10, by - 1, 20, 1);       // shadow underline
+  ctx.fillStyle = '#4e4e58';
+  ctx.fillRect(cx - 10, by - 3, 20, 1);        // top highlight
+  // Middle step
+  ctx.fillStyle = '#484850';
+  ctx.fillRect(cx - 8, by - 6, 16, 3);
+  ctx.fillStyle = '#585862';
+  ctx.fillRect(cx - 8, by - 6, 16, 1);
+  // Top step (narrowest)
+  ctx.fillStyle = '#525258';
+  ctx.fillRect(cx - 6, by - 9, 12, 3);
+  ctx.fillStyle = '#626268';
+  ctx.fillRect(cx - 6, by - 9, 12, 1);
 
   if (unitType === 'soldier') {
-    // Crossed swords on stone
-    ctx.strokeStyle = '#aaa';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(bx - 2, by - 18); ctx.lineTo(bx + 6, by - 6); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(bx + 6, by - 18); ctx.lineTo(bx - 2, by - 6); ctx.stroke();
-    // Sword handles
-    ctx.fillStyle = '#8a6a3a';
-    ctx.fillRect(bx - 3, by - 20, 3, 4);
-    ctx.fillRect(bx + 5, by - 20, 3, 4);
-    // Crossguards
-    ctx.fillStyle = '#cc9944';
-    ctx.fillRect(bx - 4, by - 17, 5, 1.5);
-    ctx.fillRect(bx + 3, by - 17, 5, 1.5);
-    // Glow
-    ctx.globalAlpha = glow * 0.3;
-    ctx.fillStyle = '#ff6644';
-    ctx.beginPath(); ctx.arc(bx + 2, by - 12, 6, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1;
-  } else if (unitType === 'archer') {
-    // Bow embedded in stone
-    ctx.strokeStyle = '#8a6a3a';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(bx + 2, by - 12, 10, -1.2, 1.2); ctx.stroke();
-    // Bowstring
-    ctx.strokeStyle = '#ccc';
-    ctx.lineWidth = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(bx + 2 + Math.cos(-1.2) * 10, by - 12 + Math.sin(-1.2) * 10);
-    ctx.lineTo(bx + 2 + Math.cos(1.2) * 10, by - 12 + Math.sin(1.2) * 10);
-    ctx.stroke();
-    // Arrow embedded in ground
+    // ── Soldier's Monument: stone column with crossed swords ──────────
+    // Column body
+    ctx.fillStyle = '#5a5a64';
+    ctx.fillRect(cx - 4, by - 26, 8, 17);
+    // Column highlight (left edge)
+    ctx.fillStyle = '#6e6e78';
+    ctx.fillRect(cx - 4, by - 26, 2, 17);
+    // Column shadow (right edge)
+    ctx.fillStyle = '#404048';
+    ctx.fillRect(cx + 2, by - 26, 2, 17);
+    // Column capital (top band)
+    ctx.fillStyle = '#6a6a74';
+    ctx.fillRect(cx - 5, by - 27, 10, 2);
+    ctx.fillStyle = '#7a7a84';
+    ctx.fillRect(cx - 5, by - 27, 10, 1);
+    // Carved shield emblem on column
+    ctx.fillStyle = '#3a3a42';
+    ctx.fillRect(cx - 2, by - 23, 4, 5);
+    ctx.fillStyle = '#cc4422';
+    ctx.fillRect(cx - 1, by - 22, 2, 3);
+
+    // Sword 1 (leaning left)
+    ctx.save();
+    ctx.translate(cx - 3, by - 27);
+    ctx.rotate(-0.35);
+    ctx.fillStyle = '#b0b0bc';
+    ctx.fillRect(-1, -14, 2, 14);       // blade
+    ctx.fillStyle = '#d0d0dc';
+    ctx.fillRect(-1, -14, 1, 14);       // blade highlight
+    ctx.fillStyle = '#cc9933';
+    ctx.fillRect(-3, -1, 6, 1.5);      // crossguard
+    ctx.fillStyle = '#7a5a2a';
+    ctx.fillRect(-1, 0, 2, 5);          // handle
     ctx.fillStyle = '#aa8844';
-    ctx.fillRect(bx + 8, by - 8, 1, 6);
-    ctx.fillStyle = '#888';
-    ctx.beginPath(); ctx.moveTo(bx + 8.5, by - 9); ctx.lineTo(bx + 7, by - 7); ctx.lineTo(bx + 10, by - 7); ctx.closePath(); ctx.fill();
-    // Glow
+    ctx.beginPath(); ctx.arc(0, 5, 1.5, 0, Math.PI * 2); ctx.fill(); // pommel
+    ctx.restore();
+
+    // Sword 2 (leaning right)
+    ctx.save();
+    ctx.translate(cx + 3, by - 27);
+    ctx.rotate(0.35);
+    ctx.fillStyle = '#b0b0bc';
+    ctx.fillRect(-1, -14, 2, 14);
+    ctx.fillStyle = '#d0d0dc';
+    ctx.fillRect(0, -14, 1, 14);
+    ctx.fillStyle = '#cc9933';
+    ctx.fillRect(-3, -1, 6, 1.5);
+    ctx.fillStyle = '#7a5a2a';
+    ctx.fillRect(-1, 0, 2, 5);
+    ctx.fillStyle = '#aa8844';
+    ctx.beginPath(); ctx.arc(0, 5, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    // Outer glow
+    ctx.globalAlpha = glow * 0.18;
+    ctx.fillStyle = '#ff5522';
+    ctx.beginPath(); ctx.arc(cx, by - 20, 14, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = glow * 0.3;
-    ctx.fillStyle = '#44cc44';
-    ctx.beginPath(); ctx.arc(bx + 2, by - 12, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, by - 20, 7, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = 1;
-  } else if (unitType === 'halberd') {
-    // Crossed halberds
-    ctx.strokeStyle = '#8a8a8a';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(bx, by - 22); ctx.lineTo(bx + 2, by - 5); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(bx + 6, by - 22); ctx.lineTo(bx + 4, by - 5); ctx.stroke();
-    // Halberd blades
-    ctx.fillStyle = '#aaa';
-    ctx.beginPath(); ctx.moveTo(bx - 1, by - 22); ctx.lineTo(bx - 4, by - 18); ctx.lineTo(bx + 1, by - 16); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(bx + 7, by - 22); ctx.lineTo(bx + 10, by - 18); ctx.lineTo(bx + 5, by - 16); ctx.closePath(); ctx.fill();
-    // Altar stone
-    ctx.fillStyle = '#555';
-    ctx.fillRect(bx - 3, by - 6, 12, 3);
-    // Glow
-    ctx.globalAlpha = glow * 0.25;
-    ctx.fillStyle = '#cc8844';
-    ctx.beginPath(); ctx.arc(bx + 3, by - 14, 5, 0, Math.PI * 2); ctx.fill();
+
+  } else if (unitType === 'archer') {
+    // ── Ranger's Shrine: standing stone with leaning bow + arrows ─────
+    // Standing stone (menhir)
+    ctx.fillStyle = '#585864';
+    ctx.beginPath();
+    ctx.moveTo(cx - 4, by - 9);
+    ctx.lineTo(cx - 5, by - 28);
+    ctx.lineTo(cx - 2, by - 32);
+    ctx.lineTo(cx + 2, by - 32);
+    ctx.lineTo(cx + 5, by - 28);
+    ctx.lineTo(cx + 4, by - 9);
+    ctx.closePath(); ctx.fill();
+    // Left face highlight
+    ctx.fillStyle = '#6a6a78';
+    ctx.beginPath();
+    ctx.moveTo(cx - 4, by - 9); ctx.lineTo(cx - 5, by - 28); ctx.lineTo(cx - 2, by - 32);
+    ctx.lineTo(cx - 1, by - 32); ctx.lineTo(cx - 3, by - 28); ctx.lineTo(cx - 2, by - 9);
+    ctx.closePath(); ctx.fill();
+    // Moss patches
+    ctx.fillStyle = '#3a6a2a';
+    ctx.fillRect(cx - 4, by - 20, 2, 3);
+    ctx.fillRect(cx + 2, by - 16, 2, 2);
+    ctx.fillRect(cx - 3, by - 26, 3, 2);
+    // Carved arrow symbol on stone face
+    ctx.fillStyle = '#3a3a44';
+    ctx.fillRect(cx - 1, by - 27, 2, 12);        // arrow shaft carving
+    ctx.beginPath(); ctx.moveTo(cx - 3, by - 27); ctx.lineTo(cx, by - 31); ctx.lineTo(cx + 3, by - 27); ctx.closePath(); ctx.fill(); // arrowhead carving
+    // Carving highlight
+    ctx.globalAlpha = glow * 0.7;
+    ctx.fillStyle = '#55ee55';
+    ctx.fillRect(cx - 0.5, by - 27, 1, 12);
+    ctx.beginPath(); ctx.moveTo(cx - 2, by - 27); ctx.lineTo(cx, by - 30); ctx.lineTo(cx + 2, by - 27); ctx.closePath(); ctx.fill();
     ctx.globalAlpha = 1;
-  } else if (unitType === 'knight') {
-    // Kneeling knight statue silhouette
-    ctx.fillStyle = '#6a6a70';
-    // Body (kneeling)
-    ctx.fillRect(bx, by - 16, 6, 10);
-    // Head
-    ctx.fillStyle = '#7a7a80';
-    ctx.beginPath(); ctx.arc(bx + 3, by - 18, 3, 0, Math.PI * 2); ctx.fill();
-    // Helmet visor
-    ctx.fillStyle = '#444';
-    ctx.fillRect(bx + 1, by - 19, 4, 1.5);
-    // Shield resting on ground
-    ctx.fillStyle = '#8a7a44';
-    ctx.fillRect(bx + 6, by - 12, 3, 8);
-    ctx.fillStyle = '#aa9944';
-    ctx.fillRect(bx + 6.5, by - 10, 2, 4);
-    // Glow
-    ctx.globalAlpha = glow * 0.3;
-    ctx.fillStyle = '#ffd700';
-    ctx.beginPath(); ctx.arc(bx + 3, by - 12, 6, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1;
-  } else if (unitType === 'wizard') {
-    // Arcane obelisk
-    ctx.fillStyle = '#3a3a5a';
-    ctx.beginPath(); ctx.moveTo(bx, by - 5); ctx.lineTo(bx + 2, by - 22); ctx.lineTo(bx + 5, by - 22); ctx.lineTo(bx + 7, by - 5); ctx.closePath(); ctx.fill();
-    // Rune lines
-    ctx.strokeStyle = '#6688cc';
+
+    // ── Bow leaning against the stone (left side, oriented vertically) ─
+    const bx2 = cx - 8;  // bow horizontal center
+    const bTop = by - 33; // top tip y
+    const bBot = by - 10; // bottom tip y
+    const bMid = (bTop + bBot) / 2;
+    const bCurve = bx2 - 7; // how far limbs curve left
+
+    // Upper limb
+    ctx.strokeStyle = '#7a5020';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(bx2, bTop);
+    ctx.quadraticCurveTo(bCurve, bMid - 4, bx2, bMid);
+    ctx.stroke();
+    // Lower limb
+    ctx.beginPath();
+    ctx.moveTo(bx2, bMid);
+    ctx.quadraticCurveTo(bCurve, bMid + 4, bx2, bBot);
+    ctx.stroke();
+    // Highlight on bow limbs
+    ctx.strokeStyle = '#aa7a40';
     ctx.lineWidth = 0.8;
-    ctx.globalAlpha = glow;
-    ctx.beginPath(); ctx.moveTo(bx + 2, by - 18); ctx.lineTo(bx + 5, by - 18); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(bx + 1.5, by - 14); ctx.lineTo(bx + 5.5, by - 14); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(bx + 1, by - 10); ctx.lineTo(bx + 6, by - 10); ctx.stroke();
-    ctx.globalAlpha = 1;
-    // Lightning spark at top
-    ctx.globalAlpha = glow;
-    ctx.fillStyle = '#44ccff';
-    ctx.beginPath(); ctx.arc(bx + 3.5, by - 24, 2.5, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = glow * 0.4;
-    ctx.beginPath(); ctx.arc(bx + 3.5, by - 24, 5, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1;
-  } else if (unitType === 'cleric') {
-    // Holy reliquary — small ornate box with cross
-    ctx.fillStyle = '#5a4a3a';
-    ctx.fillRect(bx - 1, by - 14, 10, 10);
-    ctx.fillStyle = '#7a6a4a';
-    ctx.fillRect(bx, by - 13, 8, 8);
-    // Cross
-    ctx.fillStyle = '#ffd700';
-    ctx.fillRect(bx + 3, by - 12, 2, 6);
-    ctx.fillRect(bx + 1.5, by - 10, 5, 2);
-    // Holy light
-    ctx.globalAlpha = glow * 0.5;
-    ctx.fillStyle = '#fff8cc';
-    ctx.beginPath(); ctx.arc(bx + 4, by - 9, 7, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = glow * 0.2;
-    ctx.beginPath(); ctx.arc(bx + 4, by - 9, 12, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1;
-  } else if (unitType === 'conjurer') {
-    // Dark obelisk with floating crystal shards
-    ctx.fillStyle = '#2a2a3a';
-    ctx.beginPath(); ctx.moveTo(bx, by - 5); ctx.lineTo(bx + 1, by - 20); ctx.lineTo(bx + 6, by - 20); ctx.lineTo(bx + 7, by - 5); ctx.closePath(); ctx.fill();
-    // Eerie purple veins
-    ctx.strokeStyle = '#8844cc';
-    ctx.lineWidth = 0.6;
-    ctx.globalAlpha = glow;
-    ctx.beginPath(); ctx.moveTo(bx + 2, by - 17); ctx.lineTo(bx + 4, by - 12); ctx.lineTo(bx + 3, by - 8); ctx.stroke();
-    ctx.globalAlpha = 1;
-    // Floating crystal shards
-    const float1 = Math.sin(frame * 0.06) * 3;
-    const float2 = Math.sin(frame * 0.06 + 2) * 3;
-    ctx.fillStyle = '#55ddcc';
-    ctx.globalAlpha = glow + 0.2;
-    // Shard 1
-    ctx.beginPath(); ctx.moveTo(bx - 3, by - 18 + float1); ctx.lineTo(bx - 1.5, by - 22 + float1); ctx.lineTo(bx, by - 18 + float1); ctx.closePath(); ctx.fill();
-    // Shard 2
-    ctx.beginPath(); ctx.moveTo(bx + 7, by - 16 + float2); ctx.lineTo(bx + 8.5, by - 20 + float2); ctx.lineTo(bx + 10, by - 16 + float2); ctx.closePath(); ctx.fill();
-    ctx.globalAlpha = 1;
-  } else if (unitType === 'bombard') {
-    // Smoking crater with bomb
-    // Crater
-    ctx.fillStyle = '#2a1a0a';
-    ctx.beginPath(); ctx.ellipse(bx + 3, by - 2, 8, 3, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#3a2a1a';
-    ctx.beginPath(); ctx.ellipse(bx + 3, by - 3, 6, 2, 0, 0, Math.PI * 2); ctx.fill();
-    // Bomb (round with fuse)
-    ctx.fillStyle = '#333';
-    ctx.beginPath(); ctx.arc(bx + 3, by - 8, 4.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#222';
-    ctx.beginPath(); ctx.arc(bx + 3, by - 8, 3.5, 0, Math.PI * 2); ctx.fill();
-    // Fuse
-    ctx.strokeStyle = '#aa8844';
+    ctx.beginPath();
+    ctx.moveTo(bx2, bTop);
+    ctx.quadraticCurveTo(bCurve + 1, bMid - 4, bx2, bMid);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(bx2, bMid);
+    ctx.quadraticCurveTo(bCurve + 1, bMid + 4, bx2, bBot);
+    ctx.stroke();
+    // Grip wrap at center
+    ctx.strokeStyle = '#4a3010';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(bx2, bMid - 3); ctx.lineTo(bx2, bMid + 3); ctx.stroke();
+    ctx.strokeStyle = '#6a5030';
     ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(bx + 5, by - 12); ctx.quadraticCurveTo(bx + 8, by - 15, bx + 6, by - 17); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx2, bMid - 3); ctx.lineTo(bx2, bMid + 3); ctx.stroke();
+    // Bowstring (slightly to right of tips, creating bow tension)
+    const strX = bx2 + 2;
+    ctx.strokeStyle = '#ddddbb';
+    ctx.lineWidth = 0.6;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(bx2, bTop); ctx.lineTo(strX, bMid); ctx.lineTo(bx2, bBot); ctx.stroke();
+    // Tip caps
+    ctx.fillStyle = '#cc9933';
+    ctx.beginPath(); ctx.arc(bx2, bTop, 1.2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bx2, bBot, 1.2, 0, Math.PI * 2); ctx.fill();
+
+    // Nocked arrow on the string
+    const arrowNockX = strX;
+    const arrowNockY = bMid;
+    // Shaft (pointing right, slightly up)
+    ctx.strokeStyle = '#8a6a30';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(arrowNockX, arrowNockY); ctx.lineTo(arrowNockX + 14, arrowNockY - 2); ctx.stroke();
+    // Arrowhead
+    ctx.fillStyle = '#b0b0be';
+    ctx.beginPath();
+    ctx.moveTo(arrowNockX + 14, arrowNockY - 2);
+    ctx.lineTo(arrowNockX + 10, arrowNockY - 4);
+    ctx.lineTo(arrowNockX + 10, arrowNockY);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#d0d0de';
+    ctx.beginPath();
+    ctx.moveTo(arrowNockX + 14, arrowNockY - 2);
+    ctx.lineTo(arrowNockX + 10, arrowNockY - 4);
+    ctx.lineTo(arrowNockX + 12, arrowNockY - 3);
+    ctx.closePath(); ctx.fill();
+    // Fletching
+    ctx.fillStyle = '#cc3333';
+    ctx.beginPath(); ctx.moveTo(arrowNockX, arrowNockY); ctx.lineTo(arrowNockX + 3, arrowNockY - 3); ctx.lineTo(arrowNockX + 3, arrowNockY); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#cc3333';
+    ctx.beginPath(); ctx.moveTo(arrowNockX, arrowNockY); ctx.lineTo(arrowNockX + 3, arrowNockY + 2); ctx.lineTo(arrowNockX + 3, arrowNockY); ctx.closePath(); ctx.fill();
+
+    // Arrows embedded in pedestal (2 angled)
+    ctx.fillStyle = '#8a6a3a';
+    ctx.save(); ctx.translate(cx + 6, by - 12); ctx.rotate(-0.3);
+    ctx.fillRect(-0.7, -9, 1.4, 9);
+    ctx.fillStyle = '#888898';
+    ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(-2, -6); ctx.lineTo(2, -6); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#8a6a3a';
+    ctx.save(); ctx.translate(cx + 9, by - 11); ctx.rotate(0.2);
+    ctx.fillRect(-0.7, -8, 1.4, 8);
+    ctx.fillStyle = '#888898';
+    ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(-2, -5); ctx.lineTo(2, -5); ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    // Glow
+    ctx.globalAlpha = glow * 0.15;
+    ctx.fillStyle = '#44cc44';
+    ctx.beginPath(); ctx.arc(cx, by - 20, 16, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = glow * 0.25;
+    ctx.beginPath(); ctx.arc(cx - 5, by - 20, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+  } else if (unitType === 'halberd') {
+    // ── Halberdier's Altar: stone altar table with crossed halberds ───
+    // Altar table top
+    ctx.fillStyle = '#5a5050';
+    ctx.fillRect(cx - 9, by - 18, 18, 4);
+    ctx.fillStyle = '#6a6060';
+    ctx.fillRect(cx - 9, by - 18, 18, 1);    // top highlight
+    ctx.fillStyle = '#3a3030';
+    ctx.fillRect(cx - 9, by - 15, 18, 1);    // bottom shadow
+    // Altar legs
+    ctx.fillStyle = '#4a4044';
+    ctx.fillRect(cx - 8, by - 15, 4, 7);
+    ctx.fillRect(cx + 4, by - 15, 4, 7);
+    // Blood channel carved in altar
+    ctx.fillStyle = '#3a2020';
+    ctx.fillRect(cx - 5, by - 16, 10, 1);
+    ctx.fillStyle = '#5a1010';
+    ctx.fillRect(cx - 4, by - 16, 8, 1);
+
+    // Halberd 1 (leaning left, behind altar)
+    ctx.save();
+    ctx.translate(cx - 4, by - 18);
+    ctx.rotate(-0.25);
+    ctx.fillStyle = '#7a6a4a';
+    ctx.fillRect(-1, -18, 2, 18);           // shaft
+    ctx.fillStyle = '#9a8a6a';
+    ctx.fillRect(-1, -18, 1, 18);           // shaft highlight
+    // Blade
+    ctx.fillStyle = '#b0b0be';
+    ctx.beginPath(); ctx.moveTo(-2, -18); ctx.lineTo(-5, -13); ctx.lineTo(-1, -12); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(0, -22); ctx.lineTo(2, -18); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#d0d0de';
+    ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(0, -22); ctx.lineTo(1, -18); ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    // Halberd 2 (leaning right)
+    ctx.save();
+    ctx.translate(cx + 4, by - 18);
+    ctx.rotate(0.25);
+    ctx.fillStyle = '#7a6a4a';
+    ctx.fillRect(-1, -18, 2, 18);
+    ctx.fillStyle = '#5a4a2a';
+    ctx.fillRect(0, -18, 1, 18);
+    ctx.fillStyle = '#b0b0be';
+    ctx.beginPath(); ctx.moveTo(2, -18); ctx.lineTo(5, -13); ctx.lineTo(1, -12); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(0, -22); ctx.lineTo(-2, -18); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#d0d0de';
+    ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(0, -22); ctx.lineTo(-1, -18); ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    // Glow
+    ctx.globalAlpha = glow * 0.2;
+    ctx.fillStyle = '#cc8833';
+    ctx.beginPath(); ctx.arc(cx, by - 18, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = glow * 0.28;
+    ctx.beginPath(); ctx.arc(cx, by - 16, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+  } else if (unitType === 'knight') {
+    // ── Knight's Sepulcher: stone tomb with carved effigy ─────────────
+    // Tomb base slab
+    ctx.fillStyle = '#5a5460';
+    ctx.fillRect(cx - 8, by - 10, 16, 3);
+    ctx.fillStyle = '#6a6470';
+    ctx.fillRect(cx - 8, by - 10, 16, 1);
+    // Tomb body
+    ctx.fillStyle = '#4e4858';
+    ctx.fillRect(cx - 7, by - 22, 14, 12);
+    ctx.fillStyle = '#5e5868';
+    ctx.fillRect(cx - 7, by - 22, 3, 12);   // left highlight
+    ctx.fillStyle = '#3e3848';
+    ctx.fillRect(cx + 4, by - 22, 3, 12);   // right shadow
+    // Tomb lid (angled top)
+    ctx.fillStyle = '#6a6474';
+    ctx.beginPath(); ctx.moveTo(cx - 8, by - 22); ctx.lineTo(cx, by - 27); ctx.lineTo(cx + 8, by - 22); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#7a7484';
+    ctx.beginPath(); ctx.moveTo(cx - 8, by - 22); ctx.lineTo(cx, by - 27); ctx.lineTo(cx - 6, by - 22); ctx.closePath(); ctx.fill();
+    // Cross carved on lid
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(cx - 1, by - 26, 2, 5);
+    ctx.fillRect(cx - 3, by - 24, 6, 2);
+    // Carved knight face on tomb body
+    ctx.fillStyle = '#3a3444';
+    ctx.fillRect(cx - 3, by - 20, 6, 7);
+    // Helmet visor line
+    ctx.fillStyle = '#222230';
+    ctx.fillRect(cx - 2, by - 18, 4, 1);
+    // Shield emblem
+    ctx.fillStyle = '#884422';
+    ctx.fillRect(cx - 2, by - 16, 4, 4);
+    ctx.fillStyle = '#aa5533';
+    ctx.fillRect(cx - 1, by - 15, 2, 2);
+
+    // Glow
+    ctx.globalAlpha = glow * 0.2;
+    ctx.fillStyle = '#ffd700';
+    ctx.beginPath(); ctx.arc(cx, by - 20, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = glow * 0.35;
+    ctx.beginPath(); ctx.arc(cx, by - 24, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+  } else if (unitType === 'wizard') {
+    // ── Apprentice's Sanctum: arcane obelisk with orbiting orb ────────
+    // Obelisk body (tapered)
+    ctx.fillStyle = '#28284a';
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, by - 9);
+    ctx.lineTo(cx - 3, by - 32);
+    ctx.lineTo(cx + 3, by - 32);
+    ctx.lineTo(cx + 5, by - 9);
+    ctx.closePath(); ctx.fill();
+    // Left highlight
+    ctx.fillStyle = '#38386a';
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, by - 9);
+    ctx.lineTo(cx - 3, by - 32);
+    ctx.lineTo(cx - 1, by - 32);
+    ctx.lineTo(cx - 2, by - 9);
+    ctx.closePath(); ctx.fill();
+    // Tip
+    ctx.fillStyle = '#4848a8';
+    ctx.beginPath(); ctx.moveTo(cx - 3, by - 32); ctx.lineTo(cx, by - 36); ctx.lineTo(cx + 3, by - 32); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#6868cc';
+    ctx.beginPath(); ctx.moveTo(cx - 3, by - 32); ctx.lineTo(cx, by - 36); ctx.lineTo(cx - 1, by - 32); ctx.closePath(); ctx.fill();
+
+    // Rune engravings (glowing)
+    ctx.globalAlpha = glow * 0.9;
+    ctx.strokeStyle = '#6688ff';
+    ctx.lineWidth = 0.7;
+    // Top rune: triangle
+    ctx.beginPath(); ctx.moveTo(cx - 1.5, by - 29); ctx.lineTo(cx, by - 27); ctx.lineTo(cx + 1.5, by - 29); ctx.closePath(); ctx.stroke();
+    // Middle rune: diamond
+    ctx.beginPath(); ctx.moveTo(cx, by - 24); ctx.lineTo(cx + 2, by - 22); ctx.lineTo(cx, by - 20); ctx.lineTo(cx - 2, by - 22); ctx.closePath(); ctx.stroke();
+    // Bottom rune: horizontal lines
+    ctx.beginPath(); ctx.moveTo(cx - 2, by - 17); ctx.lineTo(cx + 2, by - 17); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 2, by - 15); ctx.lineTo(cx + 2, by - 15); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Orbiting energy orb
+    const orbitAngle = frame * 0.04;
+    const ox = cx + Math.cos(orbitAngle) * 8;
+    const oy = by - 22 + Math.sin(orbitAngle) * 4;
+    ctx.globalAlpha = glow + 0.1;
+    ctx.fillStyle = '#88aaff';
+    ctx.beginPath(); ctx.arc(ox, oy, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = (glow + 0.1) * 0.5;
+    ctx.fillStyle = '#aaccff';
+    ctx.beginPath(); ctx.arc(ox, oy, 3.5, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Crown spark at tip
+    ctx.globalAlpha = glow;
+    ctx.fillStyle = '#88ccff';
+    ctx.beginPath(); ctx.arc(cx, by - 36, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = glow * 0.4;
+    ctx.fillStyle = '#aaddff';
+    ctx.beginPath(); ctx.arc(cx, by - 36, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Outer glow
+    ctx.globalAlpha = glow * 0.12;
+    ctx.fillStyle = '#4466ff';
+    ctx.beginPath(); ctx.arc(cx, by - 22, 16, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+  } else if (unitType === 'cleric') {
+    // ── Cleric's Reliquary: miniature chapel with stained glass window ─
+    // Chapel body
+    ctx.fillStyle = '#6a5a48';
+    ctx.fillRect(cx - 7, by - 22, 14, 13);
+    ctx.fillStyle = '#7a6a58';
+    ctx.fillRect(cx - 7, by - 22, 3, 13);   // left highlight
+    ctx.fillStyle = '#4a3a28';
+    ctx.fillRect(cx + 4, by - 22, 3, 13);   // right shadow
+    // Roof (triangular gable)
+    ctx.fillStyle = '#7a6a58';
+    ctx.beginPath(); ctx.moveTo(cx - 8, by - 22); ctx.lineTo(cx, by - 30); ctx.lineTo(cx + 8, by - 22); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#8a7a68';
+    ctx.beginPath(); ctx.moveTo(cx - 8, by - 22); ctx.lineTo(cx, by - 30); ctx.lineTo(cx - 4, by - 22); ctx.closePath(); ctx.fill();
+    // Spire
+    ctx.fillStyle = '#8a7a68';
+    ctx.fillRect(cx - 1, by - 34, 2, 6);
+    ctx.fillStyle = '#9a8a78';
+    ctx.fillRect(cx - 1, by - 34, 1, 6);
+    // Cross on spire
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(cx - 1, by - 38, 2, 6);
+    ctx.fillRect(cx - 3, by - 36, 6, 2);
+    // Cross highlight
+    ctx.fillStyle = '#ffe844';
+    ctx.fillRect(cx - 1, by - 38, 1, 6);
+    ctx.fillRect(cx - 3, by - 36, 6, 1);
+
+    // Arched window (stained glass)
+    ctx.fillStyle = '#2a1a10';
+    ctx.fillRect(cx - 3, by - 20, 6, 7);
+    ctx.beginPath(); ctx.arc(cx, by - 20, 3, Math.PI, 0); ctx.fill();
+    // Inner glass glow
+    ctx.globalAlpha = glow * 0.9;
+    ctx.fillStyle = '#ffcc44';
+    ctx.fillRect(cx - 2, by - 20, 4, 5);
+    ctx.beginPath(); ctx.arc(cx, by - 20, 2, Math.PI, 0); ctx.fill();
+    ctx.globalAlpha = 1;
+    // Window lead lines
+    ctx.strokeStyle = '#2a1a10';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(cx, by - 21); ctx.lineTo(cx, by - 13); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 2, by - 17); ctx.lineTo(cx + 2, by - 17); ctx.stroke();
+
+    // Door arch
+    ctx.fillStyle = '#3a2a18';
+    ctx.fillRect(cx - 2, by - 14, 4, 5);
+    ctx.beginPath(); ctx.arc(cx, by - 14, 2, Math.PI, 0); ctx.fill();
+
+    // Holy light rays
+    ctx.globalAlpha = glow * 0.3;
+    ctx.fillStyle = '#fff8cc';
+    ctx.beginPath(); ctx.arc(cx, by - 17, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = glow * 0.12;
+    ctx.beginPath(); ctx.arc(cx, by - 17, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+  } else if (unitType === 'conjurer') {
+    // ── Conjurer's Obelisk: jagged dark stone with orbiting shards ────
+    // Main obelisk (jagged angular cuts)
+    ctx.fillStyle = '#1e1e30';
+    ctx.beginPath();
+    ctx.moveTo(cx - 4, by - 9);
+    ctx.lineTo(cx - 5, by - 20);
+    ctx.lineTo(cx - 2, by - 25);
+    ctx.lineTo(cx - 3, by - 32);
+    ctx.lineTo(cx, by - 35);
+    ctx.lineTo(cx + 3, by - 32);
+    ctx.lineTo(cx + 2, by - 25);
+    ctx.lineTo(cx + 5, by - 20);
+    ctx.lineTo(cx + 4, by - 9);
+    ctx.closePath(); ctx.fill();
+    // Left face highlight
+    ctx.fillStyle = '#2e2e48';
+    ctx.beginPath();
+    ctx.moveTo(cx - 4, by - 9);
+    ctx.lineTo(cx - 5, by - 20);
+    ctx.lineTo(cx - 2, by - 25);
+    ctx.lineTo(cx - 3, by - 32);
+    ctx.lineTo(cx, by - 35);
+    ctx.lineTo(cx - 1, by - 34);
+    ctx.lineTo(cx - 2, by - 31);
+    ctx.lineTo(cx - 1, by - 25);
+    ctx.lineTo(cx - 4, by - 20);
+    ctx.lineTo(cx - 3, by - 9);
+    ctx.closePath(); ctx.fill();
+
+    // Purple energy veins
+    ctx.globalAlpha = glow * 0.9;
+    ctx.strokeStyle = '#9922dd';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(cx - 1, by - 31); ctx.lineTo(cx + 1, by - 26); ctx.lineTo(cx - 1, by - 20); ctx.lineTo(cx + 1, by - 14); ctx.stroke();
+    ctx.strokeStyle = '#bb44ff';
+    ctx.lineWidth = 0.4;
+    ctx.beginPath(); ctx.moveTo(cx - 3, by - 24); ctx.lineTo(cx - 1, by - 19); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 3, by - 22); ctx.lineTo(cx + 1, by - 17); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Glowing eye socket in center
+    ctx.fillStyle = '#110022';
+    ctx.beginPath(); ctx.ellipse(cx, by - 22, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = glow;
+    ctx.fillStyle = '#cc44ff';
+    ctx.beginPath(); ctx.ellipse(cx, by - 22, 1.5, 1, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Orbiting crystal shards (3 of them)
+    const sa1 = frame * 0.055;
+    const sa2 = frame * 0.055 + (Math.PI * 2 / 3);
+    const sa3 = frame * 0.055 + (Math.PI * 4 / 3);
+    const sr = 9;
+    ctx.globalAlpha = glow + 0.15;
+    ctx.fillStyle = '#55ddcc';
+    [[sa1, sr], [sa2, sr], [sa3, sr]].forEach(([a, r]) => {
+      const shx = cx + Math.cos(a) * r;
+      const shy = by - 22 + Math.sin(a) * r * 0.5;
+      ctx.save();
+      ctx.translate(shx, shy);
+      ctx.rotate(a);
+      ctx.beginPath(); ctx.moveTo(0, -3); ctx.lineTo(1.5, 0); ctx.lineTo(0, 3); ctx.lineTo(-1.5, 0); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    });
+    ctx.globalAlpha = 1;
+
+    // Crown glow at tip
+    ctx.globalAlpha = glow * 0.4;
+    ctx.fillStyle = '#9933ff';
+    ctx.beginPath(); ctx.arc(cx, by - 35, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = glow * 0.15;
+    ctx.beginPath(); ctx.arc(cx, by - 22, 16, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+  } else if (unitType === 'bombard') {
+    // ── Bombard's Crater: scorched earth with iron bomb and chain ──────
+    // Outer scorch ring
+    ctx.fillStyle = '#1a0e04';
+    ctx.beginPath(); ctx.ellipse(cx, by - 4, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
+    // Inner crater
+    ctx.fillStyle = '#0e0804';
+    ctx.beginPath(); ctx.ellipse(cx, by - 5, 8, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#2a1a08';
+    ctx.beginPath(); ctx.ellipse(cx, by - 5, 8, 1.5, 0, 0, Math.PI); ctx.fill(); // rim highlight
+
+    // Debris rocks around crater
+    ctx.fillStyle = '#3a2a18';
+    ctx.fillRect(cx - 11, by - 7, 3, 2);
+    ctx.fillRect(cx + 8, by - 6, 3, 2);
+    ctx.fillRect(cx - 8, by - 8, 2, 2);
+    ctx.fillStyle = '#4a3a28';
+    ctx.fillRect(cx - 11, by - 7, 2, 1);
+    ctx.fillRect(cx + 8, by - 6, 2, 1);
+
+    // Chain links on ground
+    ctx.strokeStyle = '#5a5060';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(cx - 5, by - 8); ctx.quadraticCurveTo(cx - 7, by - 10, cx - 9, by - 8); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx - 4, by - 9, 1.5, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx - 7, by - 10, 1.5, 0, Math.PI * 2); ctx.stroke();
+
+    // Bomb body (large iron ball)
+    ctx.fillStyle = '#222222';
+    ctx.beginPath(); ctx.arc(cx + 1, by - 14, 7, 0, Math.PI * 2); ctx.fill();
+    // Bomb sheen
+    ctx.fillStyle = '#333333';
+    ctx.beginPath(); ctx.arc(cx + 1, by - 14, 6.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#3a3a3a';
+    ctx.beginPath(); ctx.arc(cx - 1, by - 16, 2.5, 0, Math.PI * 2); ctx.fill(); // specular
+    // Bomb rivets
+    ctx.fillStyle = '#444444';
+    [[cx - 4, by - 14], [cx + 6, by - 14], [cx + 1, by - 20], [cx + 1, by - 8]].forEach(([rx, ry]) => {
+      ctx.beginPath(); ctx.arc(rx, ry, 0.8, 0, Math.PI * 2); ctx.fill();
+    });
+
+    // Fuse rope
+    ctx.strokeStyle = '#8a6a2a';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(cx + 4, by - 20);
+    ctx.quadraticCurveTo(cx + 9, by - 24, cx + 7, by - 28);
+    ctx.stroke();
     // Fuse spark
     ctx.globalAlpha = glow;
-    ctx.fillStyle = '#ff8844';
-    ctx.beginPath(); ctx.arc(bx + 6, by - 17, 2, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ffcc44';
-    ctx.beginPath(); ctx.arc(bx + 6, by - 17, 1, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ff6600';
+    ctx.beginPath(); ctx.arc(cx + 7, by - 28, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffcc00';
+    ctx.beginPath(); ctx.arc(cx + 7, by - 28, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = glow * 0.5;
+    ctx.fillStyle = '#ff4400';
+    ctx.beginPath(); ctx.arc(cx + 7, by - 28, 5.5, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = 1;
-    // Smoke wisps
-    ctx.globalAlpha = 0.15 + Math.sin(frame * 0.08) * 0.1;
-    ctx.fillStyle = '#888';
-    ctx.beginPath(); ctx.arc(bx + 4 + Math.sin(frame * 0.03) * 2, by - 20, 2.5, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(bx + 1 + Math.sin(frame * 0.04 + 1) * 2, by - 23, 2, 0, Math.PI * 2); ctx.fill();
+
+    // Rising smoke wisps
+    const smokeAlpha = 0.12 + Math.sin(frame * 0.07) * 0.06;
+    ctx.globalAlpha = smokeAlpha;
+    ctx.fillStyle = '#888898';
+    ctx.beginPath(); ctx.arc(cx + 5 + Math.sin(frame * 0.03) * 1.5, by - 32, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 3 + Math.sin(frame * 0.04 + 1) * 2, by - 36, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 6 + Math.sin(frame * 0.035 + 2) * 1.5, by - 39, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Heat shimmer glow under bomb
+    ctx.globalAlpha = glow * 0.22;
+    ctx.fillStyle = '#ff4400';
+    ctx.beginPath(); ctx.arc(cx + 1, by - 14, 12, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = 1;
   }
 
   ctx.restore(); // end scale transform
 
-  // Shrine label (drawn at normal scale so text isn't huge)
-  ctx.fillStyle = '#ffd700';
-  ctx.globalAlpha = glow * 0.8;
-  ctx.font = '7px "Press Start 2P", monospace';
+  // Shrine name label (drawn outside scaled context so text isn't huge)
+  const shrineNames: Record<string, string> = {
+    soldier: 'MONUMENT', archer: 'SHRINE', halberd: 'ALTAR',
+    knight: 'SEPULCHER', wizard: 'SANCTUM', cleric: 'RELIQUARY',
+    conjurer: 'OBELISK', bombard: 'CRATER'
+  };
+  const shrineColors: Record<string, string> = {
+    soldier: '#ff7755', archer: '#55dd55', halberd: '#cc8833',
+    knight: '#ffd700', wizard: '#88aaff', cleric: '#fff8cc',
+    conjurer: '#bb66ff', bombard: '#ff8844'
+  };
+  ctx.fillStyle = shrineColors[unitType] ?? '#ffd700';
+  ctx.globalAlpha = glow * 0.85;
+  ctx.font = '6px "Press Start 2P", monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('SHRINE', bx + 2, by - 22 * S - 8);
+  ctx.fillText(shrineNames[unitType] ?? 'SHRINE', cx, gy - 52);
   ctx.textAlign = 'left';
   ctx.globalAlpha = 1;
 }
@@ -807,7 +1228,7 @@ function drawShardChest(ctx: CanvasRenderingContext2D, chest: Chest, ox: number,
 function drawRegaliaChest(ctx: CanvasRenderingContext2D, chest: Chest, ox: number, oy: number): void {
   const rd = chest.regaliaData;
   const rarity = rd?.rarity || 'common';
-  const rc = { common: '#cc88ff', rare: '#4a9fff', legendary: '#ffd700' }[rarity];
+  const rc = REGALIA_RARITY_COLORS[rarity as 'common' | 'rare' | 'legendary'];
   const isLeg = rarity === 'legendary';
   const isRare = rarity === 'rare';
   const pulse = Math.sin(chest.age * 0.12) * 0.3;
@@ -1195,15 +1616,110 @@ function drawGemChest(ctx: CanvasRenderingContext2D, chest: Chest, ox: number, o
   ctx.globalAlpha = 1;
 }
 
+// ── Conjured chest: Arcane floating orb-chest ────────────────────
+function drawConjuredChest(ctx: CanvasRenderingContext2D, chest: Chest, ox: number, oy: number): void {
+  const bob = Math.sin(chest.age * 0.09) * 2.5;
+  const y = oy + bob;
+  const pulse = 0.5 + Math.sin(chest.age * 0.12) * 0.15;
+
+  // Shadow (fades as it bobs up)
+  ctx.fillStyle = '#000';
+  ctx.globalAlpha = 0.15 - bob * 0.01;
+  fillEllipse(ctx, ox + 10, oy + 22, 10 - bob * 0.3, 3);
+  ctx.globalAlpha = 1;
+
+  // Outer arcane ring
+  ctx.strokeStyle = `rgba(100,180,255,${0.3 + Math.sin(chest.age * 0.07) * 0.1})`;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(ox + 10, y + 13, 11, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Inner arcane ring
+  ctx.strokeStyle = `rgba(160,220,255,${0.2 + Math.sin(chest.age * 0.11) * 0.1})`;
+  ctx.lineWidth = 0.6;
+  ctx.beginPath();
+  ctx.arc(ox + 10, y + 13, 8.5, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Chest body — dark arcane blue
+  roundRect(ctx, ox + 1, y + 7, 18, 13, 3);
+  ctx.fillStyle = '#0d1f3c';
+  ctx.fill();
+  ctx.strokeStyle = '#2a6fb5';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Lid
+  roundRect(ctx, ox, y + 4, 20, 5, 2);
+  ctx.fillStyle = '#112a50';
+  ctx.fill();
+  ctx.strokeStyle = '#3a80c5';
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+
+  // Lid arcane highlight
+  roundRect(ctx, ox + 1, y + 4, 18, 2, 2);
+  ctx.fillStyle = '#5ab4ff';
+  ctx.globalAlpha = 0.25 * pulse;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Central arcane sigil (stylised star)
+  ctx.strokeStyle = '#7ec8e3';
+  ctx.lineWidth = 0.7;
+  ctx.globalAlpha = 0.8 * pulse;
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI + chest.age * 0.03;
+    const r = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(ox + 10 + Math.cos(angle) * r, y + 13.5 + Math.sin(angle) * r);
+    ctx.lineTo(ox + 10 - Math.cos(angle) * r, y + 13.5 - Math.sin(angle) * r);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Sigil center dot
+  ctx.fillStyle = '#b8eaff';
+  ctx.globalAlpha = pulse;
+  ctx.beginPath();
+  ctx.arc(ox + 10, y + 13.5, 1.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Lock clasp
+  roundRect(ctx, ox + 7, y + 8.5, 6, 4, 1);
+  ctx.fillStyle = '#1a3a6a';
+  ctx.fill();
+  ctx.strokeStyle = '#4a9fff';
+  ctx.lineWidth = 0.6;
+  ctx.stroke();
+
+  // Arcane particles orbiting
+  for (let i = 0; i < 3; i++) {
+    const angle = chest.age * 0.08 + (i / 3) * Math.PI * 2;
+    const r = 9 + Math.sin(chest.age * 0.1 + i) * 1.5;
+    const px = ox + 10 + Math.cos(angle) * r;
+    const py = y + 13 + Math.sin(angle) * r * 0.5;
+    ctx.fillStyle = i === 0 ? '#5ab4ff' : i === 1 ? '#b8eaff' : '#7ec8e3';
+    ctx.globalAlpha = 0.5 + Math.sin(chest.age * 0.15 + i * 2) * 0.3;
+    ctx.beginPath();
+    ctx.arc(px, py, 1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
 // ── Main chest dispatch ──────────────────────────────────────────
 // Glow color per chest type
 function chestGlowColor(type: string): string {
   if (type.endsWith('Legendary')) return '#FFD700';
   if (type.endsWith('Rare')) return '#4a9fff';
   if (type === 'shard') return '#44ee88';
-  if (type === 'regalia') return '#ff66aa';
+  if (type === 'regalia') return '#aaa'; // fallback, overridden in drawChest for rarity
   if (type === 'consumable') return '#88cc44';
   if (type === 'gem') return '#cc66ff';
+  if (type === 'conjured') return '#5ab4ff';
   // gold or common relics/artifacts
   return '#DAA520';
 }
@@ -1215,7 +1731,9 @@ function drawChest(ctx: CanvasRenderingContext2D, chest: Chest, camX: number, _f
   ctx.save();
 
   // === Reward glow — pulsing radial behind every chest ===
-  const glowColor = chestGlowColor(chest.type);
+  const glowColor = chest.type === 'regalia' && chest.regaliaData
+    ? REGALIA_RARITY_COLORS[chest.regaliaData.rarity]
+    : chestGlowColor(chest.type);
   const pulse = 0.12 + Math.sin(chest.age * 0.08) * 0.06;
   const outerPulse = 0.06 + Math.sin(chest.age * 0.06) * 0.03;
   const cx = ox + 10;
@@ -1256,6 +1774,8 @@ function drawChest(ctx: CanvasRenderingContext2D, chest: Chest, camX: number, _f
     drawConsumableChest(ctx, chest, ox, oy);
   } else if (chest.type === 'gem') {
     drawGemChest(ctx, chest, ox, oy);
+  } else if (chest.type === 'conjured') {
+    drawConjuredChest(ctx, chest, ox, oy);
   } else {
     drawGoldChest(ctx, chest, ox, oy);
   }
@@ -1300,69 +1820,111 @@ function drawBanner(ctx: CanvasRenderingContext2D, banner: Banner, camX: number,
 // ── Barricades ────────────────────────────────────────────────────
 function drawBarricade(ctx: CanvasRenderingContext2D, barr: Barricade, camX: number): void {
   const sx = barr.x - camX;
-  const sy = barr.y + WORLD_Y_OFFSET;
-  const w = 16;
-  const h = 24;
   const hpFrac = barr.health / barr.maxHealth;
 
-  // Stone tower body
-  ctx.fillStyle = '#6a6a7a';
-  ctx.fillRect(sx, sy - h, w, h);
+  ctx.save();
+  ctx.translate(sx, GROUND_Y + 8);
 
-  // Battlements
-  ctx.fillStyle = '#7a7a8a';
-  for (let i = 0; i < 3; i++) {
-    ctx.fillRect(sx + i * 6, sy - h - 4, 4, 4);
+  // Foundation
+  ctx.fillStyle = '#555';
+  ctx.fillRect(-14, -6, 28, 6);
+  ctx.strokeStyle = '#666';
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(-14, -6, 28, 6);
+
+  // Tower body (tapered trapezoid)
+  ctx.fillStyle = '#5a3a1a';
+  ctx.beginPath();
+  ctx.moveTo(-12, -6);
+  ctx.lineTo(-10, -46);
+  ctx.lineTo(10, -46);
+  ctx.lineTo(12, -6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#8B6914';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Horizontal texture lines
+  ctx.strokeStyle = '#4a2a0a';
+  ctx.lineWidth = 0.5;
+  for (const [x1, y1, x2, y2] of [[-11.5, -12, 11.5, -12], [-11, -20, 11, -20], [-10.5, -28, 10.5, -28], [-10.2, -36, 10.2, -36]] as [number,number,number,number][]) {
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  }
+
+  // Arrow slits
+  ctx.fillStyle = '#1a0a00';
+  ctx.fillRect(-2, -24, 4, 8);
+  ctx.fillRect(-4, -20, 8, 2);
+  ctx.fillRect(-2, -40, 4, 6);
+  ctx.fillRect(-4, -37, 8, 2);
+
+  // Platform
+  ctx.fillStyle = '#6a4a2a';
+  ctx.fillRect(-16, -50, 32, 4);
+  ctx.strokeStyle = '#8B6914';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(-16, -50, 32, 4);
+
+  // Crenellations
+  ctx.fillStyle = '#5a3a1a';
+  ctx.strokeStyle = '#8B6914';
+  ctx.lineWidth = 0.5;
+  for (const bx of [-16, -5, 6]) {
+    ctx.fillRect(bx, -56, 6, 6);
+    ctx.strokeRect(bx, -56, 6, 6);
   }
 
   // Damage cracks
   if (hpFrac < 0.5) {
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(sx + 4, sy - h + 4);
-    ctx.lineTo(sx + 8, sy - h / 2);
-    ctx.lineTo(sx + 6, sy - 4);
-    ctx.stroke();
+    ctx.strokeStyle = '#2a1a0a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-5, -14); ctx.lineTo(2, -30); ctx.stroke();
+  }
+  if (hpFrac < 0.25) {
+    ctx.beginPath(); ctx.moveTo(3, -20); ctx.lineTo(-3, -40); ctx.stroke();
   }
 
   // HP bar
   ctx.fillStyle = '#333';
-  ctx.fillRect(sx, sy - h - 8, w, 3);
-  ctx.fillStyle = hpFrac > 0.5 ? '#4a8' : hpFrac > 0.25 ? '#ca4' : '#c44';
-  ctx.fillRect(sx, sy - h - 8, w * hpFrac, 3);
+  ctx.fillRect(-16, -62, 32, 4);
+  ctx.fillStyle = hpFrac > 0.5 ? '#4a4' : hpFrac > 0.25 ? '#aa4' : '#a44';
+  ctx.fillRect(-16, -62, Math.floor(32 * hpFrac), 4);
+
+  ctx.restore();
 }
 
 // ── Ice Walls ─────────────────────────────────────────────────────
 function drawIceWall(ctx: CanvasRenderingContext2D, wall: IceWall, camX: number, frame: number): void {
   const sx = wall.x - camX;
-  const sy = wall.y + WORLD_Y_OFFSET;
+  const groundY = GROUND_Y + WORLD_Y_OFFSET;
   const w = 12;
   const h = 20;
   const hpFrac = wall.health / wall.maxHealth;
   const shimmer = 0.6 + Math.sin(frame * 0.08 + wall.x * 0.05) * 0.15;
 
-  // Ice block
+  // Ice block — bottom flush with ground
   ctx.globalAlpha = shimmer;
   ctx.fillStyle = '#88ccff';
-  ctx.fillRect(sx, sy - h, w, h);
+  ctx.fillRect(sx, groundY - h, w, h);
 
   // Highlight
   ctx.fillStyle = '#bbddff';
-  ctx.fillRect(sx + 2, sy - h + 2, 3, h - 4);
+  ctx.fillRect(sx + 2, groundY - h + 2, 3, h - 4);
   ctx.globalAlpha = 1;
 
   // HP bar
   ctx.fillStyle = '#333';
-  ctx.fillRect(sx, sy - h - 6, w, 3);
+  ctx.fillRect(sx, groundY - h - 6, w, 3);
   ctx.fillStyle = '#66aadd';
-  ctx.fillRect(sx, sy - h - 6, w * hpFrac, 3);
+  ctx.fillRect(sx, groundY - h - 6, w * hpFrac, 3);
 }
 
 // ── Crystal Turret (conjurer ally turret) ─────────────────────────
 function drawCrystalTurret(ctx: CanvasRenderingContext2D, t: CrystalTurret, camX: number, frame: number): void {
   const sx = t.x - camX;
   const sy = t.y + WORLD_Y_OFFSET;
+  const groundY = GROUND_Y + WORLD_Y_OFFSET;
   const hoverY = Math.sin(frame * 0.06 + t.x * 0.1) * 3;
   const tilt = Math.sin(frame * 0.04 + t.x * 0.05) * 0.14; // radians
   const hpFrac = t.health / t.maxHealth;
@@ -1379,17 +1941,17 @@ function drawCrystalTurret(ctx: CanvasRenderingContext2D, t: CrystalTurret, camX
     ctx.globalAlpha = fadeOp * 0.7;
   }
 
-  // Ground shadow
+  // Ground shadow — always on the ground, not at hover height
   ctx.fillStyle = 'rgba(0,0,0,0.2)';
   ctx.beginPath();
-  ctx.ellipse(sx + 8, sy, 7, 2.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(sx + 8, groundY, 7, 2.5, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Arcane ground circle
+  // Arcane ground circle — on the ground
   ctx.fillStyle = '#55ddcc';
   ctx.globalAlpha = fadeOp * (0.06 + Math.sin(frame * 0.08) * 0.03);
   ctx.beginPath();
-  ctx.ellipse(sx + 8, sy, 10, 3, 0, 0, Math.PI * 2);
+  ctx.ellipse(sx + 8, groundY, 10, 3, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = fadeOp;
 
@@ -1489,13 +2051,21 @@ function drawCrystalTurret(ctx: CanvasRenderingContext2D, t: CrystalTurret, camX
   ctx.fillStyle = '#55ddcc';
   ctx.fillRect(sx, sy - 34 + hoverY, 16 * hpFrac, 3);
 
+  // HP number
+  ctx.globalAlpha = fadeOp * 0.85;
+  ctx.font = '7px monospace';
+  ctx.fillStyle = '#88ffee';
+  ctx.textAlign = 'center';
+  ctx.fillText(String(t.health), sx + 8, sy - 37 + hoverY);
+  ctx.textAlign = 'left';
+
   ctx.restore();
 }
 
 // ── Ice Turret (boss-summoned enemy turret) ───────────────────────
 function drawIceTurret(ctx: CanvasRenderingContext2D, t: IceTurret, camX: number, frame: number): void {
   const sx = t.x - camX;
-  const sy = t.y + WORLD_Y_OFFSET;
+  const groundY = GROUND_Y + WORLD_Y_OFFSET;
   const hpFrac = t.health / t.maxHealth;
   const shimmer = 0.7 + Math.sin(frame * 0.07 + t.x * 0.04) * 0.15;
   const pulse = Math.sin(frame * 0.1) * 0.1;
@@ -1505,20 +2075,20 @@ function drawIceTurret(ctx: CanvasRenderingContext2D, t: IceTurret, camX: number
   ctx.save();
   ctx.globalAlpha = fadeOp * shimmer;
 
-  // Ground shadow
+  // Ground shadow — flush with ground
   ctx.fillStyle = 'rgba(0,0,0,0.2)';
   ctx.beginPath();
-  ctx.ellipse(sx + 6, sy, 8, 2.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(sx + 6, groundY, 8, 2.5, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Ice crystal body — sharp angular shape
+  // Ice crystal body — base flush with ground
   ctx.fillStyle = '#66bbee';
   ctx.beginPath();
-  ctx.moveTo(sx + 6, sy - 22);   // top point
-  ctx.lineTo(sx - 2, sy - 8);
-  ctx.lineTo(sx, sy);
-  ctx.lineTo(sx + 12, sy);
-  ctx.lineTo(sx + 14, sy - 8);
+  ctx.moveTo(sx + 6, groundY - 22);   // top point
+  ctx.lineTo(sx - 2, groundY - 8);
+  ctx.lineTo(sx, groundY);
+  ctx.lineTo(sx + 12, groundY);
+  ctx.lineTo(sx + 14, groundY - 8);
   ctx.closePath();
   ctx.fill();
 
@@ -1526,11 +2096,11 @@ function drawIceTurret(ctx: CanvasRenderingContext2D, t: IceTurret, camX: number
   ctx.fillStyle = '#99ddff';
   ctx.globalAlpha = fadeOp * (0.6 + pulse);
   ctx.beginPath();
-  ctx.moveTo(sx + 6, sy - 18);
-  ctx.lineTo(sx + 1, sy - 7);
-  ctx.lineTo(sx + 3, sy - 1);
-  ctx.lineTo(sx + 9, sy - 1);
-  ctx.lineTo(sx + 11, sy - 7);
+  ctx.moveTo(sx + 6, groundY - 18);
+  ctx.lineTo(sx + 1, groundY - 7);
+  ctx.lineTo(sx + 3, groundY - 1);
+  ctx.lineTo(sx + 9, groundY - 1);
+  ctx.lineTo(sx + 11, groundY - 7);
   ctx.closePath();
   ctx.fill();
   ctx.globalAlpha = fadeOp * shimmer;
@@ -1538,22 +2108,22 @@ function drawIceTurret(ctx: CanvasRenderingContext2D, t: IceTurret, camX: number
   // Highlight streak
   ctx.fillStyle = '#cceeFF';
   ctx.globalAlpha = fadeOp * 0.4;
-  ctx.fillRect(sx + 3, sy - 18, 2, 12);
+  ctx.fillRect(sx + 3, groundY - 18, 2, 12);
   ctx.globalAlpha = fadeOp * shimmer;
 
   // Core glow
   ctx.fillStyle = '#ddeeff';
   ctx.globalAlpha = fadeOp * (0.3 + pulse);
   ctx.beginPath();
-  ctx.arc(sx + 6, sy - 10, 3, 0, Math.PI * 2);
+  ctx.arc(sx + 6, groundY - 10, 3, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = fadeOp;
 
   // HP bar
   ctx.fillStyle = '#333';
-  ctx.fillRect(sx - 1, sy - 28, 14, 3);
+  ctx.fillRect(sx - 1, groundY - 28, 14, 3);
   ctx.fillStyle = '#44ccee';
-  ctx.fillRect(sx - 1, sy - 28, 14 * hpFrac, 3);
+  ctx.fillRect(sx - 1, groundY - 28, 14 * hpFrac, 3);
 
   ctx.restore();
 }

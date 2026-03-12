@@ -1290,6 +1290,9 @@ function drawProjectiles(
       case 'crystalBolt':
         drawCrystalBolt(ctx, sx, sy);
         break;
+      case 'longbowShot':
+        drawLongbowShot(ctx, sx, sy);
+        break;
       case 'bombardShot':
         drawBombardShot(ctx, sx, sy, px);
         break;
@@ -1554,6 +1557,34 @@ function drawCrystalBolt(ctx: CanvasRenderingContext2D, x: number, y: number): v
   ctx.globalAlpha = 0.6;
   ctx.fillStyle = '#fff';
   ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawLongbowShot(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  // Long arrow shaft — angled slightly downward to read as in-flight
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(0.25); // slight downward angle
+  // Shaft
+  ctx.strokeStyle = '#8b6914';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(-14, 0); ctx.lineTo(10, 0); ctx.stroke();
+  // Arrowhead
+  ctx.fillStyle = '#c0c0c0';
+  ctx.beginPath();
+  ctx.moveTo(10, 0); ctx.lineTo(5, -3); ctx.lineTo(13, 0); ctx.lineTo(5, 3); ctx.closePath();
+  ctx.fill();
+  // Fletching (feather)
+  ctx.strokeStyle = '#a0522d';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(-11, 0); ctx.lineTo(-16, -4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-11, 0); ctx.lineTo(-16, 4); ctx.stroke();
+  // Motion blur streak
+  ctx.globalAlpha = 0.18;
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(-26, 0); ctx.stroke();
+  ctx.restore();
   ctx.globalAlpha = 1;
 }
 

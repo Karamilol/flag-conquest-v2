@@ -144,7 +144,7 @@ export function RelicPanel({ relicCollection, onClose, ancientFragments, dungeon
       padding: '6px', overflow: 'visible',
     } : {
       position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(30,12,50,0.98) 0%, rgba(15,8,25,0.98) 100%)',
-      borderRadius: '8px', zIndex: 20, display: 'flex', flexDirection: 'column',
+      borderRadius: '8px', zIndex: 20, pointerEvents: 'auto', display: 'flex', flexDirection: 'column',
       padding: '6px', overflow: 'hidden', border: '2px solid #8a4adf',
     }}>
       {/* Header */}

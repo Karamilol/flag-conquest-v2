@@ -83,11 +83,11 @@ export const BOSS4_VB_W = 44;
 export const BOSS4_VB_H = 62;
 
 // Type 5: Ice Conjurer — translate(x-25, y-12)
-// At x=0,y=0 → translate(-25, -12). Local: shadow y=92, staff crystal y=12, aura x=-10..60
-export const BOSS5_VB_X = -12;
-export const BOSS5_VB_Y = -2;
-export const BOSS5_VB_W = 72;
-export const BOSS5_VB_H = 100;
+// At x=0,y=0 → translate(-25, -12). SVG bounds: hood tip y=-4, left robe/hand x=-20, shadow y=80
+export const BOSS5_VB_X = -22;
+export const BOSS5_VB_Y = -6;
+export const BOSS5_VB_W = 82;
+export const BOSS5_VB_H = 104;
 
 // Type 6: Snow Ninja — translate(x-25, y-12+bob)
 // At x=0,y=0 → translate(-25, -12+bob). Local: headband y=22, sandals y=87

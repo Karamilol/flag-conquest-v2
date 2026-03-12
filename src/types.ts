@@ -128,6 +128,8 @@ export interface Enemy {
   // Artifact debuffs
   slowTimer?: number;
   slowAmount?: number;
+  // Smooth knockback velocity (decays each tick)
+  knockbackVx?: number;
 }
 
 export interface EnemyArcher {
@@ -531,6 +533,7 @@ export interface Ally {
   bulwarkActive?: number;
   dodgeCooldown?: number;
   knockbackResist?: number;
+  knockbackVx?: number;      // Smooth knockback velocity (decays each tick)
   healBonus?: number;
   baseAttackRate?: number;
   atkSpeedBuffTimer?: number;
@@ -654,7 +657,7 @@ export interface Projectile {
   targetY?: number;
   speed: number;
   damage: number;
-  type: 'arrow' | 'allyArrow' | 'wizardBeam' | 'fireball' | 'laser' | 'boss' | 'heroRanged' | 'heroArrow' | 'healBeam' | 'clericBolt' | 'clericChain' | 'darkHeal' | 'iceball' | 'spectralBlast' | 'crystalBolt' | 'bombardShot' | 'chainLightning' | 'meteorStrike';
+  type: 'arrow' | 'allyArrow' | 'wizardBeam' | 'fireball' | 'laser' | 'boss' | 'heroRanged' | 'heroArrow' | 'healBeam' | 'clericBolt' | 'clericChain' | 'darkHeal' | 'iceball' | 'spectralBlast' | 'crystalBolt' | 'bombardShot' | 'longbowShot' | 'spearThrow' | 'chainLightning' | 'meteorStrike';
   radius?: number;
   duration?: number;
   startX?: number;
@@ -668,6 +671,7 @@ export interface Projectile {
   chainTargets?: Array<{x: number, y: number}>;  // chain lightning visual arcs
   delayFrames?: number;                            // meteor strike delay before impact
   pierce?: number;                                  // shrine archer: pierce through N enemies
+  _piercedIds?: Set<number>;                        // runtime: tracks already-hit enemy IDs
 }
 
 export interface Banner {
@@ -715,12 +719,13 @@ export interface Chest {
   id: number;
   x: number;
   y: number;
-  type: 'gold' | 'gem' | 'shard' | 'consumable' | 'relicCommon' | 'relicRare' | 'relicLegendary' | 'artifactCommon' | 'artifactRare' | 'artifactLegendary' | 'regalia';
+  type: 'gold' | 'gem' | 'shard' | 'consumable' | 'conjured' | 'relicCommon' | 'relicRare' | 'relicLegendary' | 'artifactCommon' | 'artifactRare' | 'artifactLegendary' | 'regalia';
   value: number;
   age: number;
   relicId?: string;
   consumableId?: ConsumableId;
   regaliaData?: import('./regalias').Regalia;
+  pendingClickCollect?: boolean;
 }
 
 export interface Artifact {
@@ -1025,6 +1030,7 @@ export interface ShardUpgrades {
   archer_leatherwork: number;
   archer_distance: number;
   archer_aiming: number;
+  archer_overwatch: number;
   // Knight
   knight_ironclad: number;
   knight_heavyPlating: number;

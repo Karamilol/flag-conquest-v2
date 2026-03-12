@@ -1,9 +1,10 @@
 import { SKILL_UNLOCK_LEVELS, SKILL_POOL, getSkillDef } from '../skills';
 import { getClassDef } from '../classes';
 import { GROUND_Y } from '../constants';
-import { makeParticle, makeCritParticle, uid } from '../utils/helpers';
+import { makeParticle, makeCritParticle, uid, formatNumber } from '../utils/helpers';
 import type { TickState } from './tickState';
 import { tickHasSkill, tickSkillBuffActive, forEachEnemy, absorbBossShield } from './tickState';
+import { passiveGoldPerMin } from '../utils/economy';
 
 /** Tick UP all equipped active/triggered skill cooldowns toward their max */
 export function processSkillCooldowns(ts: TickState): void {
@@ -330,12 +331,13 @@ function executeSkill(ts: TickState, skillId: string, def: ReturnType<typeof get
     return true;
   }
 
-  // Production Magic: conjure a gold chest
+  // Production Magic: conjure a gold chest worth 10s of passive income (min 100g)
   if (skillId === 'productionMagic') {
-    const goldAmount = Math.floor(50 + (ts.currentZone || 0) * 30);
-    ts.chests.push({ id: uid(), x: hero.x + 20, y: GROUND_Y - 10, type: 'gold', value: goldAmount, age: 0 });
+    const gpm = passiveGoldPerMin(ts.runUpgrades as any);
+    const goldAmount = Math.max(100, Math.floor(gpm / 6)); // 10 seconds of income
+    const chestX = hero.x + 20;
+    ts.chests.push({ id: uid(), x: chestX, y: GROUND_Y - 10, type: 'conjured', value: goldAmount, age: 0 });
     ts.heroSkills.skillCooldowns[skillId] = 0;
-    ts.particles.push(makeParticle(hero.x, hero.y - 30, `\u{1F4B0} +${goldAmount}g`, '#eebb22'));
     return true;
   }
 

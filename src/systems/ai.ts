@@ -514,7 +514,7 @@ export function processBossAI(ts: TickState): void {
       allies.forEach(a => {
         if (Math.abs(a.x - boss.x) < slamRadius) {
           dealDamageToAlly(ts, a, slamDmg, ' 👻', '#8844cc');
-          a.x -= 20; // knockback
+          a.knockbackVx = (a.knockbackVx || 0) - 4; // smooth knockback
         }
       });
       // Post-slam: small heal (backstep handled in movement phase)
@@ -681,6 +681,17 @@ export function processArcherAI(ts: TickState): void {
   }
 }
 
+/** Apply and decay knockbackVx for all enemy types (runs once per tick before enemy AI) */
+export function processEnemyKnockbacks(ts: TickState): void {
+  forEachEnemy(ts, (e: any) => {
+    if (e.knockbackVx) {
+      e.x += e.knockbackVx;
+      e.knockbackVx *= 0.82;
+      if (Math.abs(e.knockbackVx) < 0.1) e.knockbackVx = 0;
+    }
+  });
+}
+
 /** Enemy goblin AI: movement, melee attacks */
 export function processEnemyAI(ts: TickState): void {
   const { hero } = ts;
@@ -842,7 +853,7 @@ export function processWraithAI(ts: TickState): void {
               w.health = Math.min(w.maxHealth, w.health + heal);
             }
             const kbAmount = w.knockback * (1 - (a.knockbackResist || 0));
-            a.x -= kbAmount;
+            a.knockbackVx = (a.knockbackVx || 0) - kbAmount * 0.25;
           }
         });
       }
@@ -1045,8 +1056,8 @@ export function processLichAI(ts: TickState): void {
       l.passiveSummonTimer = 0;
       const zoneScale = Math.pow(1.3, ts.currentZone);
       const flagScale = 1 + ts.flagsCaptured * 0.05;
-      const skelHp = Math.floor((UNIT_STATS.enemy.health + ts.flagsCaptured * 3) * zoneScale * flagScale * 0.7);
-      const skelDmg = Math.floor((UNIT_STATS.enemy.damage + ts.flagsCaptured) * zoneScale * flagScale * 0.7);
+      const skelHp = Math.floor((UNIT_STATS.enemy.health + ts.flagsCaptured * 3) * zoneScale * flagScale * 0.6);
+      const skelDmg = Math.floor((UNIT_STATS.enemy.damage + ts.flagsCaptured) * zoneScale * flagScale * 0.6);
       const toSpawn = Math.min(skelCount, skelCap - l.activeSkeletons);
       for (let si = 0; si < toSpawn; si++) {
         l.activeSkeletons++;
@@ -1118,26 +1129,32 @@ export function processAllyAI(ts: TickState): void {
   // skipTarget: true for lunging hounds / stealthed assassins (ranged can't target)
   // meleeBonus: extended melee detection range (wraith=35, boss=50)
   // isBoss: used by melee target priority
-  type EnemyEntry = { x: number; skipTarget: boolean; meleeBonus: number; isBoss: boolean; ref: any };
+  type EnemyEntry = { x: number; skipTarget: boolean; meleeBonus: number; isBoss: boolean; isRangedEnemy: boolean; ref: any };
   const allEnemies: EnemyEntry[] = [];
-  for (const e of enemies) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, ref: e });
-  for (const e of enemyArchers) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, ref: e });
-  for (const e of enemyWraiths) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 35, isBoss: false, ref: e });
-  for (const e of enemyHounds) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: !!(e.lungeTimer && e.lungeTimer > 0), meleeBonus: 0, isBoss: false, ref: e });
-  for (const e of enemyLichs) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, ref: e });
-  for (const e of enemyShadowAssassins) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: e.stealthTimer > 0, meleeBonus: 0, isBoss: false, ref: e });
-  for (const e of enemyFlameCallers) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, ref: e });
-  for (const e of enemyCorruptedSentinels) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, ref: e });
-  for (const e of enemyDungeonRats) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, ref: e });
-  for (const e of enemyFireImps) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, ref: e });
-  for (const e of enemyCursedKnights) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, ref: e });
-  if (boss && boss.health > 0) allEnemies.push({ x: boss.x, skipTarget: false, meleeBonus: 50, isBoss: true, ref: boss });
+  for (const e of enemies) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, isRangedEnemy: false, ref: e });
+  for (const e of enemyArchers) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, isRangedEnemy: true, ref: e });
+  for (const e of enemyWraiths) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 35, isBoss: false, isRangedEnemy: false, ref: e });
+  for (const e of enemyHounds) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: !!(e.lungeTimer && e.lungeTimer > 0), meleeBonus: 0, isBoss: false, isRangedEnemy: false, ref: e });
+  for (const e of enemyLichs) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, isRangedEnemy: true, ref: e });
+  for (const e of enemyShadowAssassins) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: e.stealthTimer > 0, meleeBonus: 0, isBoss: false, isRangedEnemy: false, ref: e });
+  for (const e of enemyFlameCallers) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, isRangedEnemy: true, ref: e });
+  for (const e of enemyCorruptedSentinels) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, isRangedEnemy: false, ref: e });
+  for (const e of enemyDungeonRats) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, isRangedEnemy: false, ref: e });
+  for (const e of enemyFireImps) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, isRangedEnemy: true, ref: e });
+  for (const e of enemyCursedKnights) if (e.health > 0) allEnemies.push({ x: e.x, skipTarget: false, meleeBonus: 0, isBoss: false, isRangedEnemy: false, ref: e });
+  if (boss && boss.health > 0) allEnemies.push({ x: boss.x, skipTarget: false, meleeBonus: 50, isBoss: true, isRangedEnemy: false, ref: boss });
   // Sort by x for better spatial locality (allies move left→right, enemies come right→left)
   allEnemies.sort((a2, b2) => a2.x - b2.x);
 
   for (const a of ts.allies) {
     if (a.health <= 0) continue;
     a.frame = ts.frame;
+    // Apply smooth knockback velocity (decays each tick)
+    if (a.knockbackVx) {
+      a.x += a.knockbackVx;
+      a.knockbackVx *= 0.8; // friction decay
+      if (Math.abs(a.knockbackVx) < 0.1) a.knockbackVx = 0;
+    }
     // Friendly Slime AI: follow hero within 80px, no attack, just a cute companion
     if (a.isFriendlySlime) {
       const dist = a.x - hero.x;
@@ -1313,38 +1330,46 @@ export function processAllyAI(ts: TickState): void {
       }
     }
 
-    // Shrine knight charge: on first encounter with enemies, dash forward and stun
+    // Shrine knight charge: dash to target, AOE knockback all nearby enemies
     if (a.shrineCharge && !a.shrineChargeUsed) {
-      // Check if any enemy is within 200px ahead
-      let hasNearbyEnemy = false;
+      // Find closest enemy ahead within 220px
+      let closestEnemy: typeof allEnemies[0] | null = null;
+      let closestDist = Infinity;
       for (const e of allEnemies) {
         const d = e.x - a.x;
-        if (d > 0 && d < 200) { hasNearbyEnemy = true; break; }
+        if (d > 0 && d < 220 && d < closestDist) { closestDist = d; closestEnemy = e; }
       }
-      if (hasNearbyEnemy) {
+      if (closestEnemy) {
         a.shrineChargeUsed = true;
-        const chargeDistance = 80;
-        const oldX = a.x;
-        a.x += chargeDistance;
-        // Stun all enemies in the charge path (oldX to newX + 20)
+        // Charge to just in front of the enemy
+        a.x = closestEnemy.x - 18;
+        const impactX = a.x;
+        const AOE_RADIUS = 80;
+        // Knock all enemies within AOE radius back
         forEachEnemy(ts, (e: any) => {
-          if (e.x >= oldX && e.x <= a.x + 20) {
-            e.stunTimer = 180; // 3 seconds
+          if (Math.abs(e.x - impactX) <= AOE_RADIUS) {
+            // Push away from knight (always rightward since enemies approach from right)
+            const pushDir = Math.sign(e.x - impactX) || 1;
+            e.knockbackVx = (e.knockbackVx || 0) + pushDir * 6;
+            e.stunTimer = 30; // brief stun so they don't resist immediately
           }
         });
         ts.particles.push(makeParticle(a.x, a.y - 15, '🛡️ CHARGE!', '#ffcc44'));
+        ts.particles.push(makeParticle(a.x, a.y - 5, '💥', '#ffaa00'));
       }
     }
 
-    // Shrine halberd spear throw: hurl spear when first entering 100px range of enemy
+    // Shrine halberd spear throw: hurl spear when first entering 150px range of enemy
     if (a.shrineSpearThrow && !a.shrineChargeUsed) {
       for (const e of allEnemies) {
         const d = e.x - a.x;
-        if (!e.skipTarget && d > 0 && d < 100) {
-          a.shrineChargeUsed = true; // reuse flag — one throw per life
-          let spearDmg = Math.floor(a.damage * 1.5);
+        if (!e.skipTarget && d > 0 && d < 150) {
+          a.shrineChargeUsed = true;
+          const startX = a.x + 20;
+          const startY = a.y + (a.lane || 0) + 5;
+          let spearDmg = Math.floor(a.damage * 3);
           spearDmg = Math.floor(spearDmg * modAllyDmgMult(ts) * modMeleeDmgMult(ts));
-          ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 5, targetX: e.x, speed: -12, damage: spearDmg, type: 'allyArrow', aoeRadius: 35 });
+          ts.projectiles.push({ id: uid(), x: startX, y: startY, startX, startY, targetX: e.x, speed: -13, arcHeight: 40, damage: spearDmg, type: 'spearThrow' });
           ts.particles.push(makeParticle(a.x + 20, a.y - 15, '🔱 HURL!', '#cc8844'));
           break;
         }
@@ -1634,33 +1659,48 @@ export function processAllyAI(ts: TickState): void {
           turretAtkRate = Math.max(15, Math.floor(turretAtkRate * (1 - ownerTurrets * 0.03)));
         }
         const turretDuration = conjurerStats.turretDuration + (su.conjurer_sustainedChannel || 0) * 180;
+        // Arch formation: spread turrets above and ahead of conjurer
+        const archSlots = [
+          { dx: 55,  dy: -30 },  // slot 0: front-right, elevated
+          { dx: -5,  dy: -42 },  // slot 1: center-high
+          { dx: 110, dy: -20 },  // slot 2: far-front
+        ];
+        const slot = archSlots[ownerTurrets % archSlots.length];
         ts.crystalTurrets.push({
           id: uid(),
           ownerId: a.id,
-          x: a.x + 12,
-          y: GROUND_Y - 20,
+          x: a.x + slot.dx,
+          y: GROUND_Y + slot.dy,
           health: turretHp,
           maxHealth: turretHp,
           damage: a.damage,
           defense: 0,
           attackRate: turretAtkRate,
-          attackRange: a.attackRange,
+          attackRange: a.attackRange + 40,
           attackCooldown: 0,
           frame: ts.frame,
           duration: turretDuration,
           maxDuration: turretDuration,
           markOnHit: su.conjurer_prismaticShards > 0,
         });
-        ts.particles.push(makeParticle(a.x + 12, a.y - 10, '💎 Conjure!', '#55ddcc'));
+        ts.particles.push(makeParticle(a.x + slot.dx, a.y - 10, '💎 Conjure!', '#55ddcc'));
       }
 
-      // Shrine big: floating turrets follow conjurer
+      // Shrine big: turrets orbit above conjurer in elliptical formation
       if (a.shrineFloatingTurrets) {
-        let offset = -20;
+        const orbitRx = 28; // horizontal radius
+        const orbitRy = 12; // vertical radius (elliptical)
+        const orbitCY = GROUND_Y - 32; // orbit center height
+        const orbitSpeed = 0.025;
+        let idx = 0;
         for (const t of ts.crystalTurrets) {
           if (t.ownerId === a.id) {
-            t.x += (a.x + offset - t.x) * 0.15; // smooth follow
-            offset -= 25;
+            const angle = ts.frame * orbitSpeed + (idx / 3) * Math.PI * 2;
+            const targetX = a.x + Math.cos(angle) * orbitRx;
+            const targetY = orbitCY + Math.sin(angle) * orbitRy;
+            t.x += (targetX - t.x) * 0.12;
+            t.y += (targetY - t.y) * 0.12;
+            idx++;
           }
         }
       }
@@ -1862,6 +1902,7 @@ export function processAllyAI(ts: TickState): void {
     let meleeBlocked = false;
     let meleeTarget: EnemyEntry | null = null;
     let rangedTarget: EnemyEntry | null = null; // first targetable enemy in ranged range
+    let arcRangedTarget: EnemyEntry | null = null; // archer-only: ranged enemy in normal range (overwatch)
     let wizardHasTarget = false;
     for (const e of allEnemies) {
       const d = e.x - a.x;
@@ -1873,6 +1914,10 @@ export function processAllyAI(ts: TickState): void {
       // Ranged target (first in range, skip untargetable)
       if (isRanged && !rangedTarget && !e.skipTarget && d > 0 && d < attackRange) {
         rangedTarget = e;
+      }
+      // Archer overwatch: prioritize ranged enemies within normal range for arcing shots
+      if (a.unitType === 'archer' && su.archer_overwatch > 0 && !arcRangedTarget && e.isRangedEnemy && !e.skipTarget && d > 0 && d < attackRange) {
+        arcRangedTarget = e;
       }
       // Wizard beam range (d > -30, includes behind slightly)
       if (isWizard && !wizardHasTarget && !e.skipTarget && d > -30 && d < attackRange) {
@@ -1943,14 +1988,47 @@ export function processAllyAI(ts: TickState): void {
         }
         // Wizard beam: traveling AOE projectile
         ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 5, targetX: a.x + attackRange, speed: -14, damage: wizDmg, type: 'wizardBeam', crit: wizCrit, startX: a.x, burnRate: hasBurn ? bRate : undefined, burnDuration: hasBurn ? bDuration : undefined });
-        // Shrine: Arcanist lightning strike every 6 attacks
+        // Shrine: Arcanist lightning strike every 6 attacks — chains like hero chainLightning
         if (a.shrineLightningCounter !== undefined) {
           a.shrineLightningCounter++;
           if (a.shrineLightningCounter >= 6) {
             a.shrineLightningCounter = 0;
             const lightningDmg = Math.floor(wizDmg * 3);
-            ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y - 30, targetX: a.x + attackRange, speed: -18, damage: lightningDmg, type: 'chainLightning', aoeRadius: 40 });
-            ts.particles.push(makeParticle(a.x + 20, a.y - 25, '⚡ ARCANIST!', '#44ccff'));
+            const chainRange = 180;
+            const maxChains = 3;
+            const hitSet = new Set<any>();
+            const chainPositions: Array<{ x: number; y: number }> = [];
+            let lastX = a.x + 20;
+            for (let c = 0; c < maxChains; c++) {
+              let best: any = null;
+              let bestDist = chainRange;
+              const checkE = (e: any) => {
+                if (e.health <= 0 || hitSet.has(e)) return;
+                const d = e.x - lastX;
+                if (d > 0 && d < bestDist) { bestDist = d; best = e; }
+              };
+              enemies.forEach(checkE); enemyArchers.forEach(checkE); enemyWraiths.forEach(checkE);
+              enemyHounds.forEach(checkE); enemyLichs.forEach(checkE); enemyFlameCallers.forEach(checkE);
+              enemyCorruptedSentinels.forEach(checkE); enemyCursedKnights.forEach(checkE);
+              if (ts.boss && ts.boss.health > 0 && !hitSet.has(ts.boss)) {
+                const bd = ts.boss.x - lastX;
+                if (bd > 0 && bd < bestDist) { bestDist = bd; best = ts.boss; }
+              }
+              if (!best) break;
+              let dmg = lightningDmg;
+              if (best.defense) dmg = Math.max(1, dmg - best.defense);
+              if (ts.boss && best === ts.boss) dmg = absorbBossShield(ts.boss, dmg);
+              best.health -= dmg;
+              best.lastDamageTime = ts.frame;
+              hitSet.add(best);
+              chainPositions.push({ x: best.x, y: (best.y || GROUND_Y - 15) + ((best as any).lane || 0) });
+              ts.particles.push(makeParticle(best.x, (best.y || GROUND_Y - 15) - 10, `-${dmg}`, '#66aadd'));
+              lastX = best.x;
+            }
+            if (chainPositions.length > 0) {
+              ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 5, targetX: a.x + 20, speed: 0, damage: 0, type: 'chainLightning', duration: 20, chainTargets: [{ x: a.x + 20, y: a.y + (a.lane || 0) + 5 }, ...chainPositions] });
+              ts.particles.push(makeParticle(a.x + 20, a.y - 25, '⚡ ARCANIST!', '#44ccff'));
+            }
           }
         }
         // Channeled Energy artifact: 3% chance to trigger instant cast on a nearby mage
@@ -2018,9 +2096,13 @@ export function processAllyAI(ts: TickState): void {
         }
         // Fractured World: ally + ranged damage multipliers
         aimDmg = Math.floor(aimDmg * modAllyDmgMult(ts) * modRangedDmgMult(ts));
+        const shrPierce = a.shrinePierce || 0;
         // Target from unified scan (rangedTarget already found above)
-        const tX = rangedTarget ? rangedTarget.x : a.x;
-        const rangedRef = rangedTarget ? rangedTarget.ref : null;
+        // Overwatch: prefer ranged enemy for arcing shot
+        const useArc = arcRangedTarget !== null;
+        const effectiveTarget = useArc ? arcRangedTarget : rangedTarget;
+        const tX = effectiveTarget ? effectiveTarget.x : a.x;
+        const rangedRef = effectiveTarget ? effectiveTarget.ref : null;
         // Double shot: artifact (15%) + shard doubleTap stack
         let shotCount = 1;
         if (isRanged) {
@@ -2028,9 +2110,14 @@ export function processAllyAI(ts: TickState): void {
           const shardDouble = su.archer_doubleTap > 0 && Math.random() < su.archer_doubleTap * 0.1;
           if (artifactDouble || shardDouble) shotCount = 2;
         }
-        const shrPierce = a.shrinePierce || 0;
-        ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 10, targetX: tX, speed: -8, damage: aimDmg, type: 'allyArrow', crit: archerCrit, ...(shrPierce > 0 && { pierce: shrPierce }) });
-        if (shotCount > 1) ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 14, targetX: tX, speed: -8, damage: aimDmg, type: 'allyArrow', crit: archerCrit, ...(shrPierce > 0 && { pierce: shrPierce }) });
+        if (useArc) {
+          // Overwatch arcing shot at ranged enemy — no range extension, just smart targeting
+          ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 10, targetX: tX, speed: -10, damage: aimDmg, type: 'longbowShot', crit: archerCrit, arcHeight: 38, startX: a.x + 20, ...(shrPierce > 0 && { pierce: shrPierce }) });
+          if (shotCount > 1) ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 14, targetX: tX, speed: -10, damage: aimDmg, type: 'longbowShot', crit: archerCrit, arcHeight: 38, startX: a.x + 20, ...(shrPierce > 0 && { pierce: shrPierce }) });
+        } else {
+          ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 10, targetX: tX, speed: -8, damage: aimDmg, type: 'allyArrow', crit: archerCrit, ...(shrPierce > 0 && { pierce: shrPierce }) });
+          if (shotCount > 1) ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 14, targetX: tX, speed: -8, damage: aimDmg, type: 'allyArrow', crit: archerCrit, ...(shrPierce > 0 && { pierce: shrPierce }) });
+        }
         // Shrine echo strike: 3% chance to fire an extra shot (conjurer break)
         if (a.shrineEchoStrike && Math.random() < 0.03) {
           ts.projectiles.push({ id: uid(), x: a.x + 20, y: a.y + (a.lane || 0) + 6, targetX: tX, speed: -9, damage: aimDmg, type: 'allyArrow', crit: archerCrit, ...(shrPierce > 0 && { pierce: shrPierce }) });
@@ -2304,7 +2391,11 @@ export function processCrystalTurretAI(ts: TickState): void {
 
       if (target) {
         turret.attackCooldown = 0;
-        ts.projectiles.push({ id: uid(), x: turret.x, y: turret.y - 4, targetX: target.x, speed: -10, damage: turret.damage, type: 'crystalBolt', markOnHit: !!turret.markOnHit });
+        const boltStartY = turret.y - 24;
+        // Use owner conjurer's current damage so level-ups apply immediately
+        const owner = turret.ownerId != null ? ts.nonPetAllies.find(a => a.id === turret.ownerId) : null;
+        const fireDamage = owner ? owner.damage : turret.damage;
+        ts.projectiles.push({ id: uid(), x: turret.x + 8, y: boltStartY, startX: turret.x + 8, startY: boltStartY, targetX: target.x, targetY: GROUND_Y - 15, speed: -10, damage: fireDamage, type: 'crystalBolt', markOnHit: !!turret.markOnHit });
       }
     }
 
@@ -2639,7 +2730,7 @@ export function processCorruptedSentinelAI(ts: TickState): void {
         allies.forEach(a => {
           if (Math.abs(a.x - c.x) < stompRadius) {
             dealDamageToAlly(ts, a, stompDmg, ' 💥', '#aaaaaa');
-            a.x -= 15 * (1 - (a.knockbackResist || 0));
+            a.knockbackVx = (a.knockbackVx || 0) - 3 * (1 - (a.knockbackResist || 0));
           }
         });
         ts.particles.push(makeParticle(c.x, c.y - 25, 'STOMP!', '#aaaaaa'));

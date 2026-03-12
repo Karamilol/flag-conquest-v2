@@ -65,7 +65,7 @@ export function BackpackPanel({ backpack, gems, shards, onClose, onUseConsumable
       onClick={onClose}
       style={{
         position: 'absolute', inset: 0,
-        zIndex: 20,
+        zIndex: 20, pointerEvents: 'auto',
         display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
         paddingTop: '80px',
       }}

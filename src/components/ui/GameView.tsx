@@ -3,7 +3,7 @@ import type { GameState, CameraMode, Artifact, PermanentUpgrades, ShardUpgrades,
 import type { RelicCollection } from '../../relics';
 import type { Regalia, RegaliaSlot } from '../../regalias';
 import type { KeyBindings, ActionId } from '../../keybindings';
-import { VIEWPORT_W, VIEWPORT_H, DISPLAY_W, DISPLAY_H, COLORS, GROUND_Y, UNIT_STATS } from '../../constants';
+import { VIEWPORT_W, VIEWPORT_H, DISPLAY_W, DISPLAY_H, COLORS, GROUND_Y, UNIT_STATS, BUILDING_DEFS, isUnitRanged, isUnitMagic } from '../../constants';
 import { computeFullUnitStats, type UnitType } from '../../utils/unitStats';
 import { drawEntities } from '../../canvasRenderer';
 import { TileCache } from '../../rendering/tileRenderer';
@@ -19,7 +19,7 @@ import { ShrinePrompt } from './ShrinePrompt';
 import { DungeonGatePrompt } from './DungeonGatePrompt';
 import { SHRINE_DEFS } from '../../modifiers';
 import { ModifierIndicator } from './ModifierIndicator';
-import { applyPortalChoice } from '../../systems/flags';
+import { applyPortalChoice, triggerShrineDesecration } from '../../systems/flags';
 import type { PortalChoiceData } from '../../types';
 import { TutorialOverlay } from '../../tutorial/TutorialOverlay';
 import { ShopPanel, ShopTabs } from './ShopPanel';
@@ -74,6 +74,8 @@ interface GameViewProps {
   setVolume: (v: number) => void;
   sfxVolume: number;
   setSfxVolume: (v: number) => void;
+  brightness: number;
+  setBrightness: (v: number) => void;
   setShowHpNumbers: (v: boolean) => void;
   setKillParticles: (v: boolean) => void;
   hideNotifications: boolean;
@@ -147,7 +149,7 @@ export default function GameView({
   relicCollection, ancientRelicsOwned, ancientRelicCopies, highestZone, highestFlags,
   buyRunUpgrade, buyRunUpgradeMulti, onRoll, onConfirmRoll, onReroll, extraRerolls, movePortalForward, toggleAutoPortal, onReturnHome,
   regaliaEquipped,
-  settingsOpen, volume, setVolume, sfxVolume, setSfxVolume, setShowHpNumbers, setKillParticles, hideNotifications, setHideNotifications,
+  settingsOpen, volume, setVolume, sfxVolume, setSfxVolume, brightness, setBrightness, setShowHpNumbers, setKillParticles, hideNotifications, setHideNotifications,
   keybindings, setKeybindings, rebindingAction, setRebindingAction,
   gems, setGems, shards, setShards,
   showBackpack, setShowBackpack, showAchievements, setShowAchievements, showRelics, setShowRelics,
@@ -166,7 +168,7 @@ export default function GameView({
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const tileCacheRef = useRef(new TileCache());
   const pixiRef = useRef<PixiRenderer | null>(null);
-  const [settingsTab, setSettingsTab] = useState<'audio' | 'controls' | 'dev'>('audio');
+  const [settingsTab, setSettingsTab] = useState<'audio' | 'graphics' | 'controls' | 'dev'>('audio');
   const [showMap, setShowMap] = useState(false);
 
   // Refresh shop at ~30fps so gold/costs stay current (throttled from 60fps to reduce React reconciliation)
@@ -233,6 +235,7 @@ export default function GameView({
       if (renderer.canvas) {
         renderer.canvas.style.zIndex = '0';
         renderer.canvas.style.touchAction = 'none';
+        renderer.canvas.style.pointerEvents = 'none';
       }
     });
 
@@ -312,7 +315,27 @@ export default function GameView({
   }, [gameRef]);
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragRef.current) return;
+    // Building hover tooltip — runs whether dragging or not
+    if (!dragRef.current) {
+      const g = gameRef.current;
+      const container = canvasContainerRef.current;
+      if (g && container) {
+        const rect = container.getBoundingClientRect();
+        const gameX = (e.clientX - rect.left) * (VIEWPORT_W / rect.width) + (g.cameraX || 0);
+        let found: string | null = null;
+        for (const flag of g.flags) {
+          if (!flag.buildingType || !flag.captured || flag.corrupted) continue;
+          if (Math.abs(gameX - flag.x) < 35) {
+            const bDef = BUILDING_DEFS[flag.buildingType];
+            if (bDef) { found = `${bDef.icon} ${bDef.name} — ${bDef.desc}`; break; }
+          }
+        }
+        const sx = (e.clientX - rect.left) * (DISPLAY_W / rect.width);
+        const sy = (e.clientY - rect.top) * (DISPLAY_H / rect.height);
+        setBuildingTooltip(found ? { text: found, x: sx, y: sy } : null);
+      }
+      return;
+    }
     const dx = e.clientX - dragRef.current.startScreenX;
     const dist = Math.abs(dx);
 
@@ -419,7 +442,7 @@ export default function GameView({
           if (d < closestDist) { closestDist = d; closestIdx = i; }
         }
         if (closestIdx >= 0) {
-          g.chests[closestIdx].x = g.hero.x;
+          g.chests[closestIdx].pendingClickCollect = true;
         }
       }
     }
@@ -473,6 +496,7 @@ export default function GameView({
   const onSelectPortal = useCallback((portal: PortalChoiceData) => {
     const game = gameRef.current;
     if (!game) return;
+    game.pendingPortalChoice = null;
     applyPortalChoice(game, portal);
   }, [gameRef]);
 
@@ -490,8 +514,20 @@ export default function GameView({
       }
     }
     const isBreak = shrineChoice.endsWith(':break');
+    const unitType = shrineChoice.split(':')[0];
     if (isBreak) {
       game.fracturedMap.brokenShrine = shrineChoice;
+      // Spawn thematic enemies from the shrine
+      const shrineFlag = game.flags.find(f => f.id === game.shrineFlagId);
+      if (shrineFlag) triggerShrineDesecration(game, unitType, shrineFlag.x);
+      // Halberd shrine break: immediately grant shield to all living ranged/magic allies on the field
+      if (unitType === 'halberd') {
+        for (const a of game.allies) {
+          if (a.health > 0 && (isUnitRanged(a.unitType || '') || isUnitMagic(a.unitType || ''))) {
+            (a as any).shrineAbsorb = 1;
+          }
+        }
+      }
     } else {
       game.fracturedMap.chosenShrine = shrineChoice;
     }
@@ -572,6 +608,7 @@ export default function GameView({
   const [purchaseMode, setPurchaseMode] = useState<'1x' | '10x' | 'MAX'>('1x');
   const [devShrineUnit, setDevShrineUnit] = useState('soldier');
   const [, forceRender] = useState(0);
+  const [buildingTooltip, setBuildingTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const cyclePurchaseMode = useCallback(() => {
     setPurchaseMode(prev => prev === '1x' ? '10x' : prev === '10x' ? 'MAX' : '1x');
   }, []);
@@ -584,12 +621,14 @@ export default function GameView({
       <div style={{
         position: 'relative', width: '100%', height: DISPLAY_H, overflow: 'hidden',
         isolation: 'isolate' as any,
+        filter: brightness !== 1 ? `brightness(${brightness})` : undefined,
       }}>
         <div
           ref={canvasContainerRef}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
+          onPointerLeave={() => setBuildingTooltip(null)}
           style={{
             position: 'absolute', top: 0, left: 0,
             width: DISPLAY_W, height: DISPLAY_H,
@@ -597,6 +636,26 @@ export default function GameView({
             touchAction: 'none',
           }}
         />
+        {buildingTooltip && (
+          <div style={{
+            position: 'absolute',
+            left: buildingTooltip.x + 12,
+            top: Math.max(8, buildingTooltip.y - 44),
+            background: 'rgba(10,8,4,0.95)',
+            border: '1px solid #ffd700',
+            borderRadius: '4px',
+            padding: '5px 9px',
+            color: '#ffd700',
+            fontSize: '7px',
+            fontFamily: '"Press Start 2P", monospace',
+            pointerEvents: 'none',
+            zIndex: 20,
+            whiteSpace: 'nowrap',
+            boxShadow: '0 0 8px rgba(255,215,0,0.3)',
+          }}>
+            {buildingTooltip.text}
+          </div>
+        )}
 
         {/* HUD overlay — sized to display frame */}
         <GameHUD
@@ -630,7 +689,7 @@ export default function GameView({
 
         {/* Track selector overlay */}
         {trackSelectorOpen && musicClicks >= 5 && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 27 }}>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 27, pointerEvents: 'none' }}>
             <TrackSelector
               highestZone={highestZone}
               currentTrack={musicTrack}
@@ -678,6 +737,7 @@ export default function GameView({
           <PortalArches
             portals={game.pendingPortalChoice}
             onSelect={onSelectPortal}
+            equippedRegalias={regaliaEquipped}
           />
         )}
 
@@ -686,10 +746,12 @@ export default function GameView({
           const shrineUnit = shrineFlag?.shrineUnitType || 'soldier';
           const fm = game?.fracturedMap;
           const alreadyUsed = (fm?.chosenShrine?.startsWith(shrineUnit + ':')) || (fm?.brokenShrine?.startsWith(shrineUnit + ':'));
+          const desecrationOnly = !alreadyUsed && !!fm?.chosenShrine;
           return (
             <ShrinePrompt
               shrineUnitType={shrineUnit}
               alreadyChosen={!!alreadyUsed}
+              desecrationOnly={desecrationOnly}
               gold={game?.goldEarned || 0}
               gems={gems}
               onPledge={onShrinePledge}
@@ -800,7 +862,7 @@ export default function GameView({
 
         {/* Backpack panel overlay */}
         {showBackpack && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 26, overflow: 'auto' }}>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 26, overflow: 'auto', pointerEvents: 'none' }}>
             <BackpackPanel
               backpack={backpack}
               gems={gems}
@@ -816,7 +878,7 @@ export default function GameView({
 
         {/* Achievements panel overlay */}
         {showAchievements && game && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 26, overflow: 'auto' }}>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 26, overflow: 'auto', pointerEvents: 'none' }}>
             <AchievementPanel
               achievementProgress={achievementProgress}
               stats={{
@@ -833,7 +895,7 @@ export default function GameView({
 
         {/* Relics panel overlay */}
         {showRelics && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 26, overflow: 'auto' }}>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 26, overflow: 'auto', pointerEvents: 'none' }}>
             <RelicPanel
               relicCollection={relicCollection}
               onClose={() => setShowRelics(false)}
@@ -856,7 +918,7 @@ export default function GameView({
         {/* Settings overlay */}
         {settingsOpen && (() => {
           const isDev = typeof location !== 'undefined' && location.hostname === 'localhost';
-          const tabs = ['audio', 'controls', ...(isDev ? ['dev'] : [])] as ('audio' | 'controls' | 'dev')[];
+          const tabs = ['audio', 'graphics', 'controls', ...(isDev ? ['dev'] : [])] as ('audio' | 'graphics' | 'controls' | 'dev')[];
           return (
           <div style={{
             position: 'absolute', top: 0, left: 0, right: 0,
@@ -877,7 +939,7 @@ export default function GameView({
                   color: settingsTab === tab ? COLORS.gold : '#aaa',
                   border: `1px solid ${settingsTab === tab ? '#8a4adf' : 'rgba(138,74,223,0.3)'}`,
                   borderRadius: 4, cursor: 'pointer', textTransform: 'uppercase',
-                }}>{tab === 'audio' ? 'Audio' : tab === 'controls' ? 'Controls' : 'Dev'}</button>
+                }}>{tab === 'audio' ? 'Audio' : tab === 'graphics' ? 'Graphics' : tab === 'controls' ? 'Controls' : 'Dev'}</button>
               ))}
             </div>
             {/* Audio tab */}
@@ -889,6 +951,13 @@ export default function GameView({
               <div style={{ marginBottom: 12 }}>
                 <div style={{ color: '#ccc', fontSize: 11, marginBottom: 6 }}>SFX: {Math.round(sfxVolume * 100)}%</div>
                 <input type="range" min="0" max="100" value={Math.round(sfxVolume * 100)} onChange={e => setSfxVolume(Number(e.target.value) / 100)} style={{ width: '100%', accentColor: COLORS.gold }} />
+              </div>
+            </>)}
+            {/* Graphics tab */}
+            {settingsTab === 'graphics' && (<>
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ color: '#ccc', fontSize: 11, marginBottom: 6 }}>BRIGHTNESS: {Math.round(brightness * 100)}%</div>
+                <input type="range" min="50" max="150" value={Math.round(brightness * 100)} onChange={e => setBrightness(Number(e.target.value) / 100)} style={{ width: '100%', accentColor: COLORS.heroBlue }} />
               </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                 <input type="checkbox" checked={showHpNumbers} onChange={e => setShowHpNumbers(e.target.checked)} style={{ accentColor: COLORS.heroBlue, width: 14, height: 14 }} />
@@ -1057,7 +1126,19 @@ export default function GameView({
 
       {/* Shop panel — always visible during gameplay (matches old project) */}
       {game && (
-        <div style={{ width: DISPLAY_W, fontFamily: F }}>
+        <div style={{ width: DISPLAY_W, fontFamily: F, position: 'relative' }}>
+          {showPortalArches && (
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 50,
+              background: 'rgba(0,0,0,0.55)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'all',
+            }}>
+              <span style={{ color: '#8a7a55', fontSize: '8px', fontFamily: '"Press Start 2P", monospace', textAlign: 'center' }}>
+                Choose a portal to continue...
+              </span>
+            </div>
+          )}
           {game.inDungeon && game.dungeonType === 'wave' && dungeonBuyUnit && dungeonBuyMeleeBoost && dungeonBuyRangedBoost && dungeonBuyMagicBoost && dungeonBuyMetaUpgrade && dungeonSetAllyMode ? (
             <DungeonShopPanel
               game={game}

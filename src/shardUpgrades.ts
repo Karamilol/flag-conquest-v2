@@ -63,6 +63,9 @@ export const SHARD_UPGRADES: ShardUpgradeDef[] = [
   { key: 'archer_aiming', unitType: 'archer', name: 'Aiming', icon: '🎯',
     maxLevel: 1, description: ['+1% dmg/sec standing still'],
     baseCost: 5, costScaling: 1, costs: [6] },
+  { key: 'archer_overwatch', unitType: 'archer', name: 'Overwatch', icon: '🏹',
+    maxLevel: 1, description: ['Arc over frontline to target enemy ranged units'],
+    baseCost: 8, costScaling: 1, costs: [8] },
 
   // === KNIGHT ===
   { key: 'knight_ironclad', unitType: 'knight', name: 'Ironclad', icon: '🏰',

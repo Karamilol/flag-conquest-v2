@@ -1,0 +1,548 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 630 500" width="630" height="500">
+  <defs>
+    <linearGradient id="void" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#050210"/>
+      <stop offset="50%" stop-color="#0a0520"/>
+      <stop offset="100%" stop-color="#080318"/>
+    </linearGradient>
+    <radialGradient id="portalGlow1" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#aa44ff" stop-opacity="0.5"/>
+      <stop offset="40%" stop-color="#6622cc" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#6622cc" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="portalGlow2" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#44aaff" stop-opacity="0.4"/>
+      <stop offset="40%" stop-color="#2266cc" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#2266cc" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="portalCore" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#eeddff" stop-opacity="0.8"/>
+      <stop offset="30%" stop-color="#bb66ff" stop-opacity="0.5"/>
+      <stop offset="70%" stop-color="#6622aa" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#220044" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="groundForest" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a6a2a"/>
+      <stop offset="100%" stop-color="#1a3a10"/>
+    </linearGradient>
+    <linearGradient id="groundVolcanic" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a2a1a"/>
+      <stop offset="100%" stop-color="#1a0c06"/>
+    </linearGradient>
+    <linearGradient id="groundNordic" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a6a8a"/>
+      <stop offset="100%" stop-color="#2a3a4a"/>
+    </linearGradient>
+    <linearGradient id="goldText" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe888"/>
+      <stop offset="35%" stop-color="#ffd700"/>
+      <stop offset="75%" stop-color="#cc9900"/>
+      <stop offset="100%" stop-color="#996600"/>
+    </linearGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.65">
+      <stop offset="50%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.7"/>
+    </radialGradient>
+    <filter id="crackGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="portalBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3"/>
+    </filter>
+  </defs>
+
+  <!-- VOID BACKGROUND -->
+  <rect width="630" height="500" fill="url(#void)"/>
+
+  <!-- Stars -->
+  <g fill="#ffffff">
+    <circle cx="45" cy="35" r="0.8" opacity="0.5"/><circle cx="120" cy="60" r="0.6" opacity="0.4"/>
+    <circle cx="200" cy="25" r="0.9" opacity="0.6"/><circle cx="310" cy="45" r="0.5" opacity="0.3"/>
+    <circle cx="400" cy="30" r="0.7" opacity="0.5"/><circle cx="490" cy="55" r="0.8" opacity="0.4"/>
+    <circle cx="560" cy="20" r="0.6" opacity="0.5"/><circle cx="80" cy="100" r="0.7" opacity="0.3"/>
+    <circle cx="250" cy="85" r="0.5" opacity="0.4"/><circle cx="380" cy="95" r="0.6" opacity="0.3"/>
+    <circle cx="520" cy="80" r="0.7" opacity="0.4"/><circle cx="600" cy="110" r="0.5" opacity="0.3"/>
+    <circle cx="155" cy="140" r="0.6" opacity="0.25"/><circle cx="450" cy="130" r="0.5" opacity="0.2"/>
+  </g>
+
+  <!-- Nebula wisps -->
+  <ellipse cx="150" cy="120" rx="100" ry="50" fill="#3322aa" opacity="0.04"/>
+  <ellipse cx="480" cy="90" rx="80" ry="40" fill="#aa2255" opacity="0.03"/>
+  <ellipse cx="315" cy="200" rx="200" ry="60" fill="#442288" opacity="0.03"/>
+
+  <!-- FRACTURE CRACKS — thicker, brighter -->
+  <g filter="url(#crackGlow)">
+    <!-- Left crack -->
+    <path d="M0,180 L45,195 L80,170 L130,210 L155,185 L180,220" fill="none" stroke="#9955dd" stroke-width="3.5" opacity="0.6"/>
+    <path d="M0,180 L45,195 L80,170 L130,210 L155,185 L180,220" fill="none" stroke="#dd99ff" stroke-width="1.2" opacity="0.8"/>
+    <!-- Right crack -->
+    <path d="M450,160 L480,190 L520,170 L560,200 L590,180 L630,210" fill="none" stroke="#9955dd" stroke-width="3.5" opacity="0.6"/>
+    <path d="M450,160 L480,190 L520,170 L560,200 L590,180 L630,210" fill="none" stroke="#dd99ff" stroke-width="1.2" opacity="0.8"/>
+    <!-- Top crack -->
+    <path d="M200,0 L215,30 L240,15 L270,50 L290,25 L315,60 L340,35 L360,55 L390,20 L420,45 L430,0" fill="none" stroke="#7744bb" stroke-width="2.5" opacity="0.5"/>
+    <path d="M200,0 L215,30 L240,15 L270,50 L290,25 L315,60 L340,35 L360,55 L390,20 L420,45 L430,0" fill="none" stroke="#bb88ee" stroke-width="1" opacity="0.6"/>
+    <!-- Bottom cracks -->
+    <path d="M100,500 L130,460 L165,480 L200,440 L230,470" fill="none" stroke="#7744bb" stroke-width="2.5" opacity="0.45"/>
+    <path d="M100,500 L130,460 L165,480 L200,440 L230,470" fill="none" stroke="#bb88ee" stroke-width="0.8" opacity="0.5"/>
+    <path d="M400,500 L430,455 L470,475 L510,440 L540,465 L570,500" fill="none" stroke="#7744bb" stroke-width="2.5" opacity="0.45"/>
+    <path d="M400,500 L430,455 L470,475 L510,440 L540,465 L570,500" fill="none" stroke="#bb88ee" stroke-width="0.8" opacity="0.5"/>
+    <!-- Side cracks -->
+    <path d="M0,350 L40,330 L60,360 L100,335" fill="none" stroke="#6633aa" stroke-width="2" opacity="0.4"/>
+    <path d="M530,340 L560,360 L590,335 L630,370" fill="none" stroke="#6633aa" stroke-width="2" opacity="0.4"/>
+  </g>
+
+  <!-- FLOATING BIOME FRAGMENTS -->
+
+  <!-- Forest fragment (left, large) -->
+  <g>
+    <path d="M30,320 Q80,300 160,315 Q190,320 200,340 L200,420 Q150,430 80,425 L30,420Z" fill="url(#groundForest)"/>
+    <path d="M30,320 Q80,300 160,315 Q190,320 200,340" fill="none" stroke="#4a8a3a" stroke-width="1.5" opacity="0.6"/>
+    <polygon points="50,318 52,308 54,318" fill="#5a9a4a" opacity="0.7"/>
+    <polygon points="70,312 72,302 74,312" fill="#4a8a3a" opacity="0.6"/>
+    <polygon points="95,310 97,300 99,311" fill="#5a9a4a" opacity="0.7"/>
+    <polygon points="120,313 122,304 124,314" fill="#4a8a3a" opacity="0.6"/>
+    <polygon points="145,316 147,307 149,316" fill="#5a9a4a" opacity="0.7"/>
+    <path d="M30,420 L35,440 L80,450 L150,445 L200,420" fill="#1a1a2a" opacity="0.7"/>
+    <path d="M40,425 L55,442 L100,448 L140,444 L190,422" fill="#222240" opacity="0.4"/>
+  </g>
+
+  <!-- Volcanic fragment (right) -->
+  <g>
+    <path d="M430,330 Q490,310 560,325 Q590,332 600,350 L600,420 Q540,430 470,425 L430,415Z" fill="url(#groundVolcanic)"/>
+    <path d="M430,330 Q490,310 560,325 Q590,332 600,350" fill="none" stroke="#6a3a1a" stroke-width="1.5" opacity="0.6"/>
+    <path d="M460,340 L475,345 L490,338" fill="none" stroke="#ff4400" stroke-width="1" opacity="0.4"/>
+    <path d="M520,335 L540,342" fill="none" stroke="#ff6600" stroke-width="0.8" opacity="0.3"/>
+    <circle cx="480" cy="328" r="1.2" fill="#ff6622" opacity="0.5"/>
+    <circle cx="540" cy="322" r="1" fill="#ff8844" opacity="0.4"/>
+    <circle cx="560" cy="318" r="0.8" fill="#ffaa44" opacity="0.3"/>
+    <path d="M430,415 L440,440 L500,450 L560,445 L600,420" fill="#1a0a0a" opacity="0.7"/>
+    <path d="M435,418 L450,435 L520,442 L580,432 L595,422" fill="#2a1515" opacity="0.4"/>
+  </g>
+
+  <!-- Nordic fragment (floating, top right) — larger, flipped -->
+  <g transform="translate(1075, 18) scale(-1, 1)">
+    <path d="M485,130 Q525,115 585,132 L590,168 Q545,180 490,172Z" fill="url(#groundNordic)"/>
+    <path d="M485,130 Q525,115 585,132 L578,142 Q535,125 492,138Z" fill="#ddeeff" opacity="0.4"/>
+    <path d="M485,130 Q525,115 585,132" fill="none" stroke="#8aaacc" stroke-width="1.2" opacity="0.5"/>
+    <!-- Two pine trees -->
+    <line x1="520" y1="118" x2="520" y2="132" stroke="#3a2a1a" stroke-width="2"/>
+    <polygon points="513,132 520,112 527,132" fill="#2a5a3a" opacity="0.7"/>
+    <polygon points="514,127 520,115 526,127" fill="#3a6a4a" opacity="0.6"/>
+    <line x1="550" y1="122" x2="550" y2="134" stroke="#3a2a1a" stroke-width="1.5"/>
+    <polygon points="544,134 550,118 556,134" fill="#2a5a3a" opacity="0.6"/>
+    <polygon points="545,129 550,120 555,129" fill="#3a6a4a" opacity="0.5"/>
+    <!-- Snow patches -->
+    <ellipse cx="505" cy="138" rx="6" ry="2" fill="#ddeeff" opacity="0.3"/>
+    <ellipse cx="570" cy="136" rx="5" ry="1.5" fill="#ddeeff" opacity="0.25"/>
+    <!-- Underside -->
+    <path d="M490,172 L498,190 L545,195 L590,168" fill="#1a1a30" opacity="0.5"/>
+    <path d="M495,174 L505,188 L548,192 L585,170" fill="#252545" opacity="0.3"/>
+  </g>
+
+  <!-- Small forest fragment (floating, top left) — larger -->
+  <g>
+    <path d="M45,145 Q85,130 145,148 L150,180 Q100,190 50,184Z" fill="url(#groundForest)"/>
+    <path d="M45,145 Q85,130 145,148" fill="none" stroke="#4a8a3a" stroke-width="1" opacity="0.5"/>
+    <!-- Tree silhouettes -->
+    <line x1="75" y1="130" x2="75" y2="145" stroke="#3a2a1a" stroke-width="2"/>
+    <polygon points="68,145 75,125 82,145" fill="#3a6a2a" opacity="0.7"/>
+    <polygon points="69,139 75,128 81,139" fill="#4a8a3a" opacity="0.6"/>
+    <polygon points="95,140 97,126 99,140" fill="#5a9a4a" opacity="0.6"/>
+    <polygon points="115,145 117,132 119,146" fill="#4a8a3a" opacity="0.5"/>
+    <!-- Mushroom detail -->
+    <circle cx="130" cy="147" r="2" fill="#aa4444" opacity="0.4"/>
+    <rect x="129" y="147" width="2" height="3" fill="#886644" opacity="0.3"/>
+    <!-- Underside -->
+    <path d="M50,184 L58,198 L108,204 L150,180" fill="#1a1a2a" opacity="0.5"/>
+    <path d="M55,186 L65,196 L110,200 L145,182" fill="#222240" opacity="0.3"/>
+  </g>
+
+  <!-- PORTAL — large, repositioned to gap between armies -->
+  <g transform="translate(315, 210)">
+    <ellipse cx="0" cy="0" rx="110" ry="85" fill="url(#portalGlow1)" filter="url(#portalBlur)"/>
+    <ellipse cx="0" cy="0" rx="70" ry="54" fill="none" stroke="#9955ff" stroke-width="3.5" opacity="0.5"/>
+    <ellipse cx="0" cy="0" rx="60" ry="46" fill="none" stroke="#bb77ff" stroke-width="2" opacity="0.55"/>
+    <ellipse cx="0" cy="0" rx="50" ry="38" fill="none" stroke="#cc99ff" stroke-width="1.2" opacity="0.45"/>
+    <ellipse cx="0" cy="0" rx="42" ry="32" fill="url(#portalCore)"/>
+    <!-- Swirl arcs -->
+    <path d="M-42,0 Q-30,-28 0,-32" fill="none" stroke="#ddaaff" stroke-width="2" opacity="0.55"/>
+    <path d="M42,0 Q30,28 0,32" fill="none" stroke="#ddaaff" stroke-width="2" opacity="0.55"/>
+    <path d="M0,-32 Q25,-18 42,0" fill="none" stroke="#bb88ee" stroke-width="1.2" opacity="0.4"/>
+    <path d="M0,32 Q-25,18 -42,0" fill="none" stroke="#bb88ee" stroke-width="1.2" opacity="0.4"/>
+    <!-- Inner bright core -->
+    <circle cx="0" cy="0" r="12" fill="#eeddff" opacity="0.25"/>
+    <circle cx="0" cy="0" r="5" fill="#ffffff" opacity="0.35"/>
+    <!-- Sparkle particles -->
+    <circle cx="-60" cy="-20" r="2" fill="#bb88ff" opacity="0.6"/>
+    <circle cx="55" cy="25" r="1.5" fill="#aa77ee" opacity="0.5"/>
+    <circle cx="-40" cy="42" r="1.2" fill="#cc99ff" opacity="0.45"/>
+    <circle cx="65" cy="-15" r="1.8" fill="#bb88ff" opacity="0.4"/>
+    <circle cx="-20" cy="-50" r="1" fill="#ddaaff" opacity="0.5"/>
+    <circle cx="35" cy="-45" r="1.3" fill="#cc99ff" opacity="0.4"/>
+    <circle cx="0" cy="50" r="1.5" fill="#ddaaff" opacity="0.35"/>
+    <circle cx="-70" cy="10" r="1" fill="#bb88ff" opacity="0.3"/>
+    <!-- Extra scattered sparkles -->
+    <circle cx="-85" cy="-35" r="1" fill="#aa77ee" opacity="0.3"/>
+    <circle cx="80" cy="35" r="1.2" fill="#bb88ff" opacity="0.25"/>
+    <circle cx="-30" cy="60" r="0.8" fill="#cc99ff" opacity="0.3"/>
+    <circle cx="75" cy="-40" r="1" fill="#ddaaff" opacity="0.25"/>
+    <circle cx="-55" cy="55" r="0.9" fill="#aa77ee" opacity="0.2"/>
+    <circle cx="90" cy="5" r="1.1" fill="#bb88ff" opacity="0.2"/>
+    <circle cx="-80" cy="40" r="0.7" fill="#cc99ff" opacity="0.2"/>
+    <circle cx="60" cy="50" r="0.8" fill="#ddaaff" opacity="0.15"/>
+    <circle cx="-45" cy="-55" r="0.9" fill="#bb88ff" opacity="0.25"/>
+    <circle cx="40" cy="60" r="1" fill="#aa77ee" opacity="0.15"/>
+  </g>
+
+  <!-- IN-GAME FLAG (behind soldiers) -->
+  <g transform="translate(100, 260)">
+    <!-- Pole -->
+    <rect x="0" y="0" width="3" height="55" fill="#7a5a3a"/>
+    <rect x="0.8" y="0" width="1.2" height="55" fill="#9a7a5a" opacity="0.35"/>
+    <rect x="2.2" y="0" width="0.8" height="55" fill="#5a3a1a" opacity="0.4"/>
+    <!-- Finial -->
+    <polygon points="0,0 3,0 1.5,-4" fill="#c8a83e"/>
+    <polygon points="0.8,0 1.5,-3 1.5,0" fill="#e8c85e" opacity="0.4"/>
+    <!-- Binding -->
+    <rect x="-0.5" y="1" width="4" height="1.5" fill="#8a6a3a" rx="0.5"/>
+    <!-- Flag cloth -->
+    <polygon points="3,3 30,8 28,19 3,24" fill="#44aa44"/>
+    <polygon points="3,3 16,5.5 15,14 3,13" fill="#55cc55" opacity="0.3"/>
+    <polygon points="16,5.5 30,8 28,19 15,14" fill="#338833" opacity="0.2"/>
+    <line x1="11" y1="4.5" x2="10" y2="20" stroke="#338833" stroke-width="0.4" opacity="0.25"/>
+    <rect x="12" y="11" width="8" height="1.5" fill="#55cc55" opacity="0.4"/>
+    <rect x="15" y="8" width="1.5" height="7" fill="#55cc55" opacity="0.4"/>
+  </g>
+
+  <!-- SOLDIERS (behind hero) -->
+  <!-- Soldier 1 -->
+  <g transform="translate(85, 310) scale(3)">
+    <ellipse cx="10" cy="28" rx="10" ry="3" fill="rgba(0,0,0,0.25)"/>
+    <polygon points="4,10 2,26 0,27 5,12" fill="#3a5fcc"/>
+    <rect x="6" y="20" width="5" height="5" fill="#5a5a6a"/>
+    <rect x="5" y="24" width="6" height="3" fill="#5a4a3a" rx="1"/>
+    <rect x="3" y="6" width="14" height="12" fill="#7a7a8a" rx="1"/>
+    <rect x="5" y="7" width="10" height="11" fill="#4a7fff" opacity="0.85"/>
+    <rect x="9" y="7" width="2" height="11" fill="#3a5fcc" opacity="0.5"/>
+    <rect x="3" y="17" width="14" height="2" fill="#5a4a3a"/>
+    <rect x="8" y="17" width="4" height="2" fill="#a89040" rx="0.5"/>
+    <rect x="11" y="20" width="5" height="5" fill="#7a7a8a"/>
+    <rect x="10" y="24" width="6" height="3" fill="#5a4a3a" rx="1"/>
+    <circle cx="0" cy="12" r="5" fill="#5a5a68"/>
+    <circle cx="0" cy="12" r="4" fill="#888898"/>
+    <circle cx="0" cy="12" r="2.5" fill="#4a7fff"/>
+    <circle cx="0" cy="12" r="1.2" fill="#aaabb8"/>
+    <rect x="18.5" y="-4" width="2.5" height="14" fill="#5a4a3a" rx="0.5"/>
+    <rect x="16" y="-2" width="8" height="2.5" fill="#a89040" rx="0.5"/>
+    <rect x="18" y="-14" width="4" height="10" fill="#aaabb8"/>
+    <polygon points="18,-14 22,-14 20,-17" fill="#aaabb8"/>
+    <rect x="4" y="-2" width="12" height="7" fill="#f0c8a0" rx="1"/>
+    <rect x="6" y="0" width="2" height="2" fill="#333"/>
+    <rect x="12" y="0" width="2" height="2" fill="#333"/>
+    <rect x="2" y="-5" width="16" height="5" fill="#888898" rx="2"/>
+    <rect x="0" y="-2" width="20" height="2" fill="#5a5a68" rx="1"/>
+    <rect x="5" y="-7" width="10" height="4" fill="#aaabb8" rx="2"/>
+  </g>
+
+  <!-- Soldier 2 (smaller, further back) -->
+  <g transform="translate(50, 330) scale(2.2)">
+    <ellipse cx="10" cy="28" rx="10" ry="3" fill="rgba(0,0,0,0.25)"/>
+    <rect x="3" y="6" width="14" height="12" fill="#7a7a8a" rx="1"/>
+    <rect x="5" y="7" width="10" height="11" fill="#4a7fff" opacity="0.85"/>
+    <rect x="3" y="17" width="14" height="2" fill="#5a4a3a"/>
+    <rect x="6" y="20" width="5" height="8" fill="#5a5a6a"/>
+    <rect x="11" y="20" width="5" height="8" fill="#7a7a8a"/>
+    <circle cx="0" cy="12" r="4" fill="#888898"/>
+    <circle cx="0" cy="12" r="2" fill="#4a7fff"/>
+    <rect x="4" y="-2" width="12" height="7" fill="#f0c8a0" rx="1"/>
+    <rect x="2" y="-5" width="16" height="5" fill="#888898" rx="2"/>
+    <rect x="0" y="-2" width="20" height="2" fill="#5a5a68" rx="1"/>
+    <rect x="18" y="-10" width="3" height="16" fill="#aaabb8"/>
+    <polygon points="18,-10 21,-10 19.5,-13" fill="#aaabb8"/>
+  </g>
+
+  <!-- HERO (center-left, attack pose, scale 3x, in front of soldiers) -->
+  <g transform="translate(120, 300) scale(3)">
+    <ellipse cx="16" cy="36" rx="14" ry="4" fill="rgba(0,0,0,0.25)"/>
+    <!-- Cape -->
+    <polygon points="6,6 3,34 -1,36 0,32 4,10" fill="#8b2222"/>
+    <polygon points="8,6 5,33 3,34 6,10" fill="#6b1111"/>
+    <polygon points="5,12 3,28 4,28 6,12" fill="#8b2222" opacity="0.6"/>
+    <!-- Back leg -->
+    <rect x="9" y="26" width="6" height="5" fill="#5a5a6a"/>
+    <rect x="8" y="30" width="7" height="3" fill="#888898" rx="1"/>
+    <rect x="9" y="32" width="6" height="4" fill="#5a5a6a"/>
+    <rect x="8" y="35" width="8" height="3" fill="#3a2a1a" rx="1"/>
+    <!-- Torso -->
+    <rect x="10" y="4" width="12" height="4" fill="#888898" rx="1"/>
+    <rect x="7" y="7" width="18" height="16" fill="#3a5a9f" rx="1"/>
+    <rect x="14" y="8" width="4" height="12" fill="#4a6abf" rx="1"/>
+    <polygon points="16,10 19,14 16,18 13,14" fill="#4a6abf" opacity="0.5"/>
+    <rect x="7" y="7" width="18" height="1" fill="#4a6abf" opacity="0.4"/>
+    <circle cx="9" cy="9" r="0.8" fill="#aaabb8"/>
+    <circle cx="23" cy="9" r="0.8" fill="#aaabb8"/>
+    <circle cx="9" cy="20" r="0.8" fill="#aaabb8"/>
+    <circle cx="23" cy="20" r="0.8" fill="#aaabb8"/>
+    <rect x="6" y="23" width="20" height="3" fill="#5a4a3a"/>
+    <rect x="14" y="23" width="4" height="3" fill="#c8a83e" rx="1"/>
+    <rect x="15" y="23.5" width="2" height="2" fill="#e8c85e"/>
+    <!-- Front leg -->
+    <rect x="17" y="26" width="6" height="5" fill="#888898"/>
+    <rect x="16" y="30" width="7" height="3" fill="#aaabb8" rx="1"/>
+    <circle cx="19.5" cy="31.5" r="1.5" fill="#888898"/>
+    <rect x="17" y="32" width="6" height="4" fill="#888898"/>
+    <rect x="16" y="35" width="8" height="3" fill="#5a4a3a" rx="1"/>
+    <!-- Shield arm -->
+    <rect x="0" y="5" width="10" height="5" fill="#888898" rx="2"/>
+    <rect x="1" y="6" width="8" height="3" fill="#aaabb8" rx="1"/>
+    <rect x="2" y="10" width="6" height="5" fill="#3a5a9f"/>
+    <rect x="1" y="14" width="7" height="5" fill="#888898" rx="1"/>
+    <polygon points="-6,8 -6,22 -1,26 6,22 6,8" fill="#3a5a9f"/>
+    <polygon points="-5,9 -5,21 -1,24 5,21 5,9" fill="#4a6abf"/>
+    <rect x="-2" y="12" width="4" height="1" fill="#c8a83e"/>
+    <rect x="-1" y="10" width="2" height="6" fill="#c8a83e"/>
+    <!-- Weapon arm (attack pose 45deg) -->
+    <g transform="translate(26, 6) rotate(45) translate(-26, -6)">
+      <rect x="22" y="5" width="10" height="5" fill="#888898" rx="2"/>
+      <rect x="23" y="6" width="8" height="3" fill="#aaabb8" rx="1"/>
+      <rect x="24" y="10" width="6" height="5" fill="#3a5a9f"/>
+      <rect x="24" y="14" width="7" height="5" fill="#888898" rx="1"/>
+      <rect x="28" y="8" width="4" height="4" fill="#f0c8a0" rx="1"/>
+      <circle cx="30" cy="20" r="2" fill="#c8a83e"/>
+      <rect x="29" y="12" width="3" height="8" fill="#5a4a3a" rx="0.5"/>
+      <rect x="25" y="10" width="11" height="3" fill="#c8a83e" rx="1"/>
+      <rect x="26" y="11" width="9" height="1" fill="#e8c85e"/>
+      <rect x="28" y="-12" width="5" height="22" fill="#aaabb8"/>
+      <rect x="29.5" y="-10" width="2" height="18" fill="#888898"/>
+      <rect x="28" y="-12" width="1" height="22" fill="#ccd" opacity="0.6"/>
+      <polygon points="28,-12 33,-12 30.5,-16" fill="#aaabb8"/>
+    </g>
+    <!-- Slash trail arc -->
+    <g opacity="0.85">
+      <path d="M38,-10 Q44,6 36,20" fill="none" stroke="#fff" stroke-width="3.5" opacity="0.55" stroke-linecap="round"/>
+      <path d="M36,-8 Q42,6 34,18" fill="none" stroke="#aaccff" stroke-width="2" opacity="0.35" stroke-linecap="round"/>
+    </g>
+    <!-- Head + Helmet -->
+    <rect x="8" y="-1" width="16" height="8" fill="#f0c8a0" rx="1"/>
+    <rect x="11" y="1" width="3" height="2" fill="#4af"/>
+    <rect x="18" y="1" width="3" height="2" fill="#4af"/>
+    <rect x="6" y="-4" width="20" height="8" fill="#888898" rx="2"/>
+    <rect x="8" y="-7" width="16" height="5" fill="#aaabb8" rx="2"/>
+    <rect x="6" y="-1" width="20" height="3" fill="#5a5a6a"/>
+    <rect x="10" y="0" width="12" height="1.5" fill="#1a1a2e"/>
+    <rect x="15" y="-1" width="2" height="4" fill="#1a1a2e"/>
+    <circle cx="8" cy="-2" r="0.7" fill="#aaabb8"/>
+    <circle cx="24" cy="-2" r="0.7" fill="#aaabb8"/>
+    <rect x="7" y="-4" width="18" height="2" fill="#888898" rx="1"/>
+    <polygon points="7,-3 3,-6 6,-1" fill="#5a5a6a"/>
+    <polygon points="25,-3 29,-6 26,-1" fill="#5a5a6a"/>
+    <!-- Plume -->
+    <rect x="13" y="-9" width="6" height="3" fill="#cc3333" rx="1"/>
+    <rect x="12" y="-14" width="4" height="6" fill="#cc3333" rx="1"/>
+    <rect x="14" y="-17" width="4" height="9" fill="#cc3333" rx="1"/>
+    <rect x="16" y="-15" width="3" height="7" fill="#cc3333" rx="1"/>
+    <rect x="13" y="-13" width="2" height="4" fill="#dd5555" opacity="0.5"/>
+  </g>
+
+  <!-- ENEMY FLAG (behind goblins) -->
+  <g transform="translate(560, 260)">
+    <!-- Pole -->
+    <rect x="0" y="0" width="3" height="55" fill="#5a3a2a"/>
+    <rect x="0.8" y="0" width="1.2" height="55" fill="#7a5a4a" opacity="0.35"/>
+    <rect x="2.2" y="0" width="0.8" height="55" fill="#3a1a0a" opacity="0.4"/>
+    <!-- Finial (skull-like knob) -->
+    <circle cx="1.5" cy="-2" r="3" fill="#4a3a2a"/>
+    <circle cx="1.5" cy="-2" r="2" fill="#5a4a3a"/>
+    <circle cx="0.5" cy="-2.5" r="0.5" fill="#2a1a0a"/>
+    <circle cx="2.5" cy="-2.5" r="0.5" fill="#2a1a0a"/>
+    <!-- Binding -->
+    <rect x="-0.5" y="1" width="4" height="1.5" fill="#6a4a3a" rx="0.5"/>
+    <!-- Flag cloth (enemy red, mirrored direction) -->
+    <polygon points="3,3 -24,8 -22,19 3,24" fill="#cc3333"/>
+    <polygon points="3,3 -10,5.5 -9,14 3,13" fill="#dd4444" opacity="0.3"/>
+    <polygon points="-10,5.5 -24,8 -22,19 -9,14" fill="#991111" opacity="0.2"/>
+    <!-- Crease -->
+    <line x1="-5" y1="4.5" x2="-4" y2="20" stroke="#991111" stroke-width="0.4" opacity="0.25"/>
+    <!-- Skull emblem -->
+    <circle cx="-10" cy="12" r="3" fill="#dd5555" opacity="0.4"/>
+    <circle cx="-11" cy="11.5" r="0.6" fill="#991111" opacity="0.5"/>
+    <circle cx="-9" cy="11.5" r="0.6" fill="#991111" opacity="0.5"/>
+  </g>
+
+  <!-- GOBLINS (right side, facing left) -->
+  <!-- Goblin 1 (large, foreground) -->
+  <g transform="translate(430, 295) scale(3.5)">
+    <ellipse cx="12" cy="26" rx="9" ry="3" fill="rgba(0,0,0,0.25)"/>
+    <g transform="translate(24, 0) scale(-1, 1)">
+      <!-- Back leg (connected to body) -->
+      <rect x="6" y="16" width="4" height="7" fill="#4a7733"/>
+      <rect x="4" y="22" width="6" height="3" fill="#4a7733" rx="1"/>
+      <circle cx="5" cy="25" r="1" fill="#4a7733"/>
+      <circle cx="7" cy="25.5" r="1" fill="#4a7733"/>
+      <circle cx="9" cy="25" r="1" fill="#4a7733"/>
+      <!-- Body -->
+      <rect x="5" y="8" width="14" height="10" fill="#6a9944" rx="1"/>
+      <ellipse cx="12" cy="14" rx="6" ry="5" fill="#8ab966" opacity="0.4"/>
+      <!-- Loincloth -->
+      <polygon points="5,16 4,22 8,21 7,16" fill="#7a5a3a"/>
+      <polygon points="7,16 7,22 11,21 10,16" fill="#5a3a1a"/>
+      <polygon points="10,16 10,22 14,21 13,16" fill="#7a5a3a"/>
+      <polygon points="13,16 13,21 17,22 16,16" fill="#5a3a1a"/>
+      <polygon points="16,16 16,21 19,22 19,16" fill="#7a5a3a"/>
+      <rect x="4" y="15" width="16" height="2" fill="#8a6a3a"/>
+      <circle cx="12" cy="16" r="1.5" fill="#aa8a4a"/>
+      <circle cx="17" cy="11" r="1" fill="#5a8833"/>
+      <circle cx="8" cy="14" r="0.8" fill="#5a8833"/>
+      <!-- Front leg (connected to body) -->
+      <rect x="13" y="16" width="4" height="7" fill="#6a9944"/>
+      <rect x="12" y="22" width="6" height="3" fill="#6a9944" rx="1"/>
+      <circle cx="13" cy="25" r="1" fill="#6a9944"/>
+      <circle cx="15" cy="25.5" r="1" fill="#6a9944"/>
+      <circle cx="17" cy="25" r="1" fill="#6a9944"/>
+      <!-- Left arm clawed -->
+      <rect x="1" y="8" width="4" height="7" fill="#4a7733"/>
+      <rect x="0" y="13" width="4" height="5" fill="#6a9944"/>
+      <rect x="-1" y="17" width="4" height="3" fill="#6a9944" rx="1"/>
+      <rect x="-2" y="19" width="1" height="2" fill="#4a7733" rx="0.3"/>
+      <rect x="0" y="19.5" width="1" height="2" fill="#4a7733" rx="0.3"/>
+      <rect x="2" y="19" width="1" height="2" fill="#4a7733" rx="0.3"/>
+      <!-- Club arm (attack) -->
+      <g transform="translate(20, 8) rotate(30) translate(-20, -8)">
+        <rect x="18" y="8" width="4" height="6" fill="#6a9944"/>
+        <rect x="19" y="13" width="4" height="4" fill="#4a7733"/>
+        <rect x="20" y="6" width="3" height="3" fill="#6a9944" rx="0.5"/>
+        <rect x="21" y="-6" width="3" height="16" fill="#6a4a2a" rx="0.5"/>
+        <polygon points="20,-6 24,-6 26,-10 25,-12 22,-14 19,-11 18,-8" fill="#666"/>
+        <rect x="20" y="-6" width="5" height="2" fill="#8a6a3a"/>
+      </g>
+      <!-- Head -->
+      <rect x="3" y="-4" width="18" height="13" fill="#6a9944" rx="3"/>
+      <rect x="5" y="-4" width="14" height="3" fill="#4a7733" rx="2"/>
+      <ellipse cx="7" cy="3" rx="3" ry="2.5" fill="#ffe"/>
+      <ellipse cx="17" cy="3" rx="3" ry="2.5" fill="#ffe"/>
+      <ellipse cx="8" cy="3" rx="2" ry="2" fill="#ffee00"/>
+      <ellipse cx="18" cy="3" rx="2" ry="2" fill="#ffee00"/>
+      <ellipse cx="8" cy="3" rx="0.8" ry="2" fill="#222"/>
+      <ellipse cx="18" cy="3" rx="0.8" ry="2" fill="#222"/>
+      <circle cx="7" cy="2" r="0.8" fill="#fff" opacity="0.6"/>
+      <circle cx="17" cy="2" r="0.8" fill="#fff" opacity="0.6"/>
+      <circle cx="8" cy="3" r="3" fill="#ffee00" opacity="0.15"/>
+      <circle cx="18" cy="3" r="3" fill="#ffee00" opacity="0.15"/>
+      <polygon points="11,4 13,4 12,7 10,6" fill="#4a7733"/>
+      <circle cx="11" cy="6" r="0.6" fill="#3a5522"/>
+      <circle cx="13" cy="6" r="0.6" fill="#3a5522"/>
+      <rect x="6" y="7" width="12" height="3" fill="#3a5522" rx="1"/>
+      <polygon points="7,7 8,9 9,7" fill="#ddc"/>
+      <polygon points="9,7 10,8.5 11,7" fill="#eee"/>
+      <polygon points="13,7 14,9 15,7" fill="#ddc"/>
+      <polygon points="15,7 16,8.5 17,7" fill="#eee"/>
+      <polygon points="8,10 9,8 10,10" fill="#ddc"/>
+      <polygon points="14,10 15,8.5 16,10" fill="#ddc"/>
+      <polygon points="3,0 -4,-2 -6,2 -3,4 3,4" fill="#6a9944"/>
+      <polygon points="21,0 28,-2 30,2 27,4 21,4" fill="#6a9944"/>
+      <circle cx="28" cy="3" r="1" fill="#aa8833"/>
+      <circle cx="28" cy="3" r="0.5" fill="#cc9944"/>
+      <circle cx="5" cy="5" r="0.8" fill="#5a8833"/>
+      <circle cx="16" cy="1" r="0.7" fill="#5a8833"/>
+    </g>
+  </g>
+
+  <!-- Goblin 2 (behind) -->
+  <g transform="translate(510, 315) scale(2.5)">
+    <ellipse cx="12" cy="26" rx="9" ry="3" fill="rgba(0,0,0,0.25)"/>
+    <g transform="translate(24, 0) scale(-1, 1)">
+      <rect x="5" y="8" width="14" height="10" fill="#6a9944" rx="1"/>
+      <ellipse cx="12" cy="14" rx="6" ry="5" fill="#8ab966" opacity="0.4"/>
+      <rect x="4" y="15" width="16" height="2" fill="#8a6a3a"/>
+      <polygon points="5,16 4,22 8,21 7,16" fill="#7a5a3a"/>
+      <polygon points="10,16 10,22 14,21 13,16" fill="#7a5a3a"/>
+      <polygon points="16,16 16,21 19,22 19,16" fill="#7a5a3a"/>
+      <rect x="6" y="16" width="4" height="9" fill="#4a7733"/>
+      <rect x="13" y="16" width="4" height="9" fill="#6a9944"/>
+      <rect x="21" y="-4" width="3" height="14" fill="#6a4a2a" rx="0.5"/>
+      <polygon points="20,-4 24,-4 25,-8 22,-10 19,-8" fill="#666"/>
+      <rect x="3" y="-4" width="18" height="13" fill="#6a9944" rx="3"/>
+      <ellipse cx="7" cy="3" rx="3" ry="2.5" fill="#ffe"/>
+      <ellipse cx="17" cy="3" rx="3" ry="2.5" fill="#ffe"/>
+      <ellipse cx="8" cy="3" rx="2" ry="2" fill="#ffee00"/>
+      <ellipse cx="18" cy="3" rx="2" ry="2" fill="#ffee00"/>
+      <ellipse cx="8" cy="3" rx="0.8" ry="2" fill="#222"/>
+      <ellipse cx="18" cy="3" rx="0.8" ry="2" fill="#222"/>
+      <rect x="6" y="7" width="12" height="3" fill="#3a5522" rx="1"/>
+      <polygon points="7,7 8,9 9,7" fill="#ddc"/>
+      <polygon points="13,7 14,9 15,7" fill="#ddc"/>
+      <polygon points="3,0 -3,-2 -5,2 -2,4 3,4" fill="#6a9944"/>
+      <polygon points="21,0 27,-2 29,2 26,4 21,4" fill="#6a9944"/>
+    </g>
+  </g>
+
+  <!-- Goblin 3 (tiny, far back) -->
+  <g transform="translate(560, 335) scale(1.8)">
+    <g transform="translate(24, 0) scale(-1, 1)">
+      <rect x="5" y="8" width="14" height="10" fill="#6a9944" rx="1"/>
+      <rect x="4" y="15" width="16" height="2" fill="#8a6a3a"/>
+      <rect x="6" y="16" width="4" height="9" fill="#4a7733"/>
+      <rect x="13" y="16" width="4" height="9" fill="#6a9944"/>
+      <rect x="3" y="-4" width="18" height="13" fill="#6a9944" rx="3"/>
+      <ellipse cx="7" cy="3" rx="3" ry="2.5" fill="#ffe"/>
+      <ellipse cx="17" cy="3" rx="3" ry="2.5" fill="#ffe"/>
+      <ellipse cx="8" cy="3" rx="2" ry="2" fill="#ffee00"/>
+      <ellipse cx="18" cy="3" rx="2" ry="2" fill="#ffee00"/>
+      <ellipse cx="8" cy="3" rx="0.8" ry="2" fill="#222"/>
+      <ellipse cx="18" cy="3" rx="0.8" ry="2" fill="#222"/>
+      <polygon points="3,0 -3,-2 -5,2 3,4" fill="#6a9944"/>
+      <polygon points="21,0 27,-2 29,2 21,4" fill="#6a9944"/>
+    </g>
+  </g>
+
+  <!-- FLOATING DEBRIS (bottom center, filling the gap) -->
+  <g>
+    <!-- Small rocky chunks -->
+    <polygon points="280,420 290,415 295,420 288,428" fill="#2a2a3a" opacity="0.5"/>
+    <polygon points="340,440 348,435 355,442 345,448" fill="#1a1a2a" opacity="0.4"/>
+    <polygon points="370,410 378,405 382,412 374,416" fill="#2a2a3a" opacity="0.35"/>
+    <!-- Tiny fragments -->
+    <rect x="310" y="455" width="4" height="3" fill="#2a2a3a" opacity="0.3" transform="rotate(15,312,456)"/>
+    <rect x="260" y="445" width="3" height="2" fill="#1a1a2a" opacity="0.25" transform="rotate(-20,261,446)"/>
+    <rect x="390" y="435" width="3" height="2" fill="#2a2a3a" opacity="0.25" transform="rotate(30,391,436)"/>
+    <!-- Purple energy motes drifting up from below -->
+    <circle cx="300" cy="470" r="1.5" fill="#8855cc" opacity="0.25"/>
+    <circle cx="330" cy="460" r="1" fill="#aa77ee" opacity="0.2"/>
+    <circle cx="360" cy="475" r="1.2" fill="#7744bb" opacity="0.2"/>
+    <circle cx="275" cy="480" r="0.8" fill="#9966dd" opacity="0.15"/>
+    <circle cx="395" cy="465" r="1" fill="#8855cc" opacity="0.18"/>
+    <!-- Faint nebula glow in the gap -->
+    <ellipse cx="330" cy="440" rx="60" ry="30" fill="#442288" opacity="0.04"/>
+  </g>
+
+
+  <!-- EMBERS rising from volcanic fragment (above/right of goblins) -->
+  <g>
+    <circle cx="585" cy="280" r="1.5" fill="#ff6622" opacity="0.5"/>
+    <circle cx="600" cy="260" r="1.2" fill="#ff8844" opacity="0.45"/>
+    <circle cx="575" cy="245" r="1" fill="#ffaa44" opacity="0.4"/>
+    <circle cx="610" cy="235" r="1.3" fill="#ff6622" opacity="0.35"/>
+    <circle cx="595" cy="215" r="0.8" fill="#ff8844" opacity="0.3"/>
+    <circle cx="565" cy="230" r="1" fill="#ffaa44" opacity="0.35"/>
+    <circle cx="615" cy="200" r="0.9" fill="#ff6622" opacity="0.25"/>
+    <circle cx="580" cy="195" r="0.7" fill="#ff8844" opacity="0.2"/>
+    <circle cx="605" cy="180" r="0.8" fill="#ffaa44" opacity="0.15"/>
+  </g>
+
+  <!-- TITLE -->
+  <rect x="0" y="30" width="630" height="100" fill="#000" opacity="0.45"/>
+  <line x1="40" y1="35" x2="590" y2="35" stroke="#ffd700" stroke-width="0.8" opacity="0.2"/>
+  <line x1="40" y1="125" x2="590" y2="125" stroke="#ffd700" stroke-width="0.8" opacity="0.2"/>
+  <path d="M50,40 L40,40 L40,55" fill="none" stroke="#ffd700" stroke-width="1.5" opacity="0.3"/>
+  <path d="M580,40 L590,40 L590,55" fill="none" stroke="#ffd700" stroke-width="1.5" opacity="0.3"/>
+  <path d="M50,120 L40,120 L40,105" fill="none" stroke="#ffd700" stroke-width="1.5" opacity="0.3"/>
+  <path d="M580,120 L590,120 L590,105" fill="none" stroke="#ffd700" stroke-width="1.5" opacity="0.3"/>
+  <text x="317" y="95" text-anchor="middle" font-family="'Georgia', 'Times New Roman', serif" font-size="60" font-weight="bold" letter-spacing="5" fill="#553300" opacity="0.6">FLAG CONQUEST</text>
+  <text x="315" y="93" text-anchor="middle" font-family="'Georgia', 'Times New Roman', serif" font-size="60" font-weight="bold" letter-spacing="5" fill="url(#goldText)">FLAG CONQUEST</text>
+  <text x="315" y="93" text-anchor="middle" font-family="'Georgia', 'Times New Roman', serif" font-size="60" font-weight="bold" letter-spacing="5" fill="none" stroke="#ffe888" stroke-width="0.4" opacity="0.35">FLAG CONQUEST</text>
+  <text x="315" y="115" text-anchor="middle" font-family="'Georgia', 'Times New Roman', serif" font-size="13" letter-spacing="10" fill="#9977aa" opacity="0.85">CONQUER THE FRACTURED REALMS</text>
+
+  <!-- VIGNETTE -->
+  <rect width="630" height="500" fill="url(#vignette)"/>
+</svg>

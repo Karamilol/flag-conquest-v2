@@ -25,7 +25,7 @@ function applyShrineBuff(ally: Ally, ts: TickState): void {
   if (!parsed) continue;
   const { unitType: su, choice } = parsed;
   const t = ally.unitType;
-  const cat = (UNIT_STATS[t as keyof typeof UNIT_STATS] as any)?.category || 'melee';
+  const cat = isUnitRanged(t) ? 'ranged' : isUnitMagic(t) ? 'magic' : 'melee';
 
   // ── Soldier shrine ──
   if (su === 'soldier') {
@@ -61,7 +61,7 @@ function applyShrineBuff(ally: Ally, ts: TickState): void {
     } else if (choice === 'small' || choice === 'big') {
       if (t === 'archer') {
         ally.shrineCritBonus = 0.4; // +40% crit damage
-        if (choice === 'big') ally.shrinePierce = 5;
+        if (choice === 'big') ally.shrinePierce = 1;
       }
     }
   }
@@ -436,11 +436,11 @@ export function processEnemySpawning(ts: TickState, closestFlag: Flag | null): v
   const idealMobs = Math.max(1, Math.floor(ts.flagsCaptured * 0.75) + Math.floor(allyCount * 0.4));
   const activeEnemies = ts.enemies.length + ts.enemyArchers.length + ts.enemyWraiths.length + ts.enemyHounds.length + ts.enemyLichs.length + ts.enemyShadowAssassins.length + ts.enemyFlameCallers.length + ts.enemyCorruptedSentinels.length + ts.enemyDungeonRats.length + ts.enemyFireImps.length + ts.enemyCursedKnights.length;
 
-  // Spawn rate: gentle below ideal (0.8x), aggressive slowdown above (3x)
+  // Spawn rate: gentle below ideal (0.75x), aggressive slowdown above (3x)
   let spawnMultiplier: number;
   if (activeEnemies < idealMobs) {
     const deficit = (idealMobs - activeEnemies) / idealMobs;
-    spawnMultiplier = Math.max(0.8, 1 - deficit * 0.4);
+    spawnMultiplier = Math.max(0.75, 1 - deficit * 0.4);
   } else {
     const surplus = (activeEnemies - idealMobs) / idealMobs;
     spawnMultiplier = Math.min(2.0, 1 + surplus * 2);
@@ -726,7 +726,7 @@ export function processBossSpawning(ts: TickState): void {
     : bossType === 2 ? 55  // Wraith King spectral blast base
     : bossType === 3 ? 30  // Broodmother melee bite
     : bossType === 4 ? 12  // Dungeon Lich iceball
-    : bossType === 5 ? 15  // Ice Conjurer: ranged caster
+    : bossType === 5 ? 18  // Ice Conjurer: ranged caster
     : bossType === 6 ? 35  // Wendigo: high melee
     : bossType === 7 ? 25  // Infernal General: sword drop
     : UNIT_STATS.boss.damage;

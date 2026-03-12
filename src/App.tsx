@@ -12,7 +12,7 @@ import { useMusicManager } from './hooks/useMusicManager';
 import { preloadSprites, allSpritesLoaded } from './canvasRenderer';
 import { getClassDef } from './classes';
 import { heroTotalHp, heroTotalDmg, unitHpMult, unitDmgMult, calculateOfflineIncome } from './utils/economy';
-import { rollUnitType, COLORS, GROUND_Y, UNIT_STATS } from './constants';
+import { rollUnitType, COLORS, GROUND_Y, UNIT_STATS, GAME_VERSION } from './constants';
 import { makeParticle, formatNumber, uid } from './utils/helpers';
 import { SHARD_UPGRADES } from './shardUpgrades';
 import { COSMETICS } from './cosmetics';
@@ -189,6 +189,7 @@ export default function App() {
   // Settings
   const [volume, setVolume] = useState(settings?.volume ?? 0.45);
   const [sfxVolume, setSfxVolume] = useState(settings?.sfxVolume ?? 0.5);
+  const [brightness, setBrightness] = useState(settings?.brightness ?? 1.0);
   const [showHpNumbers, setShowHpNumbers] = useState(settings?.showHpNumbers ?? true);
   const [killParticles, setKillParticles] = useState(settings?.killParticles ?? true);
   const [hideNotifications, setHideNotifications] = useState(settings?.hideNotifications ?? false);
@@ -234,8 +235,8 @@ export default function App() {
 
   // Persist settings to localStorage
   useEffect(() => {
-    try { localStorage.setItem('flag-conquest-settings', JSON.stringify({ volume, sfxVolume, showHpNumbers, killParticles, hideNotifications, blockedTracks })); } catch {}
-  }, [volume, sfxVolume, showHpNumbers, killParticles, hideNotifications, blockedTracks]);
+    try { localStorage.setItem('flag-conquest-settings', JSON.stringify({ volume, sfxVolume, brightness, showHpNumbers, killParticles, hideNotifications, blockedTracks })); } catch {}
+  }, [volume, sfxVolume, brightness, showHpNumbers, killParticles, hideNotifications, blockedTracks]);
 
   // Persist keybindings
   useEffect(() => {
@@ -384,6 +385,9 @@ export default function App() {
       } else if (matchesBinding(keybindings, 'armyToggle', e.key)) {
         e.preventDefault();
         g.armyHoldMode = !g.armyHoldMode;
+      } else if (matchesBinding(keybindings, 'plantToggle', e.key)) {
+        e.preventDefault();
+        g.hero.planted = !g.hero.planted;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -1435,6 +1439,8 @@ export default function App() {
         setVolume={setVolume}
         sfxVolume={sfxVolume}
         setSfxVolume={setSfxVolume}
+        brightness={brightness}
+        setBrightness={setBrightness}
         setShowHpNumbers={setShowHpNumbers}
         setKillParticles={setKillParticles}
         hideNotifications={hideNotifications}
@@ -1679,6 +1685,12 @@ export default function App() {
                 <span onClick={music.nextTrack} style={{ cursor: 'pointer', color: '#888', fontSize: 11 }}>{'\u25B6'}</span>
               </div>
             </div>
+            {/* Version tag */}
+            <div style={{
+              position: 'absolute', bottom: 8, right: 10,
+              color: '#444', fontSize: 7, fontFamily: F,
+              letterSpacing: '0.5px', userSelect: 'none',
+            }}>{GAME_VERSION}</div>
           </div>
         )}
 

@@ -151,7 +151,7 @@ export const SHRINE_DEFS: ShrineDef[] = [
     options: [
       { id: 'break', label: 'Break the Statue', description: 'Archers fire twice as slow and lose half their range. Melee and magic units attack 8% faster.' },
       { id: 'small', label: 'Offer a Small Gift', description: 'Archers gain +40% critical hit damage.', cost: { type: 'gold', amount: 200 } },
-      { id: 'big', label: 'Make a Grand Offering', description: 'Archers gain +40% crit damage and their arrows pierce through up to 5 enemies.', cost: { type: 'gems', amount: 8 } },
+      { id: 'big', label: 'Make a Grand Offering', description: 'Archers gain +40% crit damage and their arrows pierce through 1 additional enemy.', cost: { type: 'gems', amount: 8 } },
     ],
   },
   {

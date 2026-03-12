@@ -14,7 +14,7 @@ import { processHeroMovement } from '../systems/movement';
 import { findClosestUncapturedFlag, processEnemySpawning, processBossSpawning, processUnitRespawn, processRoyalGuardSpawn } from '../systems/spawning';
 import { processHeroCombat, processAutoFireball, processProjectileMovement, processProjectileHits, processRelicFireball, processHeroEdgeDagger } from '../systems/combat';
 import { processSkillCooldowns, processSkillBuffTimers, processSkillUnlockCheck, processBloodlust, processSecondWind, processAutoWeaponThrow, processAutoSkills, processManualSkillUses, processPoisonTicks, processMarkedTimers, processBirdsEye, processSnareTrap, processNaturesGrace, processManaShield, processChanneling, processArcaneFamiliar, processBarrierTimers } from '../systems/skills';
-import { processBossAI, processArcherAI, processEnemyAI, processWraithAI, processHoundAI, processLichAI, processShadowAssassinAI, processFlameCallerAI, processCorruptedSentinelAI, processDungeonRatAI, processFireImpAI, processCursedKnightAI, processAllyAI, processCrystalTurretAI, processIceTurretAI } from '../systems/ai';
+import { processBossAI, processArcherAI, processEnemyAI, processWraithAI, processHoundAI, processLichAI, processShadowAssassinAI, processFlameCallerAI, processCorruptedSentinelAI, processDungeonRatAI, processFireImpAI, processCursedKnightAI, processAllyAI, processCrystalTurretAI, processIceTurretAI, processEnemyKnockbacks } from '../systems/ai';
 import { processEconomy, processDeathRewards, processAllyDeaths, processLichNecromancy, processRelicFlagHaven, fastForwardIncome } from '../systems/economy';
 import { processHeroFlagCapture, processAllyFlagCapture, processChestCollection, processBossDefeat, processParticles, processFlagContest, processFlagBuildings, processDungeonKeyPortal } from '../systems/flags';
 import { processDungeonWaveTimer, processDungeonMining, processDungeonEndCheck, processDungeonPortalTimer, processTimedDungeonPortalTimer, processTimedDungeonTimer, processTimedDungeonEnd, processTimedDungeonFlagIncome, processRegaliaKeyPortal, processDungeonTickCounter } from '../systems/dungeon';
@@ -32,7 +32,7 @@ function copyArray<T extends object>(arr: T[]): T[] {
 
 /** Run one game tick: build TickState, run all systems, return new GameState */
 function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upgrades: PermanentUpgrades, shardUpgrades: ShardUpgrades, relicCollection: RelicCollection, cameraMode: CameraMode, ancientRelicsOwned: string[], ancientRelicCopies: Record<string, number>, backpack: Backpack, onCollectConsumable: (id: ConsumableId) => void, challengeCompletions: ChallengeCompletions, equippedRegalias: Record<RegaliaSlot, Regalia | null>, onCollectRegalia: (regalia: Regalia) => void, equippedPet: string, ownedPets: string[], onCollectPet: (petId: string) => void): GameState {
-  if (prev.gameOver || prev.pendingArtifactChoice || prev.pendingRelicChoice || prev.pendingRoll || prev.pendingSkillChoice || prev.pendingPortalChoice || prev.tutorialDialogueVisible || prev.devPaused) return prev;
+  if (prev.gameOver || prev.pendingArtifactChoice || prev.pendingRelicChoice || prev.pendingRoll || prev.pendingSkillChoice || prev.tutorialDialogueVisible || prev.devPaused) return prev;
   // Guard: StrictMode double-invokes state updaters — only increment once per tick
   const expectedFrame = prev.frame + 1;
   if (frameRef.current < expectedFrame) frameRef.current = expectedFrame;
@@ -184,7 +184,7 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
     activeModifiers: prev.activeModifiers || [],
     activeCurse: prev.activeCurse || null,
     curseRewards: prev.curseRewards || [],
-    pendingPortalChoice: null,
+    pendingPortalChoice: prev.pendingPortalChoice,
     portalSpawnX: prev.portalSpawnX || 0,
     selectedPortalIndex: prev.selectedPortalIndex ?? null,
     fracturedMap: prev.fracturedMap || null,
@@ -346,6 +346,7 @@ function gameTick(prev: GameState, frameRef: React.MutableRefObject<number>, upg
 
   // Enemy AI (runs after allies so enemies see blocked state and counter-attack same tick)
   perf.begin('tick.enemyAI');
+  processEnemyKnockbacks(ts); // apply velocity before each enemy's own movement
   processEnemyAI(ts);
   processWraithAI(ts);
   processHoundAI(ts);

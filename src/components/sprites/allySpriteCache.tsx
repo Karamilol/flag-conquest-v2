@@ -7,10 +7,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 // ============================================================
 
 // ViewBox for all allies (generous, fits the largest unit)
+// VB_Y=-22 to accommodate wizard hat tip (y=-18) and conjurer hood (y=-14)
 const VB_X = -10;
-const VB_Y = -12;
+const VB_Y = -22;
 const VB_W = 55;
-const VB_H = 44;
+const VB_H = 54;
 
 export const ALLY_IDLE_FRAME_COUNT = 8;
 const IDLE_TICKS_PER_FRAME = 25;
