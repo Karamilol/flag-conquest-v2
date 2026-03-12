@@ -418,7 +418,7 @@ function UnitsTab({ game, upgrades, shardUpgrades, challengeCompletions, relicCo
                 {'\u{1F9B8}'} Hero <span style={{ color: COLORS.textDim, fontWeight: 'normal', marginLeft: '4px' }}>Lv.{heroLevel}</span>
                 {heroTier > 0 && <span style={{ color: '#ffd700', fontSize: '10px', marginLeft: '4px' }}>T{heroTier}</span>}
                 {/* Regalia slot strip */}
-                <div style={{ display: 'flex', gap: 3, marginLeft: 6, position: 'relative' }}>
+                <div style={{ display: 'flex', gap: 3, marginLeft: 6, position: 'relative', zIndex: 10 }}>
                   {(['sword', 'shield', 'necklace'] as RegaliaSlot[]).map(slot => {
                     const reg = equippedRegalias?.[slot] ?? null;
                     const bc = reg ? RARITY_COLORS[reg.rarity] : 'rgba(138,74,223,0.3)';

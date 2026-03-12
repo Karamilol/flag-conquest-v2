@@ -917,7 +917,7 @@ export default function GameView({
 
         {/* Settings overlay */}
         {settingsOpen && (() => {
-          const isDev = typeof location !== 'undefined' && location.hostname === 'localhost';
+          const isDev = typeof location !== 'undefined' && (location.hostname === 'localhost' || location.hostname === '127.0.0.1')  && import.meta.env.DEV;
           const tabs = ['audio', 'graphics', 'controls', ...(isDev ? ['dev'] : [])] as ('audio' | 'graphics' | 'controls' | 'dev')[];
           return (
           <div style={{
